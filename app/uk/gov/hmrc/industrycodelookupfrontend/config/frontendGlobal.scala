@@ -28,9 +28,9 @@ import uk.gov.hmrc.play.config.{AppName, ControllerConfig, RunMode}
 import uk.gov.hmrc.play.frontend.bootstrap.DefaultFrontendGlobal
 import uk.gov.hmrc.play.frontend.filters.{FrontendAuditFilter, FrontendLoggingFilter, MicroserviceFilterSupport}
 
+object FrontendGlobal extends FrontendGlobal
 
-object FrontendGlobal
-  extends DefaultFrontendGlobal {
+trait FrontendGlobal extends DefaultFrontendGlobal {
 
   override val auditConnector = FrontendAuditConnector
   override val loggingFilter = LoggingFilter
@@ -53,6 +53,10 @@ object ControllerConfiguration extends ControllerConfig {
 
 object LoggingFilter extends FrontendLoggingFilter with MicroserviceFilterSupport {
   override def controllerNeedsLogging(controllerName: String) = ControllerConfiguration.paramsForController(controllerName).needsLogging
+}
+
+object ProductionFrontendGlobal extends FrontendGlobal {
+  override def filters = WhitelistFilter +: super.filters
 }
 
 object AuditFilter extends FrontendAuditFilter with RunMode with AppName with MicroserviceFilterSupport {
