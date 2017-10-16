@@ -16,15 +16,18 @@
 
 package uk.gov.hmrc.industrycodelookupfrontend
 
+import play.api.mvc.Call
 import uk.gov.hmrc.http.hooks.HttpHooks
 import uk.gov.hmrc.http.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
 import uk.gov.hmrc.play.audit.http.config.AuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
+import uk.gov.hmrc.play.config.{AppName, RunMode, ServicesConfig}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.config.LoadAuditingConfig
+import uk.gov.hmrc.play.frontend.filters.MicroserviceFilterSupport
 import uk.gov.hmrc.play.http.ws.{WSDelete, WSGet, WSPost, WSPut}
+import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
 object FrontendAuditConnector extends AuditConnector {
   lazy val auditingConfig: AuditingConfig = LoadAuditingConfig(s"auditing")
@@ -41,4 +44,18 @@ object WSHttp extends WSHttp
 object FrontendAuthConnector extends AuthConnector with ServicesConfig with WSHttp {
   val serviceUrl = baseUrl("auth")
   lazy val http = WSHttp
+}
+
+object WhitelistFilter extends AkamaiWhitelistFilter
+  with RunMode with MicroserviceFilterSupport {
+
+  override def whitelist: Seq[String] = FrontendAppConfig.whitelist
+
+  override def excludedPaths: Seq[Call] = {
+    FrontendAppConfig.whitelistExcluded.map { path =>
+      Call("GET", path)
+    }
+  }
+
+  override def destination: Call = Call("GET", "https://www.tax.service.gov.uk/outage-sic-search")
 }
