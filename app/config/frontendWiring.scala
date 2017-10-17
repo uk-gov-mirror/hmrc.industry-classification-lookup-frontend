@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.industrycodelookupfrontend
+package config
 
 import play.api.mvc.Call
 import uk.gov.hmrc.http.hooks.HttpHooks

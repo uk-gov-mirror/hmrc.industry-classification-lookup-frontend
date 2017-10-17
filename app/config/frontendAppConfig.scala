@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.industrycodelookupfrontend
+package config
 
 import java.util.Base64
 
