@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.industrycodelookupfrontend
+package config
 
 import com.typesafe.config.Config
 import net.ceedubs.ficus.Ficus._
@@ -42,7 +42,7 @@ trait FrontendGlobal extends DefaultFrontendGlobal {
   }
 
   override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit rh: Request[_]): Html =
-    uk.gov.hmrc.industrycodelookupfrontend.views.html.error_template(pageTitle, heading, message)
+    views.html.error_template(pageTitle, heading, message)
 
   override def microserviceMetricsConfig(implicit app: Application): Option[Configuration] = app.configuration.getConfig(s"microservice.metrics")
 }

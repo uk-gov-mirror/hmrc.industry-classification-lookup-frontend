@@ -19,14 +19,12 @@ package config
 import java.util.Base64
 
 import org.scalatest.TestData
-import org.scalatest._
 import builders.SessionBuilder
 import org.scalatestplus.play.{OneAppPerTest, PlaySpec}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
 import play.api.test._
 import play.api.{Application, Environment, Mode}
-import uk.gov.hmrc.industrycodelookupfrontend.{FrontendAppConfig, ProductionFrontendGlobal}
 
 class WhitelistFilterSpec extends PlaySpec with OneAppPerTest with SessionBuilder {
 

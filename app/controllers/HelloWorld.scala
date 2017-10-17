@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@()(implicit request: Request[_], messages: Messages)
+package controllers
 
-@uk.gov.hmrc.industrycodelookupfrontend.views.html.main_template(title = "Hello from industry-classification-lookup-frontend", bodyClasses = None) {
-    <h1>Hello from industry-classification-lookup-frontend !</h1>
+import play.api.Play.current
+import play.api.i18n.Messages.Implicits._
+import play.api.mvc._
+import uk.gov.hmrc.play.frontend.controller.FrontendController
+
+import scala.concurrent.Future
+
+
+object HelloWorld extends HelloWorld
+
+trait HelloWorld extends FrontendController {
+  val helloWorld = Action.async { implicit request =>
+		Future.successful(Ok(views.html.helloworld.hello_world()))
+  }
 }
