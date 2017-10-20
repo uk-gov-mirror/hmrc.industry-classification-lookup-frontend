@@ -1,4 +1,4 @@
-@*
+/*
  * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *@
+ */
 
-@()(implicit request: Request[_], messages: Messages)
+package helpers
 
-@views.html.main_template(title = "Hello from industry-classification-lookup-frontend", bodyClasses = None) {
-    <h1>Hello from industry-classification-lookup-frontend !</h1>
+import org.mockito.Mockito._
+
+trait MockHelper {
+
+  def collectMocks[T <: AnyRef](mocks: T*): Seq[T] = mocks
+
+  def resetMocks[T <: AnyRef](mocks: Seq[T]): Unit = {
+    mocks.map(reset(_))
+  }
 }

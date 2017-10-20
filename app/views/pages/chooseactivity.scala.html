@@ -1,0 +1,98 @@
+@*
+ * Copyright 2017 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *@
+
+@import models.ChooseActivity
+@import repositories.models.SicCode
+@import helpers.templates.{errorSummary, inputRadioGroup}
+@import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
+
+@(chooseActForm: Form[ChooseActivity], searchList: Seq[SicCode])(implicit request: Request[_], messages: Messages)
+
+@views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = None) {
+
+    <div class="form-group-compound">
+        <a id="back" class="link-back" href="javascript:history.back()">@messages("app.common.back")</a>
+    </div>
+
+    @errorSummary(
+        messages("app.common.errorSummaryLabel"), chooseActForm, dataJourney=Some("sicSearch")
+    )
+
+    <h1 class="form-title heading-xlarge" id="page-title">@messages("page.icl.chooseactivity.heading")</h1>
+
+    @govHelpers.form(action = controllers.routes.ChooseActivityController.submit) {
+
+        <div class="form-group">
+            <section>
+                <table class="check-your-answers multiple-sections">
+                    <tbody>
+                        <tr>
+                            <td id="entered-keyword">@messages("page.icl.chooseactivity.enteredkeyword")</td>
+                            <td id="search-term" class="answer">'@searchList.head.sicCode'</td>
+                            <td class="change"><a href="SicSearch">@messages("app.common.change")<span class="visuallyhidden">@messages("page.icl.chooseactivity.changehidden")</span></a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+<div class="form-group">
+
+    <p class=“result-info”>
+        <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
+            @searchList.size
+        </span>
+        @messages("page.icl.chooseactivity.resultsfound")
+    </p>
+
+</div>
+
+        <div class="form-group">
+
+        @inputRadioGroup(
+            field = chooseActForm("code"),
+            searchList.map(sicCode => (sicCode.sicCode, sicCode.description)),
+            '_labelAfter -> true,
+            '_legend -> messages("page.icl.chooseactivity.title"),
+            '_legendClass -> "hidden",
+            '_labelClass -> "block-label"
+        )
+
+        </div>
+
+        <div class="form-group">
+
+        <details role="group">
+            <summary aria-expanded="false" tabindex="0" aria-controls="details-content-0" role="button">
+                <span class="summary">@messages("page.icl.chooseactivity.cantsee")</span>
+            </summary>
+            <div id="details-content-0" class="panel panel-indent" style="" aria-hidden="false">
+                <p>
+                    @messages("page.icl.chooseactivity.trya")
+                    <a href="enter-keywords">@messages("page.icl.chooseactivity.diffkeyword")</a>
+                </p>
+
+            </div>
+        </details>
+
+        </div>
+
+
+        <div class="form-group">
+            <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.next")</button>
+        </div>
+    }
+}

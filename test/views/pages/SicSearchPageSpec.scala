@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package controllers
+package models
 
-import play.api.Play.current
-import play.api.i18n.Messages.Implicits._
-import play.api.mvc._
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import org.scalatest.mockito.MockitoSugar
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.test.FakeRequest
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-import scala.concurrent.Future
+class SicSearchPageSpec extends UnitSpec with I18nSupport with MockitoSugar with WithFakeApplication{
+  implicit val request = FakeRequest()
+  implicit val messagesApi : MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
 
+  "The enter keywords screen" should {
 
-object HelloWorld extends HelloWorld
-
-trait HelloWorld extends FrontendController {
-  val helloWorld = Action.async { implicit request =>
-		Future.successful(Ok(views.html.helloworld.hello_world()))
   }
 }

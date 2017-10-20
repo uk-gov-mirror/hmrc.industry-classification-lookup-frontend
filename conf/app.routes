@@ -1,3 +1,15 @@
 # microservice specific routes
+GET        /assets/*file                                                     controllers.Assets.at(path="/public", file)
 
-GET        /hello-world             controllers.HelloWorld.helloWorld
+GET        /sign-out                                                         @controllers.SignInOutController.signOut
+
+GET        /enter-keywords                                                   @controllers.SicSearchController.show
+POST       /enter-keywords                                                   @controllers.SicSearchController.submit
+
+GET        /choose-business-activity                                         @controllers.ChooseActivityController.show
+POST       /choose-business-activity                                         @controllers.ChooseActivityController.submit
+
+GET        /confirm-business-activites                                       @controllers.ConfirmationController.show
+POST       /confirm-business-activites                                       @controllers.ConfirmationController.submit
+
+GET        /remove-sic-code/:sicCode                                         @controllers.ConfirmationController.removeChoice(sicCode)
