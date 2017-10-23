@@ -17,15 +17,34 @@
 package forms.sicsearch
 
 import models.SicSearch
-import play.api.data.{Form, Forms, Mapping}
+import play.api.data.{Form, FormError, Forms, Mapping}
 import play.api.data.Forms.{list, mapping}
 import play.api.data.Forms._
+import play.api.data.format.Formatter
 
 object SicSearchForm {
 
+  implicit def sicSearchFormatter: Formatter[String] = new Formatter[String] {
+
+    def validate(entry: String): Either[Seq[FormError], String] = {
+      entry match {
+        case ""  => Left(Seq(FormError("sicSearch", "errors.invalid.sic.noEntry")))
+        case ss  => Right(ss)
+      }
+    }
+
+    override def bind(key: String, data: Map[String, String]) = {
+      validate(data.getOrElse(key, ""))
+    }
+
+    override def unbind(key: String, value: String) = Map(key -> value)
+  }
+
+  def sicSearchField: Mapping[String] = Forms.of[String](sicSearchFormatter)
+
   val form = Form(
     mapping(
-      "sicSearch" -> nonEmptyText
+      "sicSearch" -> sicSearchField
     )(SicSearch.apply)(SicSearch.unapply)
   )
 }
