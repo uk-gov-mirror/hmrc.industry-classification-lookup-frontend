@@ -17,6 +17,7 @@
 package models
 
 import forms.chooseactivity.ChooseActivityForm
+import play.api.data.FormError
 import uk.gov.hmrc.play.test.UnitSpec
 
 class ChooseActivityFormSpec extends UnitSpec {
@@ -25,18 +26,21 @@ class ChooseActivityFormSpec extends UnitSpec {
 
   "Binding BusinessActivityFormSpec to a model" should {
     "Bind successfully with full data" in {
-      val data = Map(
-        "code" -> "12345678"
-      )
-      val model = ChooseActivity(
-        code = "12345678"
-      )
-      val boundModel = testForm.bind(data).fold(
-        errors => errors,
-        success => success
-      )
 
-      boundModel shouldBe model
+      val data = Map("code" -> "12345678")
+      val model = ChooseActivity(code = "12345678")
+      val boundForm = testForm.bind(data).fold(errors => errors, success => success)
+
+      boundForm shouldBe model
+    }
+
+    "Provide the correct error when nothing was selected" in {
+      val data = Map("code" -> "")
+      val model = Seq(FormError("code", "errors.invalid.sic.noSelection"))
+      val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
+
+      boundForm.errors shouldBe model
+      boundForm.data shouldBe data
     }
   }
 

@@ -17,14 +17,33 @@
 package forms
 
 import models.Confirmation
-import play.api.data.{Form, Mapping}
+import play.api.data.{Form, FormError, Forms, Mapping}
 import play.api.data.Forms._
+import play.api.data.format.Formatter
 
 object ConfirmationForm {
 
+  implicit def confirmationFormatter: Formatter[String] = new Formatter[String] {
+
+    def validate(entry: String): Either[Seq[FormError], String] = {
+      entry match {
+        case ""  => Left(Seq(FormError("addAnother", "errors.invalid.sic.confirm")))
+        case select => Right(select)
+      }
+    }
+
+    override def bind(key: String, data: Map[String, String]) = {
+      validate(data.getOrElse(key, ""))
+    }
+
+    override def unbind(key: String, value: String) = Map(key -> value)
+  }
+
+  def confirmationField: Mapping[String] = Forms.of[String](confirmationFormatter)
+
   val form = Form(
     mapping(
-      "addAnother" -> nonEmptyText
+      "addAnother" -> confirmationField
     )(Confirmation.apply)(Confirmation.unapply)
   )
 }

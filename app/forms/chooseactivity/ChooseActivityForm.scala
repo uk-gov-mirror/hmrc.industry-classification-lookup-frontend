@@ -16,17 +16,36 @@
 
 package forms.chooseactivity
 
-import models.{ChooseActivity}
-import play.api.data.{Form}
+import models.ChooseActivity
+import play.api.data.{Form, FormError, Forms, Mapping}
 import play.api.data.Forms.{mapping, _}
+import play.api.data.format.Formatter
 
 
 
 object ChooseActivityForm {
 
+  implicit def chooseActivityFormatter: Formatter[String] = new Formatter[String] {
+
+    def validate(entry: String): Either[Seq[FormError], String] = {
+      entry match {
+        case ""  => Left(Seq(FormError("code", "errors.invalid.sic.noSelection")))
+        case ss  => Right(ss)
+      }
+    }
+
+    override def bind(key: String, data: Map[String, String]) = {
+      validate(data.getOrElse(key, ""))
+    }
+
+    override def unbind(key: String, value: String) = Map(key -> value)
+  }
+
+  def chooseActivityField: Mapping[String] = Forms.of[String](chooseActivityFormatter)
+
   val form = Form(
     mapping(
-      "code" -> text
+      "code" -> chooseActivityField
     )(ChooseActivity.apply)(ChooseActivity.unapply)
   )
 }

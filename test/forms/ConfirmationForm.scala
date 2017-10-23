@@ -16,25 +16,28 @@
 
 package models
 
-import forms.sicsearch.SicSearchForm
+import forms.ConfirmationForm
+import forms.chooseactivity.ChooseActivityForm
 import play.api.data.FormError
 import uk.gov.hmrc.play.test.UnitSpec
 
-class SicSearchFormSpec extends UnitSpec {
-  val testForm = SicSearchForm.form
+class ConfirmationForm extends UnitSpec {
 
-  "Binding SicSearchFormSpec to a model" should {
-    "Bind successfully with full data" in {
-      val data = Map("sicSearch" -> "12345678")
-      val model = SicSearch(sicSearch = "12345678")
+  val testForm = ConfirmationForm.form
+
+  "Binding BusinessActivityFormSpec to a model" should {
+    "bind successfully with full data" in {
+
+      val data = Map("addAnother" -> "yes")
+      val model = Confirmation(addAnother = "yes")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
       boundForm shouldBe model
     }
 
-    "Provide the correct error when nothing was entered" in {
-      val data = Map("sicSearch" -> "")
-      val model = Seq(FormError("sicSearch", "errors.invalid.sic.noEntry"))
+    "provide the correct error when nothing was selected" in {
+      val data = Map("addAnother" -> "")
+      val model = Seq(FormError("addAnother", "errors.invalid.sic.confirm"))
       val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
 
       boundForm.errors shouldBe model
