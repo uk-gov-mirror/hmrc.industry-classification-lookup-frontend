@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-package controllers
+package models
 
-import play.api.http.Status
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.play.test.{WithFakeApplication, UnitSpec}
+import uk.gov.hmrc.play.test.UnitSpec
+import play.api.libs.json.{JsValue, Json}
 
-class HelloWorldControllerSpec extends UnitSpec with WithFakeApplication{
+class SicSearchSpec extends UnitSpec {
 
-  val fakeRequest = FakeRequest("GET", "/")
+  val testSicSearchModel = SicSearch("12345678")
 
+  val testSicSearchJson : JsValue = Json.parse(
+    """
+      |{
+      |  "sicSearch":"12345678"
+      |}
+    """.stripMargin
+  )
 
-  "GET /" should {
-    "return 200" in {
-      val result = HelloWorld.helloWorld(fakeRequest)
-      status(result) shouldBe Status.OK
+  "Sic Search Model" should {
+
+    "read from json with data" in {
+      Json.fromJson(testSicSearchJson)(SicSearch.format).get shouldBe testSicSearchModel
     }
 
-    "return HTML" in {
-      val result = HelloWorld.helloWorld(fakeRequest)
-      contentType(result) shouldBe Some("text/html")
-      charset(result) shouldBe Some("utf-8")
+    "write to json with data" in {
+      Json.toJson(testSicSearchModel)(SicSearch.format) shouldBe testSicSearchJson
     }
-
 
   }
-
 
 }

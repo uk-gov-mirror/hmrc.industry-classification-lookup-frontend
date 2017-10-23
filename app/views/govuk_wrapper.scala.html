@@ -34,13 +34,18 @@
       linkElem = None,
       headScripts = None)
     <meta name="format-detection" content="telephone=no" />
+    <link rel="stylesheet" href="@routes.Assets.at("stylesheets/sicsearch.css")">
 }
 
-@headerNavLinks = {}
+@headerNavLinks = {
+    <li>
+        <a id="signOutNavHref" href="@controllers.routes.SignInOutController.signOut()" data-journey-click="primary-navigation:Click:SignOut">Sign out</a>
+    </li>
+}
 
 @insideHeader = {
     @uiLayouts.header_nav(
-      navTitle = Some("industry-classification-lookup-frontend"),
+      navTitle = Some(messages("app.title")),
       navTitleLink = None,
       showBetaLink = false,
       navLinks = Some(headerNavLinks))
@@ -62,15 +67,23 @@
 
 @serviceInfo = {
     @uiLayouts.serviceInfo(
-      betaBanner = HtmlFormat.empty,
+      betaBanner = betaBanner,
       includeGridWrapper = false,
-      serviceInfoContent = Some(serviceInfoContent))
+      serviceInfoContent = Some(serviceInfoContent),
+      includeHMRCBranding = false)
+}
+
+@betaBanner = {
+    <div class="phase-banner">
+        <p>
+            <strong class="phase-tag">BETA</strong>
+            <span>@Messages("common.feedbackFirst") <a href="#">@Messages("common.feedbackSecond")</a> @Messages("common.feedbackThird")</span>
+        </p>
+    </div>
 }
 
 @mainContentHeader = {
-    @if(contentHeader.isDefined) {
-        @uiLayouts.main_content_header(contentHeader = contentHeader.get)
-    }
+    @contentHeader
 }
 
 @getHelpForm = @{uiHelpers.reportAProblemLink(appConfig.reportAProblemPartialUrl, appConfig.reportAProblemNonJSUrl)}
@@ -86,4 +99,4 @@
       sidebar = sidebar)
 }
 
-@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), true)(content)
+@hmrcGovUkTemplate(Some(title), bodyClasses)(head, bodyEnd, insideHeader, afterHeader, footerTop, Some(uiLayouts.footer_links()), nav = true)(content)

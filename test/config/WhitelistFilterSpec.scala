@@ -19,7 +19,7 @@ package config
 import java.util.Base64
 
 import org.scalatest.TestData
-import builders.SessionBuilder
+import builders.{AuthBuilder, SessionBuilder}
 import org.scalatestplus.play.{OneAppPerTest, PlaySpec}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
@@ -51,10 +51,10 @@ class WhitelistFilterSpec extends PlaySpec with OneAppPerTest with SessionBuilde
   "ProductionFrontendGlobal" must {
     "let requests passing" when {
       "coming from an IP in the white list must work as normal" in {
-        val request = FakeRequest(GET, "/sic-search/hello-world").withHeaders("True-Client-IP" -> "11.22.33.44")
+        val request = FakeRequest(GET, "/sic-search/enter-keywords").withHeaders("True-Client-IP" -> "11.22.33.44")
         val Some(result) = route(app, request)
 
-        status(result) mustBe OK
+        status(result) mustBe SEE_OTHER
       }
 
       "coming from a IP NOT in the white-list and not with a white-listed path must be redirected" in {
