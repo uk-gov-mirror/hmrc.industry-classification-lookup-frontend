@@ -16,7 +16,7 @@
 
 package controllers
 
-import builders.AuthBuilder
+import builders.AuthBuilders
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -52,7 +52,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
     }
 
     "return 200 for an authorised user" in new Setup {
-      AuthBuilder.showWithAuthorisedUser(controller.show, mockAuthConnector) {
+      AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe OK
       }
@@ -70,7 +70,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
         "search" -> ""
       )
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         (response: Future[Result]) =>
           status(response) shouldBe BAD_REQUEST
       }
@@ -91,7 +91,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       when(mockSicSearchService.updateSearchResults(ArgumentMatchers.anyString(), ArgumentMatchers.eq(siccodemodel)))
         .thenReturn(Future.successful(Some(siccodemodel)))
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe SEE_OTHER
           redirectLocation(result) shouldBe Some("/sic-search/choose-business-activity")
@@ -107,7 +107,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       when(mockSicSearchService.lookupSicCode(ArgumentMatchers.eq(sicCode))(ArgumentMatchers.any[HeaderCarrier]()))
         .thenReturn(Future.successful(None))
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe BAD_REQUEST
       }
