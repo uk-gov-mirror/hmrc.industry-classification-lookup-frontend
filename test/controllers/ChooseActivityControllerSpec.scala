@@ -16,7 +16,7 @@
 
 package controllers
 
-import builders.AuthBuilder
+import builders.AuthBuilders
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -52,7 +52,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
     "return a 200 for an authorised user with a sic search" in new Setup {
       when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
         .thenReturn(Future.successful(Some(sicStore)))
-      AuthBuilder.showWithAuthorisedUser(controller.show, mockAuthConnector) {
+      AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe OK
       }
@@ -62,7 +62,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
       when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
         .thenReturn(Future.successful(None))
 
-      AuthBuilder.showWithAuthorisedUser(controller.show, mockAuthConnector) {
+      AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe SEE_OTHER
       }
@@ -93,7 +93,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
       when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString()))
         .thenReturn(Future.successful(Some(sicCode)))
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe SEE_OTHER
       }
@@ -105,7 +105,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
         "code" -> code
       )
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe BAD_REQUEST
       }
@@ -122,7 +122,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
       when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      AuthBuilder.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe BAD_REQUEST
       }

@@ -19,7 +19,7 @@ package config
 import java.util.Base64
 
 import org.scalatest.TestData
-import builders.{AuthBuilder, SessionBuilder}
+import builders.{AuthBuilders, SessionBuilder}
 import org.scalatestplus.play.{OneAppPerTest, PlaySpec}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._

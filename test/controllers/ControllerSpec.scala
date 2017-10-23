@@ -16,13 +16,43 @@
 
 package controllers
 
+import akka.actor.Cancellable
+import akka.stream.{Attributes, ClosedShape, Graph, Materializer}
 import org.scalatest.mockito.MockitoSugar
+import org.mockito.Mockito.reset
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.UnitSpec
+
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration.FiniteDuration
 
 trait ControllerSpec extends UnitSpec with MockitoSugar {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
   val mockSicSearchService: SicSearchService = mock[SicSearchService]
+
+  def resetMocks() {
+    reset(mockAuthConnector)
+    reset(mockSicSearchService)
+  }
+
+  /**
+    * Taken from play.api.test.Helpers (private)
+    * Avoids using an Application to instantiate a materializer in controller-level unit tests
+    **/
+  implicit val noMaterializer: Materializer = new Materializer {
+    override def withNamePrefix(name: String): Materializer =
+      throw new UnsupportedOperationException("NoMaterializer cannot be named")
+    override def materialize[Mat](runnable: Graph[ClosedShape, Mat]): Mat =
+      throw new UnsupportedOperationException("NoMaterializer cannot materialize")
+    override def materialize[Mat](runnable: Graph[ClosedShape, Mat], initialAttributes: Attributes): Mat =
+      throw new UnsupportedOperationException("NoMaterializer cannot materialize")
+    override def executionContext: ExecutionContextExecutor =
+      throw new UnsupportedOperationException("NoMaterializer does not provide an ExecutionContext")
+    def scheduleOnce(delay: FiniteDuration, task: Runnable): Cancellable =
+      throw new UnsupportedOperationException("NoMaterializer cannot schedule a single event")
+    def schedulePeriodically(initialDelay: FiniteDuration, interval: FiniteDuration, task: Runnable): Cancellable =
+      throw new UnsupportedOperationException("NoMaterializer cannot schedule a repeated event")
+  }
 }

@@ -16,21 +16,22 @@
 
 package controllers
 
+import builders.AuthBuilders
 import play.api.i18n.MessagesApi
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.WithFakeApplication
-import builders.AuthBuilder._
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
-import play.api.mvc.{AnyContent, AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Request}
+import play.api.mvc._
 import play.api.test.FakeRequest
 import repositories.models.{SicCode, SicStore}
 import uk.gov.hmrc.http.SessionKeys
+import play.api.test.Helpers._
 
 import scala.concurrent.Future
 
-class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication {
+class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {
 
   trait Setup {
     val controller: ConfirmationController = new ConfirmationController {
@@ -38,17 +39,26 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
       val authConnector: AuthConnector = mockAuthConnector
       val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
     }
+
+    resetMocks()
   }
 
   val sessionId = "session-id-12345"
 
-  val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(SessionKeys.sessionId -> sessionId)
+  val fakeRequestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(SessionKeys.sessionId -> sessionId)
+
+  val sicCodeCode = "12345"
+  val sicCodeDescription = "some description"
+  val sicCode = SicCode(sicCodeCode, sicCodeDescription)
 
   val sicStore = SicStore(
     sessionId,
-    SicCode("12345", "some description"),
-    Some(List(SicCode("12345", "some description")))
+    sicCode,
+    Some(List(sicCode))
   )
+
+  val sicStoreNoChoices = SicStore(sessionId, sicCode, None)
+  val sicStoreEmptyChoiceList = SicStore(sessionId, sicCode, Some(List()))
 
   "show" should {
 
@@ -79,12 +89,12 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 200 when the form field 'addAnother' is no" in new Setup {
 
-      val fakeRequestWithFormBody: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequest.withFormUrlEncodedBody("addAnother" -> "no")
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
 
       when(mockSicSearchService.retrieveSicStore(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      submitWithAuthorisedUser(controller.submit, mockAuthConnector, fakeRequestWithFormBody){
+      submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
         result =>
           status(result) shouldBe 200
       }
@@ -92,15 +102,78 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 303 when the form field 'addAnother' is yes" in new Setup {
 
-      val fakeRequestWithFormBody: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequest.withFormUrlEncodedBody("addAnother" -> "yes")
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
 
       when(mockSicSearchService.retrieveSicStore(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      submitWithAuthorisedUser(controller.submit, mockAuthConnector, fakeRequestWithFormBody){
+      submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
         result =>
           status(result) shouldBe 303
       }
+    }
+  }
+
+  "removeChoice" should {
+
+    "return a 200 when the supplied sic code is removed" in new Setup {
+
+      when(mockSicSearchService.removeChoice(any(), any()))
+        .thenReturn(Future.successful(Some(sicCode)))
+
+      when(mockSicSearchService.retrieveSicStore(any()))
+        .thenReturn(Future.successful(Some(sicStore)))
+
+      requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), mockAuthConnector, fakeRequestWithSessionId){
+        result =>
+          status(result) shouldBe OK
+      }
+    }
+  }
+
+  "withCurrentUsersChoices" should {
+
+    "return a 303 and redirect to SicSearch when a SicStore does not exist" in new Setup {
+      when(mockSicSearchService.retrieveSicStore(any()))
+        .thenReturn(Future.successful(None))
+
+      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
+    }
+
+    "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
+      when(mockSicSearchService.retrieveSicStore(any()))
+        .thenReturn(Future.successful(Some(sicStoreNoChoices)))
+
+      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
+    }
+
+    "return a 303 and redirect to SicSearch when a SicStore does exist but the choice list is empty from a previous removal" in new Setup {
+      when(mockSicSearchService.retrieveSicStore(any()))
+        .thenReturn(Future.successful(Some(sicStoreEmptyChoiceList)))
+
+      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+
+      status(result) shouldBe SEE_OTHER
+      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
+    }
+
+    "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
+      when(mockSicSearchService.retrieveSicStore(any()))
+        .thenReturn(Future.successful(Some(sicStore)))
+
+      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+
+      status(result) shouldBe OK
     }
   }
 }

@@ -90,6 +90,7 @@ trait ConfirmationController extends Actions with I18nSupport {
       case Some(sicStore) => sicStore.choices match {
         case Some(Nil) => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
         case Some(listOfChoices) => f(listOfChoices)
+        case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
       }
       case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
     }
