@@ -56,7 +56,7 @@
             <p>@messages("page.icl.confirmation.activities")</p>
             @govHelpers.inputRadioGroup(
                 field = confirmationForm("addAnother"),
-                Seq(("yes", "yes"), ("no", "no")),
+                Seq(("yes", "Yes"), ("no", "No")),
                 '_labelBefore -> "ss",
                 '_labelAfter -> true,
                 '_legend -> messages("page.icl.confirmation.title"),
