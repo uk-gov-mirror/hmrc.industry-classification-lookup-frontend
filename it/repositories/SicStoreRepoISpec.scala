@@ -109,10 +109,15 @@ class SicStoreRepoISpec
       await(repository.retrieveSicStore(testRegID)).get shouldBe SicStore(testRegID, testSicCode2, Some(List(testSicCode2)))
     }
 
-    "return None if unable to remove the choice from the list" in new Setup {
+    "remove a choice from the choice list leaving no choices" in new Setup {
       await(repository.insert(testSicStoreWithChoice))
       await(repository.removeChoice(testRegID, testSicCode.sicCode))
       await(repository.retrieveSicStore(testRegID)).get shouldBe SicStore(testRegID, testSicCode, Some(List()))
+    }
+
+    "return None if unable to remove the choice from the list" in new Setup {
+      await(repository.removeChoice(testRegID, testSicCode.sicCode))
+      await(repository.retrieveSicStore(testRegID)) shouldBe None
     }
   }
 
