@@ -21,52 +21,45 @@ import javax.inject.{Inject, Singleton}
 import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.chooseactivity.ChooseActivityForm
-import forms.sicsearch.SicSearchForm
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.{Action, AnyContent}
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class ChooseActivityController @Inject()(val messagesApi: MessagesApi,
-                                         val sicSearchService: SicSearchService,
-                                         val authConnector: FrontendAuthConnector) extends ChooseActCtrl
+class ChooseActivityControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                             val sicSearchService: SicSearchService,
+                                             val authConnector: FrontendAuthConnector) extends ChooseActivityController
 
-trait ChooseActCtrl extends FrontendController with Actions with I18nSupport {
+trait ChooseActivityController extends Actions with I18nSupport {
 
   val sicSearchService : SicSearchService
 
-  val show = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-          sicSearchService.retrieveSicStore(sessionId) flatMap {
-            case Some(store) => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, Seq(store.search))))
+          sicSearchService.retrieveSearchResults(sessionId) flatMap {
+            case Some(searchResults) => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults)))
             case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
           }
         }
   }
 
-  val submit = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-          sicSearchService.retrieveSicStore(sessionId) flatMap {
-            case Some(store) =>
+          sicSearchService.retrieveSearchResults(sessionId) flatMap {
+            case Some(searchResults) =>
               ChooseActivityForm.form.bindFromRequest.fold(
-                errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, Seq(store.search)))),
+                errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, searchResults))),
                 form => {
-                  form.code match {
-                    case store.search.sicCode =>
-                      sicSearchService.insertChoice(sessionId) map {
-                        case Some(_) => Redirect(routes.ConfirmationController.show())
-                        case _ => throw new RuntimeException("Failed to update sic store repo with choice")
-                      }
-                    case _ => Future.successful(BadRequest(views.html.pages.chooseactivity(ChooseActivityForm.form, Seq(store.search))))
+                  sicSearchService.insertChoice(sessionId, form.code) map { _ =>
+                    Redirect(routes.ConfirmationController.show())
                   }
-
                 }
               )
             case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))

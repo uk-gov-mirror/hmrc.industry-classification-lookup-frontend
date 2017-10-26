@@ -18,10 +18,11 @@ package repositories
 
 import javax.inject.{Inject, Singleton}
 
+import models.{SearchResults, SicStore}
+import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
 import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
-import repositories.models.{SicCode, SicStore}
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,47 +35,66 @@ class SicStoreRepo @Inject()(mongo: ReactiveMongoComponent) {
 }
 
 trait SicStoreRepository {
-  def upsertSearchCode(registrationID: String, searchResult: SicCode) : Future[Option[SicCode]]
+  def updateSearchResults(registrationID: String, searchResult: SearchResults) : Future[Boolean]
   def retrieveSicStore(registrationID: String) : Future[Option[SicStore]]
-  def insertChoice(registrationID: String) : Future[Option[SicCode]]
-  def removeChoice(registrationID: String, choice: String) : Future[Option[SicCode]]
+  def insertChoice(registrationID: String, sicCode: String) : Future[Boolean]
+  def removeChoice(registrationID: String, choice: String) : Future[Boolean]
 }
 
 class SicStoreMongoRepository(mongo: () => DB)
   extends ReactiveRepository[SicStore, BSONObjectID]("sic-store", mongo, SicStore.format)
   with SicStoreRepository {
 
-  private[repositories] def registrationIDSelector(registrationID: String): BSONDocument = BSONDocument(
-    "registrationID" -> BSONString(registrationID)
+  private[repositories] def sessionIdSelector(sessionId: String): BSONDocument = BSONDocument(
+    "registrationID" -> BSONString(sessionId)
   )
 
-  override def retrieveSicStore(registrationID: String) : Future[Option[SicStore]] = {
-    collection.find(registrationIDSelector(registrationID)).one[SicStore]
+  override def retrieveSicStore(sessionId: String) : Future[Option[SicStore]] = {
+    collection.find(sessionIdSelector(sessionId)).one[SicStore]
   }
 
-  override def upsertSearchCode(registrationID: String, searchResult: SicCode) : Future[Option[SicCode]] = {
-    val selector = registrationIDSelector(registrationID)
-    val update = BSONDocument("$set" -> BSONDocument("search" -> BSONDocument("code" -> searchResult.sicCode, "desc" -> searchResult.description)))
-    collection.findAndUpdate(selector, update, fetchNewObject = true, upsert = true).map(_ => Some(searchResult))
+  override def updateSearchResults(sessionId: String, searchResults: SearchResults) : Future[Boolean] = {
+    val selector = sessionIdSelector(sessionId)
+    val update = BSONDocument(
+      "$set" -> BSONDocument(
+        "search" -> BSONDocument(
+          "query" -> searchResults.query,
+          "numFound" -> searchResults.numFound,
+          "results" -> Json.toJson(searchResults.results)
+        )
+      )
+    )
+    collection.update(selector, update, upsert = true).map(_.ok)
   }
 
-  override def insertChoice(registrationID: String) : Future[Option[SicCode]] = {
+  override def insertChoice(registrationID: String, sicCode: String) : Future[Boolean] = {
     retrieveSicStore(registrationID) flatMap {
       case Some(store) =>
-        val selector = registrationIDSelector(registrationID)
-        val update = BSONDocument("$addToSet" -> BSONDocument("choices" -> BSONDocument("code" -> store.search.sicCode, "desc" -> store.search.description)))
-        collection.findAndUpdate(selector, update, upsert = true).map(_ => Some(store.search))
-      case None => Future(None)
+        store.searchResults.results.find(_.sicCode == sicCode) match {
+          case Some(sicCodeToAdd) =>
+            val selector = sessionIdSelector(registrationID)
+            val update = BSONDocument(
+              "$addToSet" -> BSONDocument(
+                "choices" -> BSONDocument(
+                  "code" -> sicCodeToAdd.sicCode,
+                  "desc" -> sicCodeToAdd.description
+                )
+              )
+            )
+            collection.update(selector, update, upsert = true).map(_.ok)
+          case None => Future.successful(false)
+        }
+      case None => Future.successful(false)
     }
   }
 
-  override def removeChoice(registrationID: String, sicCode: String) : Future[Option[SicCode]] = {
+  override def removeChoice(registrationID: String, sicCode: String) : Future[Boolean] = {
     retrieveSicStore(registrationID) flatMap {
-      case Some(store) =>
-        val selector = registrationIDSelector(registrationID)
+      case Some(_) =>
+        val selector = sessionIdSelector(registrationID)
         val update = BSONDocument("$pull" -> BSONDocument("choices" -> BSONDocument("code" -> sicCode)))
-        collection.findAndUpdate(selector, update).map(_ => Some(store.search))
-      case None => Future(None)
+        collection.update(selector, update).map(_.nModified == 1)
+      case None => Future.successful(false)
     }
   }
 }

@@ -21,8 +21,6 @@ import play.api.data.{Form, FormError, Forms, Mapping}
 import play.api.data.Forms.{mapping, _}
 import play.api.data.format.Formatter
 
-
-
 object ChooseActivityForm {
 
   implicit def chooseActivityFormatter: Formatter[String] = new Formatter[String] {

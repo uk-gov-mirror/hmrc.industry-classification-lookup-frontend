@@ -14,10 +14,8 @@
  * limitations under the License.
  *@
 
-@import helpers.templates.{errorSummary, input}
+@import helpers.templates._
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
-@import models.Confirmation
-@import repositories.models.SicCode
 
 @(confirmationForm: Form[Confirmation], listOfChoices: List[SicCode])(implicit request: Request[_], messages: Messages)
 

@@ -18,31 +18,26 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import play.api.Logger
 import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent, Request, Result}
-import services._
+import play.api.mvc.{Action, AnyContent}
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.{Actions, AuthContext}
-import uk.gov.hmrc.play.frontend.controller.FrontendController
-
-import scala.concurrent.Future
+import uk.gov.hmrc.play.frontend.auth.Actions
 
 @Singleton
-class SignInOutController @Inject()(val messagesApi: MessagesApi,
-                                    val authConnector: FrontendAuthConnector) extends SignInOutCtrl with ServicesConfig {
+class SignInOutControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                    val authConnector: FrontendAuthConnector) extends SignInOutController with ServicesConfig {
   lazy val compRegFEURL = getConfString("company-registration-frontend.www.url", "")
   lazy val compRegFEURI = getConfString("company-registration-frontend.www.uri", "")
 }
 
-trait SignInOutCtrl extends FrontendController with Actions with I18nSupport {
+trait SignInOutController extends Actions with I18nSupport {
 
   val compRegFEURL: String
   val compRegFEURI: String
 
-  val postSignIn = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence) {
+  val postSignIn: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence) {
     implicit user =>
       implicit request =>
         Redirect(s"$compRegFEURL$compRegFEURI/post-sign-in")

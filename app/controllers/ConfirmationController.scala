@@ -21,14 +21,12 @@ import javax.inject.{Inject, Singleton}
 import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.ConfirmationForm
-import models.Confirmation
+import models.SicCode
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, Result}
-import repositories.models.SicCode
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import models.Confirmation.{YES, NO}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -62,11 +60,10 @@ trait ConfirmationController extends Actions with I18nSupport {
             } else {
               ConfirmationForm.form.bindFromRequest().fold(
                 errors => Future.successful(BadRequest(views.html.pages.confirmation(errors, choices))),
-                success =>
-                  success.addAnother match {
-                    case Confirmation.YES => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
-                    case Confirmation.NO => Future.successful(Ok("End of journey"))
-                  }
+                form => form.addAnother match {
+                  case YES => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+                  case NO => Future.successful(Ok("End of journey"))
+                }
               )
             }
           }
@@ -86,11 +83,10 @@ trait ConfirmationController extends Actions with I18nSupport {
   }
 
   private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result]): Future[Result] = {
-    sicSearchService.retrieveSicStore(sessionId) flatMap {
-      case Some(sicStore) => sicStore.choices match {
-        case Some(Nil) => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
-        case Some(listOfChoices) => f(listOfChoices)
-        case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+    sicSearchService.retrieveChoices(sessionId) flatMap {
+      case Some(choices) => choices match {
+        case Nil => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+        case listOfChoices => f(listOfChoices)
       }
       case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
     }

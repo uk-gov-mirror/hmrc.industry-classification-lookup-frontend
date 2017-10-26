@@ -19,11 +19,12 @@ package services
 import javax.inject.{Inject, Singleton}
 
 import connectors.ICLConnector
+import models.{SearchResults, SicCode, SicStore}
 import repositories.{SicStoreRepo, SicStoreRepository}
-import repositories.models.{SicCode, SicStore}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
@@ -36,22 +37,54 @@ trait SicSearchService {
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
-  def lookupSicCode(sicCode: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = iCLConnector.lookupSicCode(sicCode)
-
-  def updateSearchResults(sessionId: String, searchResult: SicCode): Future[Option[SicCode]] = {
-    sicStoreRepository.upsertSearchCode(sessionId, searchResult)
+  def search(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    if(isLookup(query)){
+      lookupSicCode(sessionId, query)
+    } else {
+      searchQuery(sessionId, query)
+    }
   }
 
-  def retrieveSicStore(sessionId: String) : Future[Option[SicStore]] = {
-    sicStoreRepository.retrieveSicStore(sessionId)
+  def retrieveSearchResults(sessionId: String): Future[Option[SearchResults]] = {
+    retrieveSicStore(sessionId).map(_.map(_.searchResults))
   }
 
-  def insertChoice(sessionId: String): Future[Option[SicCode]] = {
-    sicStoreRepository.insertChoice(sessionId)
+  def retrieveChoices(sessionId: String): Future[Option[List[SicCode]]] = {
+    retrieveSicStore(sessionId).map(_.flatMap(_.choices))
   }
 
-  def removeChoice(sessionId: String, sicCodeToRemove: String): Future[Option[SicCode]] = {
+  def insertChoice(sessionId: String, sicCode: String): Future[Boolean] = {
+    sicStoreRepository.insertChoice(sessionId, sicCode)
+  }
+
+  def removeChoice(sessionId: String, sicCodeToRemove: String): Future[Boolean] = {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
+  private[services] def lookupSicCode(sessionId: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    iCLConnector.lookup(sicCode) flatMap {
+      case Some(sic) => updateSearchResults(sessionId, SearchResults.fromSicCode(sic))
+      case None => Future.successful(false)
+    }
+  }
+
+  private[services] def searchQuery(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+    iCLConnector.search(query).flatMap {
+      case Some(searchResults) => searchResults.numFound match {
+        case 0 => Future.successful(false)
+        case _ => updateSearchResults(sessionId, searchResults)
+      }
+      case None => Future.successful(false)
+    }
+  }
+
+  private[services] def updateSearchResults(sessionId: String, searchResult: SearchResults): Future[Boolean] = {
+    sicStoreRepository.updateSearchResults(sessionId, searchResult)
+  }
+
+  private[services] def retrieveSicStore(sessionId: String) : Future[Option[SicStore]] = {
+    sicStoreRepository.retrieveSicStore(sessionId)
+  }
+
+  private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){8}$")
 }

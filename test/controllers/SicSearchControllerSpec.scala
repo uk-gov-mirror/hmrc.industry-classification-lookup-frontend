@@ -17,6 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
+import models.SicCode
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -27,7 +28,6 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import org.mockito.ArgumentMatchers
 import play.api.test.Helpers.redirectLocation
-import repositories.models.SicCode
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
@@ -38,7 +38,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
   val mockAuthConnector = mock[AuthConnector]
 
   trait Setup {
-    val controller = new SicSearchCtrl {
+    val controller = new SicSearchController {
       override val sicSearchService = mockSicSearchService
       override val authConnector = mockAuthConnector
       implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
@@ -76,7 +76,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       }
     }
 
-    "return the select sic code page when a sic code is found" in new Setup {
+    "redirect to choose-business-activity when a search match is found" in new Setup {
       val sicCode = "111"
       val request = FakeRequest().withFormUrlEncodedBody(
         "sicSearch" -> sicCode
@@ -86,10 +86,8 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
         "Test"
       )
 
-      when(mockSicSearchService.lookupSicCode(ArgumentMatchers.eq(sicCode))(ArgumentMatchers.any[HeaderCarrier]()))
-        .thenReturn(Future.successful(Some(siccodemodel)))
-      when(mockSicSearchService.updateSearchResults(ArgumentMatchers.anyString(), ArgumentMatchers.eq(siccodemodel)))
-        .thenReturn(Future.successful(Some(siccodemodel)))
+      when(mockSicSearchService.search(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
+        .thenReturn(Future.successful(true))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
@@ -104,8 +102,8 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
         "search" -> sicCode
       )
 
-      when(mockSicSearchService.lookupSicCode(ArgumentMatchers.eq(sicCode))(ArgumentMatchers.any[HeaderCarrier]()))
-        .thenReturn(Future.successful(None))
+      when(mockSicSearchService.search(ArgumentMatchers.eq(sicCode), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
+        .thenReturn(Future.successful(true))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>

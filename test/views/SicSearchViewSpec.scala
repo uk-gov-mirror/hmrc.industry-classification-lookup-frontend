@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package helpers
+package views
 
-import org.mockito.Mockito._
+import org.scalatest.mockito.MockitoSugar
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.test.FakeRequest
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-trait MockHelper {
-
-  def collectMocks[T <: AnyRef](mocks: T*): Seq[T] = mocks
-
-  def resetMocks[T <: AnyRef](mocks: Seq[T]): Unit = {
-    mocks.map(reset(_))
-  }
+class SicSearchViewSpec extends UnitSpec with I18nSupport with MockitoSugar with WithFakeApplication{
+  implicit val request = FakeRequest()
+  implicit val messagesApi : MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
 }

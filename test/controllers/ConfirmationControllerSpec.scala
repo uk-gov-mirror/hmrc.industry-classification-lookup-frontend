@@ -17,6 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
+import models.{SearchResults, SicCode, SicStore}
 import play.api.i18n.MessagesApi
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -25,7 +26,6 @@ import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers._
 import play.api.mvc._
 import play.api.test.FakeRequest
-import repositories.models.{SicCode, SicStore}
 import uk.gov.hmrc.http.SessionKeys
 import play.api.test.Helpers._
 
@@ -50,22 +50,23 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
   val sicCodeCode = "12345"
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
+  val searchResults = SearchResults("testQuery", 1, List(sicCode))
 
   val sicStore = SicStore(
     sessionId,
-    sicCode,
+    searchResults,
     Some(List(sicCode))
   )
 
-  val sicStoreNoChoices = SicStore(sessionId, sicCode, None)
-  val sicStoreEmptyChoiceList = SicStore(sessionId, sicCode, Some(List()))
+  val sicStoreNoChoices = SicStore(sessionId, searchResults, None)
+  val sicStoreEmptyChoiceList = SicStore(sessionId, searchResults, Some(List()))
 
   "show" should {
 
     "return a 200 when a SicStore is returned from mongo" in new Setup {
 
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List(sicCode))))
 
       showWithAuthorisedUser(controller.show, mockAuthConnector){
         result =>
@@ -75,7 +76,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 303 when a SicStore ir not found in mongo" in new Setup {
 
-      when(mockSicSearchService.retrieveSicStore(any()))
+      when(mockSicSearchService.retrieveChoices(any()))
         .thenReturn(Future.successful(None))
 
       showWithAuthorisedUser(controller.show, mockAuthConnector){
@@ -91,8 +92,8 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
 
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List(sicCode))))
 
       submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
         result =>
@@ -104,8 +105,8 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
 
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List(sicCode))))
 
       submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
         result =>
@@ -119,10 +120,10 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     "return a 200 when the supplied sic code is removed" in new Setup {
 
       when(mockSicSearchService.removeChoice(any(), any()))
-        .thenReturn(Future.successful(Some(sicCode)))
+        .thenReturn(Future.successful(true))
 
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List(sicCode))))
 
       requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), mockAuthConnector, fakeRequestWithSessionId){
         result =>
@@ -134,7 +135,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
   "withCurrentUsersChoices" should {
 
     "return a 303 and redirect to SicSearch when a SicStore does not exist" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(any()))
+      when(mockSicSearchService.retrieveChoices(any()))
         .thenReturn(Future.successful(None))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
@@ -145,19 +146,8 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     }
 
     "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStoreNoChoices)))
-
-      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
-      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
-
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
-    }
-
-    "return a 303 and redirect to SicSearch when a SicStore does exist but the choice list is empty from a previous removal" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStoreEmptyChoiceList)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List())))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
       val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
@@ -167,8 +157,8 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     }
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(any()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveChoices(any()))
+        .thenReturn(Future.successful(Some(List(sicCode))))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
       val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
