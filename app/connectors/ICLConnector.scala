@@ -19,9 +19,10 @@ package connectors
 import javax.inject.Inject
 
 import config.WSHttp
+import models.{SearchResults, SicCode}
 import play.api.Logger
-import repositories.models.SicCode
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, NotFoundException}
+import play.api.libs.json.Reads
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpGet}
 import uk.gov.hmrc.play.config.inject.ServicesConfig
 
 import scala.concurrent.Future
@@ -33,14 +34,34 @@ class ICLConnectorImpl @Inject()(config : ServicesConfig) extends ICLConnector {
 }
 
 trait ICLConnector {
+
   val http: HttpGet
   val ICLUrl: String
 
-  def lookupSicCode(sicCode: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {
-    http.GET[SicCode](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode") map Some.apply recover {
-      case _: NotFoundException =>
-        Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a 404")
+  def lookup(sicCode: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {
+    http.GET[SicCode](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode") map {
+      Some.apply
+    } recover {
+      case e: HttpException =>
+        Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a ${e.responseCode}", e)
         None
+      case e: Throwable =>
+        Logger.error(s"[Lookup] Looking up sic code : $sicCode has thrown a non-http exception", e)
+        throw e
+    }
+  }
+
+  def search(query: String)(implicit hc: HeaderCarrier): Future[Option[SearchResults]] = {
+    implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
+    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=10") map {
+      Some.apply
+    } recover {
+      case e: HttpException =>
+        Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}", e)
+        None
+      case e: Throwable =>
+        Logger.error(s"[Search] Searching using query : $query has thrown a non-http exception", e)
+        throw e
     }
   }
 }

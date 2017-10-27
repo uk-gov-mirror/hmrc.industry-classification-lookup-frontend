@@ -16,108 +16,149 @@
 
 package repositories
 
-import models.{SicStore, SicCode}
-import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.{Eventually, ScalaFutures}
+import models.{SearchResults, SicCode, SicStore}
+import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SicStoreRepoISpec
-  extends UnitSpec with MongoSpecSupport with BeforeAndAfterEach with ScalaFutures with Eventually with WithFakeApplication {
+class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeApplication {
 
   class Setup {
-    val repository = new SicStoreMongoRepository(mongo)
+    val repository: SicStoreMongoRepository = fakeApplication.injector.instanceOf[SicStoreRepo].repo
+
     await(repository.drop)
     await(repository.ensureIndexes)
+
+    def count: Int = await(repository.count)
+    def insert(sicStore: SicStore): WriteResult = await(repository.insert(sicStore))
+    def fetchAll: List[SicStore] = await(repository.findAll())
   }
 
-  val testRegID = "testRegID"
-  val testSicCode = SicCode("12345678", "Test sic code description")
-  val testSicCode2 = SicCode("87654321", "Another test sic code description")
-  val testSicStore = SicStore(testRegID, testSicCode, None)
-  val testSicStoreWithChoice = SicStore(testRegID, testSicCode, Some(List(testSicCode)))
-  val testSicStoreWithChoices = SicStore(testRegID, testSicCode2, Some(List(testSicCode, testSicCode2)))
+  val sessionId = "session-id-12345"
+
+  val sicCodeCode = "12345678"
+  val sicCode = SicCode(sicCodeCode, "Test sic code description")
+  val sicCode2 = SicCode("87654321", "Another test sic code description")
+
+  val searchResults = SearchResults("testQuery", 1, List(sicCode))
+  val searchResults2 = SearchResults("testQuery", 1, List(sicCode2))
+
+  val sicStoreNoChoices = SicStore(sessionId, searchResults, None)
+  val sicStore1Choice = SicStore(sessionId, searchResults, Some(List(sicCode)))
+  val sicStore2Choices = SicStore(sessionId, searchResults2, Some(List(sicCode, sicCode2)))
 
   "retrieveSicStore" should {
+
     "return a sic store when it is present" in new Setup {
-      await(repository.insert(testSicStore))
-      await(repository.retrieveSicStore(testRegID)) shouldBe Some(testSicStore)
+      await(repository.insert(sicStoreNoChoices))
+      await(repository.retrieveSicStore(sessionId)) shouldBe Some(sicStoreNoChoices)
     }
 
     "return nothing when the reg id is not present" in new Setup {
-      await(repository.retrieveSicStore(testRegID)) shouldBe None
+      await(repository.retrieveSicStore(sessionId)) shouldBe None
     }
   }
 
-  "upsertSearchCode" should {
+  "updateSearchResults" should {
 
-    "insert a new document when the reg id does not already exist in the collection" in new Setup {
+    "insert a new document when one for a given session id does not already exist in the collection" in new Setup {
 
-      repository.upsertSearchCode(testRegID, testSicCode).get shouldBe testSicCode
-      repository.retrieveSicStore(testRegID).get shouldBe testSicStore
+      val updateSuccess: Boolean = repository.updateSearchResults(sessionId, searchResults)
 
+      updateSuccess shouldBe true
+      count shouldBe 1
+
+      val fetchedDocument: SicStore = fetchAll.head
+
+      fetchedDocument shouldBe sicStoreNoChoices
     }
 
-    "update a document with the new sic code if the document already exists" in new Setup {
+    "update a document with the new sic code if the document already exists for a given session id" in new Setup {
 
-      val otherTestCode = SicCode("87654321", "Another test sic code description")
+      val otherSearchResults = SearchResults("other query", 1, List(SicCode("87654321", "Another test sic code description")))
 
-      await(repository.insert(testSicStore))
+      insert(sicStoreNoChoices)
 
-      await(repository.upsertSearchCode(testRegID, otherTestCode))
-      val retrievedSicStore : SicStore = await(repository.retrieveSicStore(testRegID)).get
+      count shouldBe 1
 
-      retrievedSicStore.search.sicCode shouldBe otherTestCode.sicCode
-      retrievedSicStore.search.description shouldBe otherTestCode.description
+      val updateSuccess: Boolean = repository.updateSearchResults(sessionId, otherSearchResults)
+
+      updateSuccess shouldBe true
+      count shouldBe 1
+
+      val fetchedDocument: SicStore = fetchAll.head
+
+      fetchedDocument.searchResults shouldBe otherSearchResults
     }
-
   }
 
   "insertChoice" should {
 
-    "insert a new sic code subdocument into a choices list with no other choices" in new Setup {
-      await(repository.insert(testSicStore))
-      await(repository.insertChoice(testRegID)).get shouldBe testSicCode
-      await(repository.retrieveSicStore(testRegID)).get shouldBe testSicStoreWithChoice
+    "insert a new sic code into a choices list with no other choices" in new Setup {
+      insert(sicStoreNoChoices)
+      count shouldBe 1
+
+      val insertSuccess: Boolean = repository.insertChoice(sessionId, sicCodeCode)
+
+      insertSuccess shouldBe true
+      count shouldBe 1
+
+      val fetchedDocument: SicStore = fetchAll.head
+
+      fetchedDocument shouldBe sicStore1Choice
     }
 
     "insert a new sic code choice into a choices list with another choice already there" in new Setup {
-      await(repository.insert(testSicStoreWithChoice))
-      await(repository.upsertSearchCode(testRegID, testSicCode2))
-      await(repository.insertChoice(testRegID)).get shouldBe testSicCode2
-      await(repository.retrieveSicStore(testRegID)).get shouldBe testSicStoreWithChoices
+
+      val sicCodeToAdd = SicCode("67891234", "some description")
+
+      val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd))
+      val sicStoreWithExistingChoice = SicStore(sessionId, searchResults, Some(List(sicCode)))
+
+      insert(sicStoreWithExistingChoice)
+
+      await(repository.insertChoice(sessionId, sicCodeToAdd.sicCode))
+
+      val fetchedDocument: SicStore = fetchAll.head
+      val sicStoreWith2Choices = SicStore(sessionId, searchResults, Some(List(sicCode, sicCodeToAdd)))
+
+      fetchedDocument shouldBe sicStoreWith2Choices
     }
 
     "inserting the same choice twice will not duplicate it in the documents choices" in new Setup {
-      await(repository.insert(testSicStoreWithChoice))
-      await(repository.insertChoice(testRegID)).get shouldBe testSicCode
-      await(repository.retrieveSicStore(testRegID)).get shouldBe testSicStoreWithChoice
+      insert(sicStore1Choice)
+
+      await(repository.insertChoice(sessionId, sicCodeCode))
+
+      val fetchedDocument: SicStore = fetchAll.head
+
+      fetchedDocument shouldBe sicStore1Choice
     }
 
     "return None if the document wasn't found" in new Setup {
-      await(repository.insertChoice(testRegID)) shouldBe None
+      await(repository.insertChoice(sessionId, sicCode.sicCode)) shouldBe false
     }
   }
 
   "removeChoice" should {
 
     "remove a choice from the list of choices held in the document" in new Setup {
-      await(repository.insert(testSicStoreWithChoices))
-      await(repository.removeChoice(testRegID, testSicCode.sicCode))
-      await(repository.retrieveSicStore(testRegID)).get shouldBe SicStore(testRegID, testSicCode2, Some(List(testSicCode2)))
+      await(repository.insert(sicStore2Choices))
+      await(repository.removeChoice(sessionId, sicCode.sicCode))
+      await(repository.retrieveSicStore(sessionId)).get shouldBe SicStore(sessionId, searchResults2, Some(List(sicCode2)))
     }
 
     "remove a choice from the choice list leaving no choices" in new Setup {
-      await(repository.insert(testSicStoreWithChoice))
-      await(repository.removeChoice(testRegID, testSicCode.sicCode))
-      await(repository.retrieveSicStore(testRegID)).get shouldBe SicStore(testRegID, testSicCode, Some(List()))
+      await(repository.insert(sicStore1Choice))
+      await(repository.removeChoice(sessionId, sicCode.sicCode))
+      await(repository.retrieveSicStore(sessionId)).get shouldBe SicStore(sessionId, searchResults, Some(List()))
     }
 
     "return None if unable to remove the choice from the list" in new Setup {
-      await(repository.removeChoice(testRegID, testSicCode.sicCode))
-      await(repository.retrieveSicStore(testRegID)) shouldBe None
+      await(repository.removeChoice(sessionId, sicCode.sicCode))
+      await(repository.retrieveSicStore(sessionId)) shouldBe None
     }
   }
 

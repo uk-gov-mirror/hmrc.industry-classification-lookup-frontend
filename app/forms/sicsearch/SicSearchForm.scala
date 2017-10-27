@@ -18,8 +18,7 @@ package forms.sicsearch
 
 import models.SicSearch
 import play.api.data.{Form, FormError, Forms, Mapping}
-import play.api.data.Forms.{list, mapping}
-import play.api.data.Forms._
+import play.api.data.Forms.mapping
 import play.api.data.format.Formatter
 
 object SicSearchForm {

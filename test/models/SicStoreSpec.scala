@@ -18,15 +18,22 @@ package models
 
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.libs.json.{JsSuccess, JsValue, Json}
-import repositories.models.{SicCode, SicStore}
 
 class SicStoreSpec extends UnitSpec {
 
-  val sicStoreWithChoices : JsValue = Json.parse(
-    """
+  val query = "testQuery"
+
+  val sicStoreWithChoicesJson : JsValue = Json.parse(
+    s"""
       |{
       |  "registrationID" : "12345678",
-      |  "search" : {"code" : "19283746", "desc" : "Search Sic Code Result Description"},
+      |  "search" : {
+      |    "query":"$query",
+      |    "numFound":1,
+      |    "results":[
+      |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |    ]
+      |  },
       |  "choices" : [
       |    {"code" : "57384893", "desc" : "Sic Code Test Description 1"},
       |    {"code" : "11920233", "desc" : "Sic Code Test Description 2"},
@@ -37,18 +44,28 @@ class SicStoreSpec extends UnitSpec {
     """.stripMargin
   )
 
-  val sicStoreWithoutChoices : JsValue = Json.parse(
-    """
+  val sicStoreNoChoicesJson : JsValue = Json.parse(
+    s"""
       |{
       |  "registrationID" : "12345678",
-      |  "search" : {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |  "search" : {
+      |    "query":"$query",
+      |    "numFound":1,
+      |    "results":[
+      |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |    ]
+      |  }
       |}
     """.stripMargin
   )
 
-  val createdStoreWithChoices = SicStore(
+  val sicStoreWithChoices = SicStore(
     "12345678",
-    SicCode("19283746", "Search Sic Code Result Description"),
+    SearchResults(
+      query,
+      1,
+      List(SicCode("19283746", "Search Sic Code Result Description"))
+    ),
     Some(List(
       SicCode("57384893", "Sic Code Test Description 1"),
       SicCode("11920233", "Sic Code Test Description 2"),
@@ -57,28 +74,32 @@ class SicStoreSpec extends UnitSpec {
     ))
   )
 
-  val createdStoreWithoutChoices = SicStore(
+  val sicStoreNoChoices = SicStore(
     "12345678",
-    SicCode("19283746", "Search Sic Code Result Description"),
+    SearchResults(
+      query,
+      1,
+      List(SicCode("19283746", "Search Sic Code Result Description"))
+    ),
     None
   )
 
   "SicStore" should {
 
     "be able to be parsed into a json structure with choices" in {
-      Json.toJson(createdStoreWithChoices)(SicStore.format) shouldBe sicStoreWithChoices
+      Json.toJson(sicStoreWithChoices)(SicStore.format) shouldBe sicStoreWithChoicesJson
     }
 
     "be able to be parsed into a json structure without choices" in {
-      Json.toJson(createdStoreWithoutChoices)(SicStore.format) shouldBe sicStoreWithoutChoices
+      Json.toJson(sicStoreNoChoices)(SicStore.format) shouldBe sicStoreNoChoicesJson
     }
 
     "be able to be parsed from json structure with choices" in {
-      Json.fromJson(sicStoreWithChoices)(SicStore.format) shouldBe JsSuccess(createdStoreWithChoices)
+      Json.fromJson(sicStoreWithChoicesJson)(SicStore.format) shouldBe JsSuccess(sicStoreWithChoices)
     }
 
     "be able to be parsed from json structure without choices" in {
-      Json.fromJson(sicStoreWithoutChoices)(SicStore.format) shouldBe JsSuccess(createdStoreWithoutChoices)
+      Json.fromJson(sicStoreNoChoicesJson)(SicStore.format) shouldBe JsSuccess(sicStoreNoChoices)
     }
   }
 }

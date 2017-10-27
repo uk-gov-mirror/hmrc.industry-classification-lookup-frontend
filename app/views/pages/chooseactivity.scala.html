@@ -14,12 +14,10 @@
  * limitations under the License.
  *@
 
-@import models.ChooseActivity
-@import repositories.models.SicCode
-@import helpers.templates.{errorSummary, inputRadioGroup}
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
+@import helpers.templates._
 
-@(chooseActForm: Form[ChooseActivity], searchList: Seq[SicCode])(implicit request: Request[_], messages: Messages)
+@(chooseActForm: Form[ChooseActivity], searchResults: SearchResults)(implicit request: Request[_], messages: Messages)
 
 @views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = None) {
 
@@ -41,7 +39,7 @@
                     <tbody>
                         <tr>
                             <td id="entered-keyword">@messages("page.icl.chooseactivity.enteredkeyword")</td>
-                            <td id="search-term" class="answer">'@searchList.head.sicCode'</td>
+                            <td id="search-term" class="answer">'@searchResults.query'</td>
                             <td class="change"><a href="enter-keywords">@messages("app.common.change")<span class="visuallyhidden">@messages("page.icl.chooseactivity.changehidden")</span></a></td>
                         </tr>
                     </tbody>
@@ -49,22 +47,22 @@
             </section>
         </div>
 
-<div class="form-group">
+        <div class="form-group">
 
-    <p class=“result-info”>
-        <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
-            @searchList.size
-        </span>
-        @messages("page.icl.chooseactivity.resultsfound")
-    </p>
+            <p class=“result-info”>
+                <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
+                    @searchResults.numFound
+                </span>
+                @messages("page.icl.chooseactivity.resultsfound")
+            </p>
 
-</div>
+        </div>
 
         <div class="form-group">
 
         @inputRadioGroup(
             field = chooseActForm("code"),
-            searchList.map(sicCode => (sicCode.sicCode, sicCode.description)),
+            searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
             '_labelAfter -> true,
             '_legend -> messages("page.icl.chooseactivity.title"),
             '_legendClass -> "hidden",

@@ -17,41 +17,40 @@
 package controllers
 
 import builders.AuthBuilders
+import models.{SearchResults, SicCode, SicStore}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import play.api.i18n.MessagesApi
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import repositories.models.{SicCode, SicStore}
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.Future
 
-class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
-
-  val mockSicSearchService = mock[SicSearchService]
-  val mockAuthConnector = mock[AuthConnector]
+class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplication {
 
   trait Setup {
-    val controller = new ChooseActCtrl {
-      override val sicSearchService = mockSicSearchService
-      override val authConnector = mockAuthConnector
+    val controller: ChooseActivityController = new ChooseActivityController {
+      override val sicSearchService: SicSearchService = mockSicSearchService
+      override val authConnector: AuthConnector = mockAuthConnector
       implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
     }
+
+    resetMocks()
   }
 
   val sicCode = SicCode("12345678", "Test Description")
-  val sicStore = SicStore("TestId", sicCode, None)
+  val searchResults = SearchResults("testQuery", 1, List(sicCode))
+  val sicStore = SicStore("TestId", searchResults, None)
 
   "Showing the choose activity page" should {
 
     "return a 200 for an authorised user with a sic search" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+        .thenReturn(Future.successful(Some(searchResults)))
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe OK
@@ -59,7 +58,7 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
     }
 
     "return a 303 for an authorised user without a sic search" in new Setup {
-      when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
         .thenReturn(Future.successful(None))
 
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
@@ -87,11 +86,11 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
         "code" -> code
       )
 
-      when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+        .thenReturn(Future.successful(Some(searchResults)))
 
-      when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString()))
-        .thenReturn(Future.successful(Some(sicCode)))
+      when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+        .thenReturn(Future.successful(true))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
@@ -105,22 +104,8 @@ class ChooseActivityControllerSpec extends UnitSpec with MockitoSugar with WithF
         "code" -> code
       )
 
-      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
-        result =>
-          status(result) shouldBe BAD_REQUEST
-      }
-    }
-
-    "return a 400 for an authorised user with an invalid selection" in new Setup {
-      val code = "badcode"
-      val request = FakeRequest().withFormUrlEncodedBody(
-        "code" -> code
-      )
-
-      val sicStore = SicStore("TestId", SicCode("12345678", "Test Description"), None)
-
-      when(mockSicSearchService.retrieveSicStore(ArgumentMatchers.anyString()))
-        .thenReturn(Future.successful(Some(sicStore)))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+        .thenReturn(Future.successful(Some(searchResults)))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>

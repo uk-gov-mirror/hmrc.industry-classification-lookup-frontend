@@ -22,41 +22,36 @@ import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.sicsearch.SicSearchForm
 import play.api.i18n.{I18nSupport, MessagesApi}
-import services.{SicSearchService, SicSearchServiceImpl}
+import play.api.mvc.{Action, AnyContent}
+import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
 @Singleton
-class SicSearchController @Inject()(val messagesApi: MessagesApi,
-                                    val sicSearchService: SicSearchService,
-                                    val authConnector: FrontendAuthConnector) extends SicSearchCtrl
+class SicSearchControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                        val sicSearchService: SicSearchService,
+                                        val authConnector: FrontendAuthConnector) extends SicSearchController
 
-trait SicSearchCtrl extends FrontendController with Actions with I18nSupport {
+trait SicSearchController extends Actions with I18nSupport {
 
   val sicSearchService : SicSearchService
 
-  val show = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
         Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
   }
 
-  val submit = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
           SicSearchForm.form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.pages.sicsearch(errors))),
-            form => sicSearchService.lookupSicCode(form.sicSearch).flatMap {
-              case Some(code) => sicSearchService.updateSearchResults(sessionId, code).map {
-                case Some(res) => Redirect(routes.ChooseActivityController.show())
-                case None => throw new RuntimeException("Failed to add to sic-search repo")
-              }
-              case None => Future.successful(BadRequest(
-                views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch))
-              ))
+            form => sicSearchService.search(sessionId, form.sicSearch).map {
+              case true => Redirect(routes.ChooseActivityController.show())
+              case false => BadRequest(views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch)))
             }
           )
         }

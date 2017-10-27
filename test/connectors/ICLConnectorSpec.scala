@@ -16,51 +16,81 @@
 
 package connectors
 
-import config.WSHttp
-import org.mockito.ArgumentMatchers
-import org.scalatest.mockito.MockitoSugar
+import models.{SearchResults, SicCode}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, NotFoundException}
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Matchers._
 import org.mockito.Mockito._
-import repositories.models.SicCode
 
 import scala.concurrent.Future
 
-class ICLConnectorSpec extends UnitSpec with MockitoSugar {
+class ICLConnectorSpec extends ConnectorSpec {
 
-  val mockHttp: WSHttp = mock[WSHttp]
-  val iCLUrl = "http://localhost:12345/"
+  val iCLUrl = "http://localhost:12345"
+  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   trait Setup {
     val connector: ICLConnector = new ICLConnector {
       val http: HttpGet = mockHttp
       val ICLUrl: String = iCLUrl
     }
+
+    reset(mockHttp)
   }
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
-
-  "lookupSicCode" should {
+  "lookup" should {
 
     val sicCode = "12345678"
-    val sicCodeDescription = "some description"
-    val sicCodeResult = SicCode(sicCode, sicCodeDescription)
+    val sicCodeResult = SicCode(sicCode, "some description")
+
+    val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode"
 
     "return a sic code case class matching the code provided" in new Setup {
-      when(mockHttp.GET[SicCode](ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(sicCodeResult))
+      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.successful(sicCodeResult))
 
-      val result: Option[SicCode] = connector.lookupSicCode(sicCode)
+      val result: Option[SicCode] = connector.lookup(sicCode)
       result shouldBe Some(sicCodeResult)
     }
 
     "return none when ICL returns a 404" in new Setup {
-      when(mockHttp.GET[SicCode](ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.failed(new NotFoundException("404")))
+      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: Option[SicCode] = connector.lookupSicCode(sicCode)
+      val result: Option[SicCode] = connector.lookup(sicCode)
       result shouldBe None
+    }
+
+    "throw the exception when the future recovers an the exception is not http related" in new Setup {
+      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
+
+      val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode)))
+      result.getMessage shouldBe "something went wrong"
+    }
+  }
+
+  "search" should {
+
+    val query = "test query"
+    val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")))
+
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=10"
+
+    "return a SearchResults case class when one is returned from ICL" in new Setup {
+      mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
+
+      val result: Option[SearchResults] = connector.search(query)
+      result shouldBe Some(searchResults)
+    }
+
+    "return none when ICL returns a 404" in new Setup {
+      mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
+
+      val result: Option[SearchResults] = connector.search(query)
+      result shouldBe None
+    }
+
+    "throw the exception when the future recovers an the exception is not http related" in new Setup {
+      mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
+
+      val result: RuntimeException = intercept[RuntimeException](await(connector.search(query)))
+      result.getMessage shouldBe "something went wrong"
     }
   }
 }

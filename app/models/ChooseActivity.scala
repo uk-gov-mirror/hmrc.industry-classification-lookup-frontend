@@ -17,8 +17,6 @@
 package models
 
 import play.api.libs.json.Json
-import repositories.models.SicCode
-
 
 case class ChooseActivity(code: String)
 

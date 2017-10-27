@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package models
+package connectors
 
+import config.WSHttp
 import org.scalatest.mockito.MockitoSugar
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.UnitSpec
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
+import org.mockito.stubbing.OngoingStubbing
 
-class SicSearchPageSpec extends UnitSpec with I18nSupport with MockitoSugar with WithFakeApplication{
-  implicit val request = FakeRequest()
-  implicit val messagesApi : MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+import scala.concurrent.Future
 
-  "The enter keywords screen" should {
+trait ConnectorSpec extends UnitSpec with MockitoSugar {
 
-  }
+  val mockHttp: WSHttp = mock[WSHttp]
+
+  def mockHttpGet[T]: OngoingStubbing[Future[T]] = when(mockHttp.GET[T](any())(any(), any(), any()))
+  def mockHttpGet[T](url: String): OngoingStubbing[Future[T]] = when(mockHttp.GET[T](eqTo(url))(any(), any(), any()))
 }
