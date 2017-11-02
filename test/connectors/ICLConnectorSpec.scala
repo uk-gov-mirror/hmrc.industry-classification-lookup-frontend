@@ -70,7 +70,7 @@ class ICLConnectorSpec extends ConnectorSpec {
     val query = "test query"
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")))
 
-    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=10"
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))

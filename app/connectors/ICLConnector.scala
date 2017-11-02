@@ -53,7 +53,7 @@ trait ICLConnector {
 
   def search(query: String)(implicit hc: HeaderCarrier): Future[Option[SearchResults]] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
-    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=10") map {
+    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500") map {
       Some.apply
     } recover {
       case e: HttpException =>
