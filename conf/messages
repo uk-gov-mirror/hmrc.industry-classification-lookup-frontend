@@ -23,9 +23,6 @@ page.icl.sicsearch.form.hint=For example, ''plumbing'' or ''property management'
 page.icl.chooseactivity.title=Business activities search results
 page.icl.chooseactivity.heading=Choose a business activity
 page.icl.chooseactivity.enteredkeyword=You searched for
-page.icl.chooseactivity.cantsee=Can''t see the right business activity?
-page.icl.chooseactivity.trya=Try a
-page.icl.chooseactivity.diffkeyword=different keyword
 page.icl.chooseactivity.resultsfound=results found
 page.icl.chooseactivity.changehidden=Change sic code used to search
 
