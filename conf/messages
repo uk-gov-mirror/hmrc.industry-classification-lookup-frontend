@@ -16,13 +16,12 @@ common.feedbackSecond=feedback
 common.feedbackThird=will help us to improve it.
 
 page.icl.sicsearch.title=Search for business activities
-page.icl.sicsearch.heading=Step 1: Enter one or two keywords for what the company does
-page.icl.sicsearch.p1=You can also enter the company's 8-digit Standard Industry Classification (SIC) code, if you know it.
+page.icl.sicsearch.heading=Tell us what the company does
 page.icl.sicsearch.form.label=Enter one or two keywords
-page.icl.sicsearch.form.hint=For example, ''accounting'', ''property management'' or ''01810204''
+page.icl.sicsearch.form.hint=For example, ''plumbing'' or ''property management''
 
 page.icl.chooseactivity.title=Business activities search results
-page.icl.chooseactivity.heading=Step 2: Choose a business activity
+page.icl.chooseactivity.heading=Choose a business activity
 page.icl.chooseactivity.enteredkeyword=You entered the keyword
 page.icl.chooseactivity.cantsee=Can''t see the right business activity?
 page.icl.chooseactivity.trya=Try a
