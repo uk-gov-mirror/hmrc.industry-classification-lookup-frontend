@@ -49,7 +49,7 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
   "Showing the choose activity page" should {
 
     "return a 200 for an authorised user with a sic search" in new Setup {
-      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
@@ -58,7 +58,7 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
     }
 
     "return a 303 for an authorised user without a sic search" in new Setup {
-      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
 
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
@@ -86,10 +86,10 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
         "code" -> code
       )
 
-      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
-      when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+      when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString(), ArgumentMatchers.any())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(true))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
@@ -104,7 +104,7 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
         "code" -> code
       )
 
-      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString()))
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {

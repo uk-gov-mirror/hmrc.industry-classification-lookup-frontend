@@ -22,20 +22,20 @@ import config.WSHttp
 import models.{SearchResults, SicCode}
 import play.api.Logger
 import play.api.libs.json.Reads
-import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpGet}
+import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException}
 import uk.gov.hmrc.play.config.inject.ServicesConfig
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 class ICLConnectorImpl @Inject()(config : ServicesConfig) extends ICLConnector {
-  val http: WSHttp = WSHttp
+  val http: CoreGet = WSHttp
   val ICLUrl: String = config.baseUrl("industry-classification-lookup")
 }
 
 trait ICLConnector {
 
-  val http: HttpGet
+  val http: CoreGet
   val ICLUrl: String
 
   def lookup(sicCode: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {

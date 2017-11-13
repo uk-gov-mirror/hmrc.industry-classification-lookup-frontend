@@ -25,8 +25,7 @@ import reactivemongo.api.DB
 import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
 import uk.gov.hmrc.mongo.ReactiveRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
 @Singleton
@@ -35,10 +34,10 @@ class SicStoreRepo @Inject()(mongo: ReactiveMongoComponent) {
 }
 
 trait SicStoreRepository {
-  def updateSearchResults(registrationID: String, searchResult: SearchResults) : Future[Boolean]
-  def retrieveSicStore(registrationID: String) : Future[Option[SicStore]]
-  def insertChoice(registrationID: String, sicCode: String) : Future[Boolean]
-  def removeChoice(registrationID: String, choice: String) : Future[Boolean]
+  def updateSearchResults(registrationID: String, searchResult: SearchResults)(implicit ec: ExecutionContext): Future[Boolean]
+  def retrieveSicStore(registrationID: String)(implicit ec: ExecutionContext): Future[Option[SicStore]]
+  def insertChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean]
+  def removeChoice(registrationID: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
 }
 
 class SicStoreMongoRepository(mongo: () => DB)
@@ -49,11 +48,11 @@ class SicStoreMongoRepository(mongo: () => DB)
     "registrationID" -> BSONString(sessionId)
   )
 
-  override def retrieveSicStore(sessionId: String) : Future[Option[SicStore]] = {
+  override def retrieveSicStore(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SicStore]] = {
     collection.find(sessionIdSelector(sessionId)).one[SicStore]
   }
 
-  override def updateSearchResults(sessionId: String, searchResults: SearchResults) : Future[Boolean] = {
+  override def updateSearchResults(sessionId: String, searchResults: SearchResults)(implicit ec: ExecutionContext): Future[Boolean] = {
     val selector = sessionIdSelector(sessionId)
     val update = BSONDocument(
       "$set" -> BSONDocument(
@@ -67,7 +66,7 @@ class SicStoreMongoRepository(mongo: () => DB)
     collection.update(selector, update, upsert = true).map(_.ok)
   }
 
-  override def insertChoice(registrationID: String, sicCode: String) : Future[Boolean] = {
+  override def insertChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     retrieveSicStore(registrationID) flatMap {
       case Some(store) =>
         store.searchResults.results.find(_.sicCode == sicCode) match {
@@ -88,7 +87,7 @@ class SicStoreMongoRepository(mongo: () => DB)
     }
   }
 
-  override def removeChoice(registrationID: String, sicCode: String) : Future[Boolean] = {
+  override def removeChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     retrieveSicStore(registrationID) flatMap {
       case Some(_) =>
         val selector = sessionIdSelector(registrationID)

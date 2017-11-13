@@ -17,11 +17,11 @@
 import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.play.frontend.controller.FrontendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 package object controllers extends FrontendController {
 
-  def withSessionId(f: => String => Future[Result])(implicit req: Request[_]): Future[Result] = {
+  def withSessionId(f: => String => Future[Result])(implicit req: Request[_], ec: ExecutionContext): Future[Result] = {
     hc.sessionId match {
       case Some(sessionId) => f(sessionId.value)
       case None => Future.successful(throw new RuntimeException("No session id found in request"))

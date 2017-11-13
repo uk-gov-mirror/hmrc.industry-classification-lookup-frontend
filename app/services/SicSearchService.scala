@@ -23,17 +23,17 @@ import models.{SearchResults, SicCode, SicStore}
 import repositories.{SicStoreRepo, SicStoreRepository}
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 @Singleton
 class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
                                      sicStoreRepo: SicStoreRepo) extends SicSearchService {
   val sicStoreRepository: SicStoreRepository = sicStoreRepo.repo
+
 }
 
 trait SicSearchService {
-
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
@@ -45,19 +45,19 @@ trait SicSearchService {
     }
   }
 
-  def retrieveSearchResults(sessionId: String): Future[Option[SearchResults]] = {
+  def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
     retrieveSicStore(sessionId).map(_.map(_.searchResults))
   }
 
-  def retrieveChoices(sessionId: String): Future[Option[List[SicCode]]] = {
+  def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCode]]] = {
     retrieveSicStore(sessionId).map(_.flatMap(_.choices))
   }
 
-  def insertChoice(sessionId: String, sicCode: String): Future[Boolean] = {
+  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext) : Future[Boolean] = {
     sicStoreRepository.insertChoice(sessionId, sicCode)
   }
 
-  def removeChoice(sessionId: String, sicCodeToRemove: String): Future[Boolean] = {
+  def removeChoice(sessionId: String, sicCodeToRemove: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
@@ -78,11 +78,11 @@ trait SicSearchService {
     }
   }
 
-  private[services] def updateSearchResults(sessionId: String, searchResult: SearchResults): Future[Boolean] = {
+  private[services] def updateSearchResults(sessionId: String, searchResult: SearchResults)(implicit ec: ExecutionContext) : Future[Boolean] = {
     sicStoreRepository.updateSearchResults(sessionId, searchResult)
   }
 
-  private[services] def retrieveSicStore(sessionId: String) : Future[Option[SicStore]] = {
+  private[services] def retrieveSicStore(sessionId: String)(implicit ec: ExecutionContext) : Future[Option[SicStore]] = {
     sicStoreRepository.retrieveSicStore(sessionId)
   }
 
