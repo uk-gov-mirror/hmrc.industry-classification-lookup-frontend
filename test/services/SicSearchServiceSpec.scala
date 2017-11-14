@@ -26,6 +26,7 @@ import repositories.SicStoreRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
@@ -59,7 +60,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     "return true when a sic code is found in ICL and successfully saved" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(Some(sicCode)))
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any()))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.lookupSicCode(sessionId, sicCodeCode)
@@ -69,7 +70,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     "return false when a sic code is found in ICL but unsuccessfully saved" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(Some(sicCode)))
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any()))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(false))
 
       val result: Boolean = service.lookupSicCode(sessionId, sicCodeCode)
@@ -92,7 +93,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     "return true when a set of search results are returned from ICL" in new Setup {
       when(mockICLConnector.search(eqTo(query))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
-      when(mockSicStoreRepo.updateSearchResults(any(), any()))
+      when(mockSicStoreRepo.updateSearchResults(any(), any())(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.searchQuery(sessionId, query)
@@ -123,7 +124,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(Some(sicCode)))
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any()))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.search(sessionId, query)
@@ -135,7 +136,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
       when(mockICLConnector.search(eqTo(query))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
-      when(mockSicStoreRepo.updateSearchResults(any(), any()))
+      when(mockSicStoreRepo.updateSearchResults(any(), any())(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.search(sessionId, query)
@@ -146,7 +147,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "updateSearchResults" should {
 
     "return a sic code on success" in new Setup {
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any()))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.updateSearchResults(sessionId, searchResults)
@@ -157,7 +158,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "retrieveSicStore" should {
 
     "return the sic store for the user specified" in new Setup {
-      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId)))
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStoreNoChoices)))
 
       val result: Option[SicStore] = service.retrieveSicStore(sessionId)
@@ -168,7 +169,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "insertChoice" should {
 
     "return the sic code that was inserted successfully" in new Setup {
-      when(mockSicStoreRepo.insertChoice(eqTo(sessionId), eqTo(sicCodeCode)))
+      when(mockSicStoreRepo.insertChoice(eqTo(sessionId), eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.insertChoice(sessionId, sicCodeCode)
@@ -179,7 +180,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "removeChoice" should {
 
     "return the sic code that was removed successfully" in new Setup {
-      when(mockSicStoreRepo.removeChoice(eqTo(sessionId), eqTo(sicCodeCode)))
+      when(mockSicStoreRepo.removeChoice(eqTo(sessionId), eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(true))
 
       val result: Boolean = service.removeChoice(sessionId, sicCodeCode)
@@ -190,7 +191,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "retrieveChoices" should {
 
     "return a list of sic codes if they are found for the given session id" in new Setup {
-      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId)))
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
       val result: Option[List[SicCode]] = service.retrieveChoices(sessionId)
@@ -201,7 +202,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   "retrieveSearchResults" should {
 
     "return a list of sic codes if they are found for the given session id" in new Setup {
-      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId)))
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
       val result: Option[SearchResults] = service.retrieveSearchResults(sessionId)

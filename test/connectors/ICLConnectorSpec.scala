@@ -17,7 +17,7 @@
 package connectors
 
 import models.{SearchResults, SicCode}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpGet, NotFoundException}
+import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, NotFoundException}
 import org.mockito.Mockito._
 
 import scala.concurrent.Future
@@ -29,7 +29,7 @@ class ICLConnectorSpec extends ConnectorSpec {
 
   trait Setup {
     val connector: ICLConnector = new ICLConnector {
-      val http: HttpGet = mockHttp
+      val http: CoreGet = mockHttp
       val ICLUrl: String = iCLUrl
     }
 

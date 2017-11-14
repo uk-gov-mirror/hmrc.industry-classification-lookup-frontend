@@ -26,10 +26,9 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent, Result}
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.Actions
-import models.Confirmation.{YES, NO}
+import models.Confirmation.{NO, YES}
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
@@ -37,7 +36,6 @@ class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
                                            val authConnector: FrontendAuthConnector) extends ConfirmationController
 
 trait ConfirmationController extends Actions with I18nSupport {
-
   val sicSearchService: SicSearchService
 
   val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
@@ -82,7 +80,7 @@ trait ConfirmationController extends Actions with I18nSupport {
         }
   }
 
-  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result]): Future[Result] = {
+  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
     sicSearchService.retrieveChoices(sessionId) flatMap {
       case Some(choices) => choices match {
         case Nil => Future.successful(Redirect(controllers.routes.SicSearchController.show()))

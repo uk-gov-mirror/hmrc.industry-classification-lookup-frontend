@@ -30,6 +30,7 @@ import uk.gov.hmrc.http.SessionKeys
 import play.api.test.Helpers._
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {
 
@@ -65,7 +66,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 200 when a SicStore is returned from mongo" in new Setup {
 
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       showWithAuthorisedUser(controller.show, mockAuthConnector){
@@ -76,7 +77,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 303 when a SicStore ir not found in mongo" in new Setup {
 
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
       showWithAuthorisedUser(controller.show, mockAuthConnector){
@@ -92,7 +93,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
 
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
@@ -105,7 +106,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
 
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
@@ -119,10 +120,10 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 200 when the supplied sic code is removed" in new Setup {
 
-      when(mockSicSearchService.removeChoice(any(), any()))
+      when(mockSicSearchService.removeChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))
 
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), mockAuthConnector, fakeRequestWithSessionId){
@@ -135,7 +136,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
   "withCurrentUsersChoices" should {
 
     "return a 303 and redirect to SicSearch when a SicStore does not exist" in new Setup {
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
@@ -146,7 +147,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     }
 
     "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List())))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
@@ -157,7 +158,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     }
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
-      when(mockSicSearchService.retrieveChoices(any()))
+      when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
