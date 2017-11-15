@@ -3,13 +3,14 @@ app.title=Register your company
 
 app.common.next=Next
 app.common.saveandcontinue=Save and continue
+app.common.confirmAndContinue=Confirm and continue
 app.common.back=Back
 app.common.errorSummaryLabel= This page has errors
 app.common.change=Change
 
 errors.invalid.sic.noEntry=Enter one or two keywords for what the company does
 errors.invalid.sic.noSelection=Choose a business activity
-errors.invalid.sic.confirm=Do you want to add another business activity?
+errors.invalid.sic.confirm=Tell us if you want to add another business activity
 
 common.feedbackFirst=This is a new service - your
 common.feedbackSecond=feedback
@@ -28,6 +29,6 @@ page.icl.chooseactivity.changehidden=Change sic code used to search
 
 page.icl.confirmation.title=Confirm the company''s business activities
 page.icl.confirmation.heading=Confirm the company''s business activities
-page.icl.confirmation.choice.text=You''ve chosen:
+page.icl.confirmation.choice.text=You have chosen:
 page.icl.confirmation.addAnother=Do you want to add another business activity?
 page.icl.confirmation.activities=You can have up to 4 activities.

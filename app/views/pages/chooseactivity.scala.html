@@ -60,20 +60,20 @@
 
         <div class="form-group">
 
-        @inputRadioGroup(
-            field = chooseActForm("code"),
-            searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
-            '_labelAfter -> true,
-            '_legend -> messages("page.icl.chooseactivity.title"),
-            '_legendClass -> "hidden",
-            '_labelClass -> "block-label"
-        )
+            @inputRadioGroup(
+                field = chooseActForm("code"),
+                searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
+                '_labelAfter -> true,
+                '_legend -> messages("page.icl.chooseactivity.title"),
+                '_legendClass -> "hidden",
+                '_labelClass -> "block-label"
+            )
 
         </div>
 
 
         <div class="form-group">
-            <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.next")</button>
+            <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
         </div>
     }
 }

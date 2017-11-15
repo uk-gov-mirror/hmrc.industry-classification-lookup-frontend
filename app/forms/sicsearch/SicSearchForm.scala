@@ -28,6 +28,7 @@ object SicSearchForm {
     def validate(entry: String): Either[Seq[FormError], String] = {
       entry match {
         case ""  => Left(Seq(FormError("sicSearch", "errors.invalid.sic.noEntry")))
+        case ss if ss.length > 100 => Left(Seq(FormError("sicSearch", "errors.invalid.sic.noEntry")))
         case ss  => Right(ss)
       }
     }
