@@ -9,7 +9,7 @@ POST       /enter-keywords                                                   @co
 GET        /choose-business-activity                                         @controllers.ChooseActivityController.show
 POST       /choose-business-activity                                         @controllers.ChooseActivityController.submit
 
-GET        /confirm-business-activites                                       @controllers.ConfirmationController.show
-POST       /confirm-business-activites                                       @controllers.ConfirmationController.submit
+GET        /confirm-business-activities                                       @controllers.ConfirmationController.show
+POST       /confirm-business-activities                                       @controllers.ConfirmationController.submit
 
 GET        /remove-sic-code/:sicCode                                         @controllers.ConfirmationController.removeChoice(sicCode)

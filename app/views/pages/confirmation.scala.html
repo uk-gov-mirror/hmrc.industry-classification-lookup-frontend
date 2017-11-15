@@ -52,7 +52,7 @@
         @if(listOfChoices.size < 4) {
             <h2>@messages("page.icl.confirmation.addAnother")</h2>
             <p>@messages("page.icl.confirmation.activities")</p>
-            @govHelpers.inputRadioGroup(
+            @inputRadioGroup(
                 field = confirmationForm("addAnother"),
                 Seq(("yes", "Yes"), ("no", "No")),
                 '_labelBefore -> "ss",
@@ -67,7 +67,7 @@
 
 
         <div class="form-group">
-          <button class="button" type="submit" id="continue" >@messages("app.common.next")</button>
+          <button class="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
         </div>
     }
 
