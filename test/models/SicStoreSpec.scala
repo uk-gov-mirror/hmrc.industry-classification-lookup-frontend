@@ -16,12 +16,16 @@
 
 package models
 
+import org.joda.time.DateTime
 import uk.gov.hmrc.play.test.UnitSpec
 import play.api.libs.json.{JsSuccess, JsValue, Json}
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 class SicStoreSpec extends UnitSpec {
 
   val query = "testQuery"
+  val dateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
+  val now = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
 
   val sicStoreWithChoicesJson : JsValue = Json.parse(
     s"""
@@ -39,7 +43,8 @@ class SicStoreSpec extends UnitSpec {
       |    {"code" : "11920233", "desc" : "Sic Code Test Description 2"},
       |    {"code" : "12994930", "desc" : "Sic Code Test Description 3"},
       |    {"code" : "39387282", "desc" : "Sic Code Test Description 4"}
-      |  ]
+      |  ],
+      |  "lastUpdated" : $now
       |}
     """.stripMargin
   )
@@ -54,7 +59,8 @@ class SicStoreSpec extends UnitSpec {
       |    "results":[
       |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
       |    ]
-      |  }
+      |  },
+      |  "lastUpdated" : $now
       |}
     """.stripMargin
   )
@@ -71,7 +77,8 @@ class SicStoreSpec extends UnitSpec {
       SicCode("11920233", "Sic Code Test Description 2"),
       SicCode("12994930", "Sic Code Test Description 3"),
       SicCode("39387282", "Sic Code Test Description 4")
-    ))
+    )),
+    dateTime
   )
 
   val sicStoreNoChoices = SicStore(
@@ -81,7 +88,8 @@ class SicStoreSpec extends UnitSpec {
       1,
       List(SicCode("19283746", "Search Sic Code Result Description"))
     ),
-    None
+    None,
+    dateTime
   )
 
   "SicStore" should {
