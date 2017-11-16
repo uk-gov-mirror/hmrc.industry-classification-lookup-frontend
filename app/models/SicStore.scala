@@ -16,20 +16,34 @@
 
 package models
 
+import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, _}
+import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-case class SicStore(registrationID: String, searchResults: SearchResults, choices: Option[List[SicCode]])
+case class SicStore(registrationID: String,
+                    searchResults: SearchResults,
+                    choices: Option[List[SicCode]],
+                    lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
+                   )
 
-case class SicCode(sicCode: String, description: String)
+case class SicCode(sicCode: String,
+                   description: String
+                  )
 
-case class SearchResults(query: String, numFound: Int, results: List[SicCode])
+case class SearchResults(query: String,
+                         numFound: Int,
+                         results: List[SicCode]
+                        )
 
 object SicStore {
+  implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
+
   implicit val format: Format[SicStore] = (
     (__ \ "registrationID").format[String] and
       (__ \ "search").format[SearchResults](SearchResults.format) and
-      (__ \ "choices").formatNullable[List[SicCode]]
+      (__ \ "choices").formatNullable[List[SicCode]] and
+      (__ \ "lastUpdated").format[DateTime]
     )(SicStore.apply, unlift(SicStore.unapply))
 }
 
