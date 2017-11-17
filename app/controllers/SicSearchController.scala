@@ -51,7 +51,7 @@ trait SicSearchController extends Actions with I18nSupport {
             errors => Future.successful(BadRequest(views.html.pages.sicsearch(errors))),
             form => sicSearchService.search(sessionId, form.sicSearch).map {
               case true => Redirect(routes.ChooseActivityController.show())
-              case false => BadRequest(views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch)))
+              case false => Ok(views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch)))
             }
           )
         }

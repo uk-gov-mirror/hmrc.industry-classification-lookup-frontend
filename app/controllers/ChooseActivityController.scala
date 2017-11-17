@@ -41,10 +41,17 @@ trait ChooseActivityController extends Actions with I18nSupport {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-          sicSearchService.retrieveSearchResults(sessionId) flatMap {
-            case Some(searchResults) => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults)))
-            case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
-          }
+            sicSearchService.retrieveSearchResults(sessionId) map (
+              searchResults => {
+                val matcher = searchResults.fold(0)(res => res.numFound)
+                matcher match {
+                  case 1 => sicSearchService.insertChoice(sessionId,searchResults.get.results.head.sicCode)
+                            Redirect(routes.ConfirmationController.show())
+                  case 0 => Redirect(controllers.routes.SicSearchController.show())
+                  case _ => Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults.get))
+                }
+              }
+          )
         }
   }
 
