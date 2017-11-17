@@ -43,14 +43,35 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
   }
 
   val sicCode = SicCode("12345678", "Test Description")
+  val sicCode2 = SicCode("12345679", "Test Description2")
   val searchResults = SearchResults("testQuery", 1, List(sicCode))
+  val multipleSearchResults = SearchResults("testQuery", 2, List(sicCode,sicCode2))
   val sicStore = SicStore("TestId", searchResults, None)
 
   "Showing the choose activity page" should {
 
-    "return a 200 for an authorised user with a sic search" in new Setup {
+    "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
+      AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
+        (response: Future[Result]) =>
+          status(response) shouldBe SEE_OTHER
+          response.header.headers("Location") shouldBe "/sic-search/confirm-business-activities"
+      }
+    }
+
+    "return a 303 for an authorised user with the sic code isn't found and redirect to search page" in new Setup {
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
+        .thenReturn(Future.successful(None))
+      AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
+        (response: Future[Result]) =>
+          status(response) shouldBe SEE_OTHER
+          response.header.headers("Location") shouldBe "/sic-search/enter-keywords"
+      }
+    }
+    "return a 303 for an authorised user with multiple sic codes being returned and show the choose activity page" in new Setup {
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
+        .thenReturn(Future.successful(Some(multipleSearchResults)))
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe OK
