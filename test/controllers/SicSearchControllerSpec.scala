@@ -81,13 +81,9 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       val request = FakeRequest().withFormUrlEncodedBody(
         "sicSearch" -> sicCode
       )
-      val siccodemodel = SicCode(
-        sicCode,
-        "Test"
-      )
 
       when(mockSicSearchService.search(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
-        .thenReturn(Future.successful(true))
+        .thenReturn(Future.successful(2))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
@@ -96,14 +92,14 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       }
     }
 
-    "return 400 with no codes were found if the sic code was not found" in new Setup {
+    "return 400 with no codes if the sic code was not matched" in new Setup {
       val sicCode = "123"
       val request = FakeRequest().withFormUrlEncodedBody(
         "search" -> sicCode
       )
 
       when(mockSicSearchService.search(ArgumentMatchers.eq(sicCode), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
-        .thenReturn(Future.successful(true))
+        .thenReturn(Future.successful(1))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
