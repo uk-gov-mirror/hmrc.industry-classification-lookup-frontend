@@ -68,8 +68,8 @@ class ICLConnectorSpec extends ConnectorSpec {
   "search" should {
 
     val query = "test query"
-    val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")))
     val zeroResults = SearchResults(query, 0, List())
+    val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")))
 
     val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500"
 

@@ -76,7 +76,8 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     val searchjson = Json.obj("search" -> Json.obj(
       "query" -> searchResults.query,
       "numFound" -> searchResults.numFound,
-      "results" -> Json.toJson(searchResults.results)
+      "results" -> Json.toJson(searchResults.results),
+      "sector-facet" -> Json.toJson(searchResults.sectors)
     ), "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite))
     val update = Json.obj("$set" -> searchjson)
 
