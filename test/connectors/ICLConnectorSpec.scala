@@ -69,21 +69,22 @@ class ICLConnectorSpec extends ConnectorSpec {
 
     val query = "test query"
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")))
+    val zeroResults = SearchResults(query, 0, List())
 
     val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
 
-      val result: Option[SearchResults] = connector.search(query)
-      result shouldBe Some(searchResults)
+      val result: SearchResults = connector.search(query)
+      result shouldBe searchResults
     }
 
-    "return none when ICL returns a 404" in new Setup {
+    "return 0 results when ICL returns a 404" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: Option[SearchResults] = connector.search(query)
-      result shouldBe None
+      val result: SearchResults = connector.search(query)
+      result shouldBe zeroResults
     }
 
     "throw the exception when the future recovers an the exception is not http related" in new Setup {

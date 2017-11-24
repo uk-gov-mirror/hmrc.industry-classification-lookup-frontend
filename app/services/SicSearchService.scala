@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import connectors.ICLConnector
 import models.{SearchResults, SicCode, SicStore}
+import play.api.Logger
 import repositories.{SicStoreRepo, SicStoreRepository}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -37,7 +38,7 @@ trait SicSearchService {
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
-  def search(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  def search(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
       lookupSicCode(sessionId, query)
     } else {
@@ -53,7 +54,7 @@ trait SicSearchService {
     retrieveSicStore(sessionId).map(_.flatMap(_.choices))
   }
 
-  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext) : Future[Boolean] = {
+  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     sicStoreRepository.insertChoice(sessionId, sicCode)
   }
 
@@ -61,20 +62,33 @@ trait SicSearchService {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
-  private[services] def lookupSicCode(sessionId: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
+  private[services] def lookupSicCode(sessionId: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Int] = {
     iCLConnector.lookup(sicCode) flatMap {
-      case Some(sic) => updateSearchResults(sessionId, SearchResults.fromSicCode(sic))
-      case None => Future.successful(false)
+      case Some(sic) =>
+        updateSearchResults(sessionId, SearchResults.fromSicCode(sic)) flatMap ( successful =>
+          if(successful) insertChoice(sessionId, sic.sicCode) map (_ => 1) else Future.successful(0)
+        )
+      case None => Future.successful(0)
     }
   }
 
-  private[services] def searchQuery(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Boolean] = {
-    iCLConnector.search(query).flatMap {
-      case Some(searchResults) => searchResults.numFound match {
-        case 0 => Future.successful(false)
-        case _ => updateSearchResults(sessionId, searchResults)
+  private[services] def searchQuery(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Int] = {
+    iCLConnector.search(query) flatMap ( sic => {
+        val store = sic.numFound match {
+          case 1 =>
+              updateSearchResults(sessionId, SearchResults.fromSicCode(sic.results.head)) flatMap { _ =>
+                insertChoice(sessionId, sic.results.head.sicCode)
+              }
+          case 0 => Future.successful(false)
+          case _ => updateSearchResults(sessionId, sic)
+        }
+
+        store map (_ => sic.numFound)
       }
-      case None => Future.successful(false)
+    ) recover {
+      case e =>
+        Logger.error("[SicSearchService] [searchQuery] Exception encountered when attempting to fetch results from ICL")
+        0
     }
   }
 
