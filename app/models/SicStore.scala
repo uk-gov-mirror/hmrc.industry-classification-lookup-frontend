@@ -21,26 +21,37 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, _}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-case class SicStore(registrationID: String,
-                    searchResults: SearchResults,
-                    choices: Option[List[SicCode]],
-                    lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
-                   )
+case class SicStore(
+  registrationID: String,
+  searchResults: SearchResults,
+  choices: Option[List[SicCode]],
+  lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
+)
 
-case class SicCode(sicCode: String,
-                   description: String
-                  )
+case class SicCode(
+  sicCode: String,
+  description: String
+)
 
-case class SearchResults(query: String,
-                         numFound: Int,
-                         results: List[SicCode]
-                        )
+case class SearchResults(
+  query: String,
+  numFound: Int,
+  results: List[SicCode],
+  sectors: Option[List[Sector]] = None
+)
+
+case class Sector(
+  key: String,
+  heading: String,
+  count: Int
+)
 
 object SicStore {
   implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
 
-  implicit val format: Format[SicStore] = (
-    (__ \ "registrationID").format[String] and
+  implicit val format: Format[SicStore] =
+    (
+      (__ \ "registrationID").format[String] and
       (__ \ "search").format[SearchResults](SearchResults.format) and
       (__ \ "choices").formatNullable[List[SicCode]] and
       (__ \ "lastUpdated").format[DateTime]
@@ -48,27 +59,40 @@ object SicStore {
 }
 
 object SicCode {
-  implicit val format: Format[SicCode] = (
-    (__ \ "code").format[String] and
+  implicit val format: Format[SicCode] =
+    (
+      (__ \ "code").format[String] and
       (__ \ "desc").format[String]
     )(SicCode.apply, unlift(SicCode.unapply))
+}
+
+object Sector {
+  implicit val format: Format[Sector] =
+    (
+      (__ \ "code").format[String] and
+      (__ \ "name").format[String] and
+      (__ \ "count").format[Int]
+    )(Sector.apply, unlift(Sector.unapply))
 }
 
 object SearchResults {
 
   def fromSicCode(sicCode: SicCode): SearchResults = SearchResults(sicCode.sicCode, 1, List(sicCode))
 
-  def readsWithQuery(query: String): Reads[SearchResults] = (
-    Reads.pure(query) and
+  def readsWithQuery(query: String): Reads[SearchResults] =
+    (
+      Reads.pure(query) and
       (__ \ "numFound").read[Int] and
-      (__ \ "results").read[List[SicCode]]
+      (__ \ "results").read[List[SicCode]] and
+      (__ \ "sector-facet").readNullable[List[Sector]]
     )(SearchResults.apply _)
 
-  implicit val writes: Writes[SearchResults] = (
-    (__ \ "query").write[String] and
-      (__ \ "numFound").write[Int] and
-      (__ \ "results").write[List[SicCode]]
-    )(unlift(SearchResults.unapply))
+  implicit val format: Format[SearchResults] =
+    (
+      (__ \ "query").format[String] and
+      (__ \ "numFound").format[Int] and
+      (__ \ "results").format[List[SicCode]] and
+      (__ \ "sector-facet").formatNullable[List[Sector]]
+    )(SearchResults.apply, unlift(SearchResults.unapply))
 
-  val format = Format(Json.reads[SearchResults], writes)
 }

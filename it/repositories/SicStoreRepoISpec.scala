@@ -16,12 +16,12 @@
 
 package repositories
 
-import models.{SearchResults, SicCode, SicStore}
+import models.{SearchResults, Sector, SicCode, SicStore}
 import org.joda.time.DateTime
 import org.scalatest.concurrent.Eventually
-import play.api.libs.json.{JsObject, Json, Reads}
+import play.api.libs.json.Json
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.indexes.{Index, IndexType}
+import reactivemongo.api.indexes.Index
 import uk.gov.hmrc.mongo.MongoSpecSupport
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
@@ -50,8 +50,8 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
   val sicCode = SicCode(sicCodeCode, "Test sic code description")
   val sicCode2 = SicCode("87654321", "Another test sic code description")
 
-  val searchResults = SearchResults("testQuery", 1, List(sicCode))
-  val searchResults2 = SearchResults("testQuery", 1, List(sicCode2))
+  val searchResults = SearchResults("testQuery", 1, List(sicCode), Some(List(Sector("A", "Example", 1))))
+  val searchResults2 = SearchResults("testQuery", 1, List(sicCode2), Some(List(Sector("B", "Alternative", 1))))
 
   val sicStoreNoChoices = SicStore(sessionId, searchResults, None, dateTime)
   val sicStore1Choice = SicStore(sessionId, searchResults, Some(List(sicCode)), dateTime)

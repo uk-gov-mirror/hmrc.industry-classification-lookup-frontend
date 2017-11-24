@@ -36,6 +36,9 @@ class SicStoreSpec extends UnitSpec {
       |    "numFound":1,
       |    "results":[
       |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |    ],
+      |    "sector-facet":[
+      |      {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
       |    ]
       |  },
       |  "choices" : [
@@ -58,6 +61,9 @@ class SicStoreSpec extends UnitSpec {
       |    "numFound":1,
       |    "results":[
       |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |    ],
+      |    "sector-facet":[
+      |      {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
       |    ]
       |  },
       |  "lastUpdated" : $now
@@ -70,7 +76,8 @@ class SicStoreSpec extends UnitSpec {
     SearchResults(
       query,
       1,
-      List(SicCode("19283746", "Search Sic Code Result Description"))
+      List(SicCode("19283746", "Search Sic Code Result Description")),
+      Some(List(Sector("A", "Clearly fake business sector", 22)))
     ),
     Some(List(
       SicCode("57384893", "Sic Code Test Description 1"),
@@ -86,7 +93,8 @@ class SicStoreSpec extends UnitSpec {
     SearchResults(
       query,
       1,
-      List(SicCode("19283746", "Search Sic Code Result Description"))
+      List(SicCode("19283746", "Search Sic Code Result Description")),
+      Some(List(Sector("A", "Clearly fake business sector", 22)))
     ),
     None,
     dateTime
