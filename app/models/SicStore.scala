@@ -37,12 +37,12 @@ case class SearchResults(
   query: String,
   numFound: Int,
   results: List[SicCode],
-  sectors: Option[List[Sector]] = None
+  sectors: List[Sector]
 )
 
 case class Sector(
-  key: String,
-  heading: String,
+  code: String,
+  name: String,
   count: Int
 )
 
@@ -77,14 +77,14 @@ object Sector {
 
 object SearchResults {
 
-  def fromSicCode(sicCode: SicCode): SearchResults = SearchResults(sicCode.sicCode, 1, List(sicCode))
+  def fromSicCode(sicCode: SicCode): SearchResults = SearchResults(sicCode.sicCode, 1, List(sicCode), List())
 
   def readsWithQuery(query: String): Reads[SearchResults] =
     (
       Reads.pure(query) and
       (__ \ "numFound").read[Int] and
       (__ \ "results").read[List[SicCode]] and
-      (__ \ "sector-facet").readNullable[List[Sector]]
+      (__ \ "sectors").read[List[Sector]]
     )(SearchResults.apply _)
 
   implicit val format: Format[SearchResults] =
@@ -92,7 +92,7 @@ object SearchResults {
       (__ \ "query").format[String] and
       (__ \ "numFound").format[Int] and
       (__ \ "results").format[List[SicCode]] and
-      (__ \ "sector-facet").formatNullable[List[Sector]]
+      (__ \ "sectors").format[List[Sector]]
     )(SearchResults.apply, unlift(SearchResults.unapply))
 
 }
