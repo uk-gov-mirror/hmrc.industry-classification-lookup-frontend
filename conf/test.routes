@@ -1,0 +1,3 @@
+
+GET        /setup-journey                                               @controllers.test.TestSetupController.show
+POST       /setup-journey                                               @controllers.test.TestSetupController.submit

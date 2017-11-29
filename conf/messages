@@ -1,8 +1,7 @@
 
 app.title=Register your company
 
-app.common.next=Next
-app.common.saveandcontinue=Save and continue
+app.common.continue=Continue
 app.common.confirmAndContinue=Confirm and continue
 app.common.back=Back
 app.common.errorSummaryLabel= This page has errors
@@ -32,3 +31,7 @@ page.icl.confirmation.heading=Confirm the company''s business activities
 page.icl.confirmation.choice.text=You have chosen:
 page.icl.confirmation.addAnother=Do you want to add another business activity?
 page.icl.confirmation.activities=You can have up to 4 activities.
+
+page.test.setup-journey.title=Select the Lucene algorithm to use
+page.test.setup-journey.radio.query-builder=Query builder
+page.test.setup-journey.radio.query-parser=Query parser
