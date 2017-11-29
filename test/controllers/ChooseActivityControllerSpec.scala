@@ -17,7 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
-import models.{SearchResults, SicCode, SicStore}
+import models.{SearchResults, Sector, SicCode, SicStore}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
@@ -44,8 +44,8 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
 
   val sicCode = SicCode("12345678", "Test Description")
   val sicCode2 = SicCode("12345679", "Test Description2")
-  val searchResults = SearchResults("testQuery", 1, List(sicCode))
-  val multipleSearchResults = SearchResults("testQuery", 2, List(sicCode,sicCode2))
+  val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
+  val multipleSearchResults = SearchResults("testQuery", 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
   val sicStore = SicStore("TestId", searchResults, None)
 
   "Showing the choose activity page" should {

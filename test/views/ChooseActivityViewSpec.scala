@@ -17,7 +17,7 @@
 package views
 
 import forms.chooseactivity.ChooseActivityForm
-import models.{SearchResults, SicCode}
+import models.{SearchResults, Sector, SicCode}
 import org.jsoup.Jsoup
 import org.scalatest.mockito.MockitoSugar
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -33,7 +33,7 @@ class ChooseActivityViewSpec extends UnitSpec with I18nSupport with MockitoSugar
 
   val testSicCode = SicCode("12345678", "Testing")
 
-  val searchResults = SearchResults(query, 1, List(testSicCode))
+  val searchResults = SearchResults(query, 1, List(testSicCode), List(Sector("A", "Fake Sector", 1)))
 
   "The choose activity screen" should {
     lazy val view = ChooseActivityPage(ChooseActivityForm.form, searchResults)

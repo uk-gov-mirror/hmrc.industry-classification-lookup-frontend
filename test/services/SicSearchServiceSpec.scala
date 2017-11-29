@@ -17,7 +17,7 @@
 package services
 
 import connectors.ICLConnector
-import models.{SearchResults, SicCode, SicStore}
+import models.{SearchResults, Sector, SicCode, SicStore}
 import org.apache.http.HttpException
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.scalatest.mockito.MockitoSugar
@@ -50,8 +50,8 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
   val sicCodeCode = "12345678"
   val sicCode = SicCode(sicCodeCode, "some sic code description")
-  val searchResults = SearchResults(query, 1, List(sicCode))
-  val searchResultsEmpty = SearchResults(query, 0, List())
+  val searchResults = SearchResults(query, 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
+  val searchResultsEmpty = SearchResults(query, 0, List(), List())
   val choices = List(sicCode)
   val sicStore = SicStore(sessionId, searchResults, Some(choices))
   val sicStoreNoChoices = SicStore(sessionId, searchResults, None)

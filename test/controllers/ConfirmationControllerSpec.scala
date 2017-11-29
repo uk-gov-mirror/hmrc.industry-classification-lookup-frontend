@@ -17,7 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
-import models.{SearchResults, SicCode, SicStore}
+import models.{SearchResults, Sector, SicCode, SicStore}
 import play.api.i18n.MessagesApi
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -51,7 +51,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
   val sicCodeCode = "12345"
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
-  val searchResults = SearchResults("testQuery", 1, List(sicCode))
+  val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
 
   val sicStore = SicStore(
     sessionId,

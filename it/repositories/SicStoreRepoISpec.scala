@@ -50,8 +50,8 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
   val sicCode = SicCode(sicCodeCode, "Test sic code description")
   val sicCode2 = SicCode("87654321", "Another test sic code description")
 
-  val searchResults = SearchResults("testQuery", 1, List(sicCode), Some(List(Sector("A", "Example", 1))))
-  val searchResults2 = SearchResults("testQuery", 1, List(sicCode2), Some(List(Sector("B", "Alternative", 1))))
+  val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Example", 1)))
+  val searchResults2 = SearchResults("testQuery", 1, List(sicCode2), List(Sector("B", "Alternative", 1)))
 
   val sicStoreNoChoices = SicStore(sessionId, searchResults, None, dateTime)
   val sicStore1Choice = SicStore(sessionId, searchResults, Some(List(sicCode)), dateTime)
@@ -86,7 +86,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
     "update a document with the new sic code if the document already exists for a given session id" in new Setup {
 
-      val otherSearchResults = SearchResults("other query", 1, List(SicCode("87654321", "Another test sic code description")))
+      val otherSearchResults = SearchResults("other query", 1, List(SicCode("87654321", "Another test sic code description")), List(Sector("A", "Fake", 1)))
 
       insert(sicStoreNoChoices)
 
@@ -125,7 +125,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
       val sicCodeToAdd = SicCode("67891234", "some description")
 
-      val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd))
+      val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd), List(Sector("A", "Fake", 1)))
       val sicStoreWithExistingChoice = SicStore(sessionId, searchResults, Some(List(sicCode)), dateTime)
 
       insert(sicStoreWithExistingChoice)

@@ -56,7 +56,7 @@ trait ICLConnector {
     http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500") recover {
       case e: HttpException =>
         Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}", e)
-        SearchResults(query, 0, List())
+        SearchResults(query, 0, List(), List())
       case e =>
         Logger.error(s"[Search] Searching using query : $query has thrown a non-http exception", e)
         throw e
