@@ -19,27 +19,60 @@ package controllers
 import akka.actor.Cancellable
 import akka.stream.{Attributes, ClosedShape, Graph, Materializer}
 import org.scalatest.mockito.MockitoSugar
-import org.mockito.Mockito.reset
+import org.mockito.Mockito.{reset, when}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.stubbing.OngoingStubbing
+import play.api.i18n.{Lang, Messages, MessagesApi}
+import play.api.mvc.RequestHeader
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.test.UnitSpec
+import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.FiniteDuration
 
-trait ControllerSpec extends UnitSpec with MockitoSugar {
+trait ControllerSpec extends UnitSpec with MockitoSugar with NoMaterializer with WithFakeApplication {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
   val mockSicSearchService: SicSearchService = mock[SicSearchService]
+  val mockMessagesAPI: MessagesApi = mock[MessagesApi]
 
   def resetMocks() {
     reset(mockAuthConnector)
     reset(mockSicSearchService)
   }
+}
 
+trait MockMessages {
+
+  val mockMessagesAPI: MessagesApi
+
+  val lang = Lang("en")
+  val messages = Messages(lang, mockMessagesAPI)
+
+  val MOCKED_MESSAGE = "mocked message"
+
+  def mockAllMessages: OngoingStubbing[String] = {
+    when(mockMessagesAPI.preferred(any[RequestHeader]()))
+      .thenReturn(messages)
+
+    when(mockMessagesAPI.apply(any[String](), any())(any()))
+      .thenReturn(MOCKED_MESSAGE)
+  }
+
+  def mockMessage(key: String): OngoingStubbing[String] = {
+    when(mockMessagesAPI.preferred(any[RequestHeader]()))
+      .thenReturn(messages)
+
+    when(mockMessagesAPI.apply(eqTo(key), any())(any()))
+      .thenReturn(MOCKED_MESSAGE)
+  }
+}
+
+trait NoMaterializer {
   /**
     * Taken from play.api.test.Helpers (private)
-    * Avoids using an Application to instantiate a materializer in controller-level unit tests
+    * Avoids using an Application to instantiate a materializer
     **/
   implicit val noMaterializer: Materializer = new Materializer {
     override def withNamePrefix(name: String): Materializer =
@@ -56,3 +89,5 @@ trait ControllerSpec extends UnitSpec with MockitoSugar {
       throw new UnsupportedOperationException("NoMaterializer cannot schedule a repeated event")
   }
 }
+
+

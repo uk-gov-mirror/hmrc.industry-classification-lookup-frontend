@@ -23,7 +23,6 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
-import repositories.TTLIndexing
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -57,13 +56,13 @@ class TTLIndexingISpec extends MongoSpec with Eventually {
   class Setup {
     val repo = new TestTTLRepository
 
-    repo.drop
+    repo.awaitDrop
   }
 
   class SetupWithIndex(index: Index){
     val repo = new TestTTLRepository
 
-    repo.drop
+    repo.awaitDrop
     repo.collection.indexesManager.create(index)
   }
 

@@ -19,6 +19,7 @@ package config
 import com.google.inject.AbstractModule
 import connectors.{ICLConnector, ICLConnectorImpl}
 import controllers._
+import controllers.test.{TestSetupController, TestSetupControllerImpl}
 import services.{SicSearchService, SicSearchServiceImpl}
 import uk.gov.hmrc.play.config.inject.{DefaultServicesConfig, ServicesConfig}
 
@@ -38,5 +39,6 @@ class Module extends AbstractModule {
     bind(classOf[ChooseActivityController]) to classOf[ChooseActivityControllerImpl]
     bind(classOf[ConfirmationController]) to classOf[ConfirmationControllerImpl]
     bind(classOf[SignInOutController]) to classOf[SignInOutControllerImpl]
+    bind(classOf[TestSetupController]) to classOf[TestSetupControllerImpl]
   }
 }
