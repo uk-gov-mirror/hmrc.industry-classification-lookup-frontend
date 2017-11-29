@@ -73,4 +73,23 @@ trait ChooseActivityController extends Actions with I18nSupport {
           }
         }
   }
+
+
+  def filter(sectorCode: String) = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+    implicit user =>
+      implicit request =>
+        withSessionId { sessionId =>
+          sicSearchService.retrieveSearchResults(sessionId) flatMap (
+            searchResults => {
+              if (searchResults.isDefined) {
+                sicSearchService.sectorSearch(sessionId, searchResults.get.query, sectorCode).map { _ =>
+                  Redirect(routes.ChooseActivityController.show())
+                }
+              } else {
+                Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+              }
+            }
+          )
+      }
+  }
 }

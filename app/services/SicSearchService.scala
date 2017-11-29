@@ -46,6 +46,10 @@ trait SicSearchService {
     }
   }
 
+  def sectorSearch(sessionId: String, query: String, sector: String)(implicit hc: HeaderCarrier): Future[Int] = {
+    searchQuery(sessionId, query, Some(sector))
+  }
+
   def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
     retrieveSicStore(sessionId).map(_.map(_.searchResults))
   }
@@ -72,8 +76,8 @@ trait SicSearchService {
     }
   }
 
-  private[services] def searchQuery(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Int] = {
-    iCLConnector.search(query) flatMap ( sic => {
+  private[services] def searchQuery(sessionId: String, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+    iCLConnector.search(query, sector) flatMap ( sic => {
         val store = sic.numFound match {
           case 1 =>
               updateSearchResults(sessionId, SearchResults.fromSicCode(sic.results.head)) flatMap { _ =>
