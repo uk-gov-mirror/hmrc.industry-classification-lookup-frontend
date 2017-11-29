@@ -19,7 +19,7 @@
 
 @(chooseActForm: Form[ChooseActivity], searchResults: SearchResults)(implicit request: Request[_], messages: Messages)
 
-@views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = None) {
+@views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = Some("full-width")) {
 
     <div class="form-group-compound">
         <a id="back" class="link-back" href="javascript:history.back()">@messages("app.common.back")</a>
@@ -47,33 +47,36 @@
             </section>
         </div>
 
-        <div class="form-group">
+        @sectorFilter(searchResults)
 
-            <p class=“result-info”>
+        <div class="column-two-thirds">
+            <div class="form-group">
+
+                <p class=“result-info”>
                 <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
                     @searchResults.numFound
                 </span>
-                @messages("page.icl.chooseactivity.resultsfound")
-            </p>
+                    @messages("page.icl.chooseactivity.resultsfound")
+                </p>
 
-        </div>
+            </div>
 
-        <div class="form-group">
+            <div class="form-group">
 
-            @inputRadioGroup(
+                @inputRadioGroup(
                 field = chooseActForm("code"),
                 searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
                 '_labelAfter -> true,
                 '_legend -> messages("page.icl.chooseactivity.title"),
                 '_legendClass -> "hidden",
                 '_labelClass -> "block-label"
-            )
+                )
 
-        </div>
-
+            </div>
 
         <div class="form-group">
             <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
+        </div>
         </div>
     }
 }

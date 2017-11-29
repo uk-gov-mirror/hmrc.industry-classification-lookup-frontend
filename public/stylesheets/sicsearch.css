@@ -1,6 +1,7 @@
 @import 'global-header.css';
 @import 'form-validation.css';
 @import 'summary.css';
+@import 'chooseactivity.css';
 
 /* position labels above input fields in cascading forms */
 label.cascading span {

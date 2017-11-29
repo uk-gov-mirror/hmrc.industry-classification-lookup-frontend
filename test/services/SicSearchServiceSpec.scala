@@ -94,7 +94,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     val query = "some query"
 
     "return true when a set of search results are returned from ICL" in new Setup {
-      when(mockICLConnector.search(eqTo(query))(any()))
+      when(mockICLConnector.search(eqTo(query), any())(any()))
         .thenReturn(Future.successful(searchResults))
       when(mockSicStoreRepo.updateSearchResults(any(), any())(any()))
         .thenReturn(Future.successful(true))
@@ -106,7 +106,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "return false when a set of search results are returned from ICL" in new Setup {
-      when(mockICLConnector.search(eqTo(query))(any()))
+      when(mockICLConnector.search(eqTo(query), any())(any()))
         .thenReturn(Future.successful(searchResultsEmpty))
 
       val result: Int = service.searchQuery(sessionId, query)
@@ -114,7 +114,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "return false when nothing is returned from ICL" in new Setup {
-      when(mockICLConnector.search(eqTo(query))(any()))
+      when(mockICLConnector.search(eqTo(query), any())(any()))
         .thenReturn(Future.failed(new NotFoundException("404")))
 
       val result: Int = service.searchQuery(sessionId, query)
@@ -141,7 +141,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
     "search using a query and return a set of search results" in new Setup {
       val query = "some query"
 
-      when(mockICLConnector.search(eqTo(query))(any()))
+      when(mockICLConnector.search(eqTo(query), any())(any()))
         .thenReturn(Future.successful(searchResults))
       when(mockSicStoreRepo.updateSearchResults(any(), any())(any()))
         .thenReturn(Future.successful(true))
