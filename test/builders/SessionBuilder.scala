@@ -40,9 +40,18 @@ trait SessionBuilder {
       SessionKeys.token -> "RANDOMTOKEN",
       SessionKeys.userId -> userId)
 
-  def updateRequestWithSession(req: FakeRequest[_]): FakeRequest[_] = {
+  def updateRequestWithSession[T](req: FakeRequest[T]): FakeRequest[T] = {
+    val sessionId = req.headers.get(SessionKeys.sessionId).fold(s"session-${UUID.randomUUID}")(s => s)
     req.withSession(
-      SessionKeys.sessionId -> s"session-${UUID.randomUUID}",
+      SessionKeys.sessionId -> sessionId,
+      SessionKeys.token -> "RANDOMTOKEN",
+      SessionKeys.userId -> userId
+    )
+  }
+
+  def buildRequestWithSessionId(sessionId: String): FakeRequest[_] = {
+    FakeRequest().withSession(
+      SessionKeys.sessionId -> sessionId,
       SessionKeys.token -> "RANDOMTOKEN",
       SessionKeys.userId -> userId)
   }

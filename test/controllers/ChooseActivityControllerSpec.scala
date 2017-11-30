@@ -19,18 +19,20 @@ package controllers
 import builders.AuthBuilders
 import models.{SearchResults, Sector, SicCode, SicStore}
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
 import play.api.i18n.MessagesApi
-import play.api.mvc.Result
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.WithFakeApplication
+import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.Future
 
-class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplication {
+class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {
 
   trait Setup {
     val controller: ChooseActivityController = new ChooseActivityController {
@@ -42,17 +44,28 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
     resetMocks()
   }
 
+  val sessionId = "session-12345"
+  val requestWithSession: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(
+    SessionKeys.sessionId -> sessionId
+  )
+
+  val SECTOR_A = "A"
+  val query = "testQuery"
   val sicCode = SicCode("12345678", "Test Description")
   val sicCode2 = SicCode("12345679", "Test Description2")
-  val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
-  val multipleSearchResults = SearchResults("testQuery", 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
+  val noSearchResults = SearchResults(query, 0, List(), List())
+  val searchResults = SearchResults(query, 1, List(sicCode), List(Sector(SECTOR_A, "Fake Sector", 1)))
+  val multipleSearchResults = SearchResults(query, 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
   val sicStore = SicStore("TestId", searchResults, None)
 
-  "Showing the choose activity page" should {
+  "show" should {
 
     "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
+      when(mockSicSearchService.insertChoice(any(), any())(any()))
+        .thenReturn(Future.successful(true))
+
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe SEE_OTHER
@@ -75,6 +88,17 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
       AuthBuilders.showWithAuthorisedUser(controller.show, mockAuthConnector) {
         (response: Future[Result]) =>
           status(response) shouldBe OK
+      }
+    }
+
+    s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
+
+      when(mockSicSearchService.retrieveSearchResults(any())(any()))
+        .thenReturn(Future.successful(Some(noSearchResults)))
+
+      requestWithAuthorisedUser(controller.show, requestWithSession) { result =>
+        status(result) shouldBe SEE_OTHER
+        redirectLocation(result) shouldBe Some(routes.SicSearchController.show().toString)
       }
     }
 
@@ -131,6 +155,36 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
         result =>
           status(result) shouldBe BAD_REQUEST
+      }
+    }
+  }
+
+  "filter" should {
+
+    s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when search results are found" in new Setup {
+
+      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(searchResults)))
+
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), eqTo(Some(SECTOR_A)))(any()))
+        .thenReturn(Future.successful(1))
+
+      requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
+        result =>
+          status(result) shouldBe SEE_OTHER
+          redirectLocation(result) shouldBe Some(routes.ChooseActivityController.show().toString)
+      }
+    }
+
+    s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
+
+      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(None))
+
+      requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
+        result =>
+          status(result) shouldBe SEE_OTHER
+          redirectLocation(result) shouldBe Some(routes.SicSearchController.show().toString)
       }
     }
   }

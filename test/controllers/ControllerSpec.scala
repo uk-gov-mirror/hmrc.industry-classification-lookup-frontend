@@ -23,8 +23,10 @@ import org.mockito.Mockito.{reset, when}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.stubbing.OngoingStubbing
 import play.api.i18n.{Lang, Messages, MessagesApi}
-import play.api.mvc.RequestHeader
+import play.api.mvc.{AnyContent, RequestHeader}
+import play.api.test.FakeRequest
 import services.SicSearchService
+import uk.gov.hmrc.http.SessionKeys
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
@@ -40,6 +42,12 @@ trait ControllerSpec extends UnitSpec with MockitoSugar with NoMaterializer with
   def resetMocks() {
     reset(mockAuthConnector)
     reset(mockSicSearchService)
+  }
+
+  implicit class FakeRequestImps[T <: AnyContent](fakeRequest: FakeRequest[T]) {
+    def withSessionId(sessionId: String): FakeRequest[T] = {
+      fakeRequest.withHeaders(SessionKeys.sessionId -> sessionId)
+    }
   }
 }
 

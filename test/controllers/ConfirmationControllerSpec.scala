@@ -23,10 +23,9 @@ import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.WithFakeApplication
 import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers._
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import play.api.mvc._
 import play.api.test.FakeRequest
-import uk.gov.hmrc.http.SessionKeys
 import play.api.test.Helpers._
 
 import scala.concurrent.Future
@@ -44,9 +43,8 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
     resetMocks()
   }
 
-  val sessionId = "session-id-12345"
-
-  val fakeRequestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(SessionKeys.sessionId -> sessionId)
+  val sessionId = "session-12345"
+  val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
   val sicCodeCode = "12345"
   val sicCodeDescription = "some description"
@@ -91,7 +89,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 200 when the form field 'addAnother' is no" in new Setup {
 
-      val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
@@ -104,7 +102,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
 
     "return a 303 when the form field 'addAnother' is yes" in new Setup {
 
-      val request: FakeRequest[AnyContentAsFormUrlEncoded] = fakeRequestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
@@ -112,6 +110,30 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
       submitWithAuthorisedUser(controller.submit, mockAuthConnector, request){
         result =>
           status(result) shouldBe 303
+      }
+    }
+
+    "return a 200 and render end of journey page when 4 choices have already been made" in new Setup {
+
+      when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode, sicCode, sicCode))))
+
+      requestWithAuthorisedUser(controller.submit, requestWithSessionId){ result =>
+        status(result) shouldBe OK
+      }
+    }
+
+    "return a 400 when an empty form is submitted" in new Setup {
+
+      when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode))))
+
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
+        "addAnother" -> ""
+      )
+
+      requestWithAuthorisedUser(controller.submit, request){ result =>
+        status(result) shouldBe BAD_REQUEST
       }
     }
   }
@@ -126,7 +148,7 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
-      requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), mockAuthConnector, fakeRequestWithSessionId){
+      requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), requestWithSessionId, mockAuthConnector){
         result =>
           status(result) shouldBe OK
       }

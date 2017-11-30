@@ -35,19 +35,16 @@ class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
 }
 
 trait SicSearchService {
+
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
-  def search(sessionId: String, query: String)(implicit hc: HeaderCarrier): Future[Int] = {
+  def search(sessionId: String, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
       lookupSicCode(sessionId, query)
     } else {
-      searchQuery(sessionId, query)
+      searchQuery(sessionId, query, sector)
     }
-  }
-
-  def sectorSearch(sessionId: String, query: String, sector: String)(implicit hc: HeaderCarrier): Future[Int] = {
-    searchQuery(sessionId, query, Some(sector))
   }
 
   def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
@@ -77,20 +74,20 @@ trait SicSearchService {
   }
 
   private[services] def searchQuery(sessionId: String, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
-    iCLConnector.search(query, sector) flatMap ( sic => {
-        val store = sic.numFound match {
+    iCLConnector.search(query, sector) flatMap ( searchResults => {
+        val store = searchResults.numFound match {
           case 1 =>
-              updateSearchResults(sessionId, SearchResults.fromSicCode(sic.results.head)) flatMap { _ =>
-                insertChoice(sessionId, sic.results.head.sicCode)
-              }
+            updateSearchResults(sessionId, searchResults) flatMap { _ =>
+              insertChoice(sessionId, searchResults.results.head.sicCode)
+            }
           case 0 => Future.successful(false)
-          case _ => updateSearchResults(sessionId, sic)
+          case _ => updateSearchResults(sessionId, searchResults)
         }
 
-        store map (_ => sic.numFound)
+        store map (_ => searchResults.numFound)
       }
     ) recover {
-      case e =>
+      case _ =>
         Logger.error("[SicSearchService] [searchQuery] Exception encountered when attempting to fetch results from ICL")
         0
     }

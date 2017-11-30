@@ -63,7 +63,7 @@ class TTLIndexingISpec extends MongoSpec with Eventually {
     val repo = new TestTTLRepository
 
     repo.awaitDrop
-    repo.collection.indexesManager.create(index)
+    await(repo.collection.indexesManager.create(index))
   }
 
   "A TTLIndex" should {
