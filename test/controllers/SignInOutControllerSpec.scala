@@ -43,7 +43,7 @@ class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication wi
       val request = FakeRequest()
       val url = s"$cRUrl$cRUri/post-sign-in"
 
-      requestWithAuthorisedUser(controller.postSignIn, mockAuthConnector, request){
+      requestWithAuthorisedUser(controller.postSignIn, request, mockAuthConnector){
         result =>
           status(result) shouldBe 303
           redirectLocation(result) shouldBe Some(url)
@@ -58,7 +58,7 @@ class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication wi
       val request = FakeRequest()
       val url = s"$cRUrl$cRUri/questionnaire"
 
-      requestWithAuthorisedUser(controller.signOut, mockAuthConnector, request){
+      requestWithAuthorisedUser(controller.signOut, request, mockAuthConnector){
         result =>
           status(result) shouldBe 303
           redirectLocation(result) shouldBe Some(url)

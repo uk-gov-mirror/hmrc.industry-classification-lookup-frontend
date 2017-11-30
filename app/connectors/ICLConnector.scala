@@ -43,24 +43,24 @@ trait ICLConnector {
       Some.apply
     } recover {
       case e: HttpException =>
-        Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a ${e.responseCode}", e)
+        Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a ${e.responseCode}")
         None
       case e: Throwable =>
-        Logger.error(s"[Lookup] Looking up sic code : $sicCode has thrown a non-http exception", e)
+        Logger.error(s"[Lookup] Looking up sic code : $sicCode has thrown a non-http exception")
         throw e
     }
   }
 
   def search(query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
-    val sectorFilter = sector.fold("")(s => s"&sector=${sector.get}")
+    val sectorFilter = sector.fold("")(s => s"&sector=$s")
     http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter") recover {
       case e: HttpException =>
-        Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}", e)
+        Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}")
         SearchResults(
           query, 0, List(), List())
       case e =>
-        Logger.error(s"[Search] Searching using query : $query has thrown a non-http exception", e)
+        Logger.error(s"[Search] Searching using query : $query has thrown a non-http exception")
         throw e
     }
   }

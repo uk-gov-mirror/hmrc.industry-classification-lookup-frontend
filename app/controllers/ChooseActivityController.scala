@@ -21,12 +21,14 @@ import javax.inject.{Inject, Singleton}
 import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.chooseactivity.ChooseActivityForm
+import models.SearchResults
 import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, Result}
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.Actions
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class ChooseActivityControllerImpl @Inject()(val messagesApi: MessagesApi,
@@ -41,17 +43,16 @@ trait ChooseActivityController extends Actions with I18nSupport {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-            sicSearchService.retrieveSearchResults(sessionId) map (
-              searchResults => {
-                val matcher = searchResults.fold(0)(res => res.numFound)
-                matcher match {
-                  case 1 => sicSearchService.insertChoice(sessionId,searchResults.get.results.head.sicCode)
-                            Redirect(routes.ConfirmationController.show())
-                  case 0 => Redirect(controllers.routes.SicSearchController.show())
-                  case _ => Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults.get))
-                }
-              }
-          )
+          withSearchResults(sessionId) { searchResults =>
+            val numResults = searchResults.numFound
+            numResults match {
+              case 1 => sicSearchService.insertChoice(sessionId,searchResults.results.head.sicCode) map { _ =>
+                          Redirect(routes.ConfirmationController.show())
+                        }
+              case 0 => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+              case _ => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults)))
+            }
+          }
         }
   }
 
@@ -59,37 +60,36 @@ trait ChooseActivityController extends Actions with I18nSupport {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-          sicSearchService.retrieveSearchResults(sessionId) flatMap {
-            case Some(searchResults) =>
-              ChooseActivityForm.form.bindFromRequest.fold(
-                errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, searchResults))),
-                form => {
-                  sicSearchService.insertChoice(sessionId, form.code) map { _ =>
-                    Redirect(routes.ConfirmationController.show())
-                  }
+          withSearchResults(sessionId) { searchResults =>
+            ChooseActivityForm.form.bindFromRequest.fold(
+              errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, searchResults))),
+              form => {
+                sicSearchService.insertChoice(sessionId, form.code) map { _ =>
+                  Redirect(routes.ConfirmationController.show())
                 }
-              )
-            case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+              }
+            )
           }
         }
   }
 
 
-  def filter(sectorCode: String) = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  def filter(sectorCode: String): Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
         withSessionId { sessionId =>
-          sicSearchService.retrieveSearchResults(sessionId) flatMap (
-            searchResults => {
-              if (searchResults.isDefined) {
-                sicSearchService.sectorSearch(sessionId, searchResults.get.query, sectorCode).map { _ =>
-                  Redirect(routes.ChooseActivityController.show())
-                }
-              } else {
-                Future.successful(Redirect(controllers.routes.SicSearchController.show()))
-              }
+          withSearchResults(sessionId) { searchResults =>
+            sicSearchService.search(sessionId, searchResults.query, Some(sectorCode)).map { _ =>
+              Redirect(routes.ChooseActivityController.show())
             }
-          )
+          }
       }
+  }
+
+  private[controllers] def withSearchResults(sessionId: String)(f: => SearchResults => Future[Result]): Future[Result] = {
+    sicSearchService.retrieveSearchResults(sessionId) flatMap {
+      case Some(searchResults) => f(searchResults)
+      case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+    }
   }
 }

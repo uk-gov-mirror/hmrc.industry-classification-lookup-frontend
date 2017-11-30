@@ -17,33 +17,35 @@
 package controllers
 
 import builders.AuthBuilders
-import models.SicCode
-import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import uk.gov.hmrc.play.test.WithFakeApplication
 import org.mockito.Mockito._
 import play.api.i18n.MessagesApi
-import play.api.mvc.Result
+import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import play.api.test.Helpers.redirectLocation
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 
 import scala.concurrent.Future
 
-class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeApplication {
-  val mockSicSearchService = mock[SicSearchService]
-  val mockAuthConnector = mock[AuthConnector]
+class SicSearchControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {
 
   trait Setup {
-    val controller = new SicSearchController {
-      override val sicSearchService = mockSicSearchService
-      override val authConnector = mockAuthConnector
+    val controller: SicSearchController = new SicSearchController {
+      override val sicSearchService: SicSearchService = mockSicSearchService
+      override val authConnector: AuthConnector = mockAuthConnector
       implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
     }
+
+    resetMocks()
   }
+
+  val sessionId = "session-12345"
+  val requestWithSession: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
+  val query = "test query"
 
   "showing the sic search page" should {
     "return 303 for an unauthorised user" in new Setup {
@@ -59,7 +61,8 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
     }
   }
 
-  "submitting the sic search page" should {
+  "submit" should {
+
     "return 303 for an unauthorised user" in new Setup {
       val result = controller.submit()(FakeRequest())
       status(result) shouldBe SEE_OTHER
@@ -67,7 +70,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
 
     "return 400 for an authorised user with no data" in new Setup {
       val request = FakeRequest().withFormUrlEncodedBody(
-        "search" -> ""
+        "sicSearch" -> ""
       )
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
@@ -82,7 +85,7 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
         "sicSearch" -> sicCode
       )
 
-      when(mockSicSearchService.search(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
+      when(mockSicSearchService.search(any(), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(2))
 
       AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
@@ -92,18 +95,35 @@ class SicSearchControllerSpec extends UnitSpec with MockitoSugar with WithFakeAp
       }
     }
 
-    "return 400 with no codes if the sic code was not matched" in new Setup {
-      val sicCode = "123"
-      val request = FakeRequest().withFormUrlEncodedBody(
-        "search" -> sicCode
+    s"return a 200 and render the sicSearch page when 0 results are returned from search" in new Setup {
+
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
+        "sicSearch" -> query
       )
 
-      when(mockSicSearchService.search(ArgumentMatchers.eq(sicCode), ArgumentMatchers.any())(ArgumentMatchers.any[HeaderCarrier]()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), eqTo(None))(any[HeaderCarrier]()))
+        .thenReturn(Future.successful(0))
+
+      requestWithAuthorisedUser(controller.submit, request) {
+        result =>
+          status(result) shouldBe OK
+
+      }
+    }
+
+    s"return a 303 and redirect to ${routes.ConfirmationController.show()} when 1 result is returned from search" in new Setup {
+
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
+        "sicSearch" -> query
+      )
+
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), eqTo(None))(any[HeaderCarrier]()))
         .thenReturn(Future.successful(1))
 
-      AuthBuilders.submitWithAuthorisedUser(controller.submit, mockAuthConnector, request) {
+      requestWithAuthorisedUser(controller.submit, request) {
         result =>
-          status(result) shouldBe BAD_REQUEST
+          status(result) shouldBe SEE_OTHER
+          redirectLocation(result) shouldBe Some(routes.ConfirmationController.show().toString)
       }
     }
   }

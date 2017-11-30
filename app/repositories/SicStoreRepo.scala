@@ -40,10 +40,10 @@ class SicStoreRepo @Inject()(configuration: Configuration, mongo: ReactiveMongoC
 }
 
 trait SicStoreRepository {
-  def updateSearchResults(registrationID: String, searchResult: SearchResults)(implicit ec: ExecutionContext): Future[Boolean]
-  def retrieveSicStore(registrationID: String)(implicit ec: ExecutionContext): Future[Option[SicStore]]
-  def insertChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean]
-  def removeChoice(registrationID: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
+  def updateSearchResults(sessionId: String, searchResult: SearchResults)(implicit ec: ExecutionContext): Future[Boolean]
+  def retrieveSicStore(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SicStore]]
+  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean]
+  def removeChoice(sessionId: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
 }
 
 class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
@@ -84,12 +84,12 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     collection.update(selector, update, upsert = true).map(_.ok)
   }
 
-  override def insertChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    retrieveSicStore(registrationID) flatMap {
+  override def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    retrieveSicStore(sessionId) flatMap {
       case Some(store) =>
         store.searchResults.results.find(_.sicCode == sicCode) match {
           case Some(sicCodeToAdd) =>
-            val selector = sessionIdSelector(registrationID)
+            val selector = sessionIdSelector(sessionId)
             val choicesjson = Json.obj("choices" -> Json.obj(
               "code" -> sicCodeToAdd.sicCode,
               "desc" -> sicCodeToAdd.description
@@ -105,10 +105,10 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     }
   }
 
-  override def removeChoice(registrationID: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    retrieveSicStore(registrationID) flatMap {
+  override def removeChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    retrieveSicStore(sessionId) flatMap {
       case Some(_) =>
-        val selector = sessionIdSelector(registrationID)
+        val selector = sessionIdSelector(sessionId)
         val update = Json.obj(
           "$pull" -> Json.obj(
             "choices" -> Json.obj("code" -> sicCode)

@@ -16,7 +16,7 @@
 
 package builders
 
-import controllers.ControllerSpec
+import controllers.{ControllerSpec, NoMaterializer}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import play.api.mvc._
@@ -33,6 +33,7 @@ trait AuthBuilders extends SessionBuilder {
   self: ControllerSpec =>
 
   val userId: String
+  val mockAuthConnector: AuthConnector
 
   def mockAuthorisedUser(userId: String, mockAuthConnector : AuthConnector, accounts: Accounts = Accounts()) {
     when(mockAuthConnector.currentAuthority(ArgumentMatchers.any(), ArgumentMatchers.any())) thenReturn {
@@ -68,9 +69,17 @@ trait AuthBuilders extends SessionBuilder {
     test(result)
   }
 
-  def requestWithAuthorisedUser[T <: AnyContent](action: Action[AnyContent], mockAuthConnector: AuthConnector, request: FakeRequest[T])(test: Future[Result] => Any) {
+  def requestWithAuthorisedUser[T <: AnyContent](action: Action[AnyContent], request: FakeRequest[T], mockAuthConn: AuthConnector)
+                                                (test: Future[Result] => Any) {
+    mockAuthorisedUser(userId, mockAuthConn)
+    val result = action(updateRequestWithSession(request))
+    test(result)
+  }
+
+  def requestWithAuthorisedUser[T <: AnyContent](action: Action[AnyContent], request: FakeRequest[T])
+                                                (test: Future[Result] => Any) {
     mockAuthorisedUser(userId, mockAuthConnector)
-    val result = action(updateRequestWithSession(request)).run
+    val result = action(updateRequestWithSession(request))
     test(result)
   }
 

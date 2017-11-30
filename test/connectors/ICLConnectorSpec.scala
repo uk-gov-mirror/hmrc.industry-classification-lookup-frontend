@@ -70,13 +70,22 @@ class ICLConnectorSpec extends ConnectorSpec {
     val query = "test query"
     val zeroResults = SearchResults(query, 0, List(), List())
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")), List(Sector("A", "Example of a business sector", 1)))
+    val sector = "B"
 
     val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500"
+    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
 
       val result: SearchResults = connector.search(query)
+      result shouldBe searchResults
+    }
+
+    "return a SearchResults case class when a sector search is returned from ICL" in new Setup {
+      mockHttpGet[SearchResults](searchSectorUrl).thenReturn(Future.successful(searchResults))
+
+      val result: SearchResults = connector.search(query,Some(sector))
       result shouldBe searchResults
     }
 
