@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.{SearchResults, Sector, SicCode}
+import models.{Journey, SearchResults, Sector, SicCode}
 import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, NotFoundException}
 import org.mockito.Mockito._
 
@@ -68,38 +68,39 @@ class ICLConnectorSpec extends ConnectorSpec {
   "search" should {
 
     val query = "test query"
+    val journey = Journey.QUERY_BUILDER
     val zeroResults = SearchResults(query, 0, List(), List())
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")), List(Sector("A", "Example of a business sector", 1)))
     val sector = "B"
 
-    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500"
-    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector"
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&journey=$journey"
+    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector&journey=$journey"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
 
-      val result: SearchResults = connector.search(query)
+      val result: SearchResults = connector.search(query, journey)
       result shouldBe searchResults
     }
 
     "return a SearchResults case class when a sector search is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchSectorUrl).thenReturn(Future.successful(searchResults))
 
-      val result: SearchResults = connector.search(query,Some(sector))
+      val result: SearchResults = connector.search(query, journey, Some(sector))
       result shouldBe searchResults
     }
 
     "return 0 results when ICL returns a 404" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: SearchResults = connector.search(query)
+      val result: SearchResults = connector.search(query, journey)
       result shouldBe zeroResults
     }
 
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
-      val result: RuntimeException = intercept[RuntimeException](await(connector.search(query)))
+      val result: RuntimeException = intercept[RuntimeException](await(connector.search(query, journey)))
       result.getMessage shouldBe "something went wrong"
     }
   }

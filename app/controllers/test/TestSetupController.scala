@@ -66,7 +66,6 @@ trait TestSetupController extends ICLController {
             errors => Future.successful(BadRequest(views.html.test.SetupJourneyView(errors))),
             journeyName => {
               val journey = Journey(sessionId, journeyName)
-              println("================" + journey)
               journeyService.upsertJourney(journey) map { _ =>
                 Redirect(controllers.routes.SicSearchController.show())
               }

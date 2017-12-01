@@ -22,10 +22,9 @@ import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.ConfirmationForm
 import models.SicCode
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Result}
-import services.SicSearchService
-import uk.gov.hmrc.play.frontend.auth.Actions
+import services.{JourneyService, SicSearchService}
 import models.Confirmation.{NO, YES}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,16 +32,17 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
                                            val sicSearchService: SicSearchService,
+                                           val journeyService: JourneyService,
                                            val authConnector: FrontendAuthConnector) extends ConfirmationController
 
-trait ConfirmationController extends Actions with I18nSupport {
+trait ConfirmationController extends ICLController {
   val sicSearchService: SicSearchService
 
   val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit request =>
       implicit user =>
-        withSessionId { sessionId =>
-          withCurrentUsersChoices(sessionId){ choices =>
+        withJourney { journey =>
+          withCurrentUsersChoices(journey.sessionId){ choices =>
             Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
           }
         }
@@ -51,8 +51,8 @@ trait ConfirmationController extends Actions with I18nSupport {
   val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit request =>
       implicit user =>
-        withSessionId { sessionId =>
-          withCurrentUsersChoices(sessionId){ choices =>
+        withJourney { journey =>
+          withCurrentUsersChoices(journey.sessionId){ choices =>
             if(choices.size >= 4){
               Future.successful(Ok("End of journey"))
             } else {
@@ -71,9 +71,9 @@ trait ConfirmationController extends Actions with I18nSupport {
   def removeChoice(sicCode: String): Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit request =>
       implicit user =>
-        withSessionId{ sessionId =>
-          sicSearchService.removeChoice(sessionId, sicCode) flatMap { _ =>
-            withCurrentUsersChoices(sessionId){ choices =>
+        withJourney { journey =>
+          sicSearchService.removeChoice(journey.sessionId, sicCode) flatMap { _ =>
+            withCurrentUsersChoices(journey.sessionId){ choices =>
               Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
             }
           }
