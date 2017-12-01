@@ -17,7 +17,7 @@
 package services
 
 import connectors.ICLConnector
-import models.{SearchResults, Sector, SicCode, SicStore}
+import models._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.scalatest.mockito.MockitoSugar
 import uk.gov.hmrc.play.test.UnitSpec
@@ -46,6 +46,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
   val sessionId = "session-id-12345"
   val query = "testQuery"
+  val journey: String = Journey.QUERY_BUILDER
 
   val sicCodeCode = "12345678"
   val sicCode = SicCode(sicCodeCode, "some sic code description")
@@ -53,8 +54,8 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
   val threeSearchResults = SearchResults(query, 3, List(sicCode, sicCode, sicCode), List(Sector("A", "Fake Sector A", 2), Sector("B", "Fake Sector B", 1)))
   val searchResultsEmpty = SearchResults(query, 0, List(), List())
   val choices = List(sicCode)
-  val sicStore = SicStore(sessionId, oneSearchResult, Some(choices))
-  val sicStoreNoChoices = SicStore(sessionId, oneSearchResult, None)
+  val sicStore = SicStore(sessionId, journey, Some(oneSearchResult), Some(choices))
+  val sicStoreNoChoices = SicStore(sessionId, journey, Some(oneSearchResult), None)
 
   "lookupSicCode" should {
 

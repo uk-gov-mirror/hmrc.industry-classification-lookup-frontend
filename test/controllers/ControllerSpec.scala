@@ -25,28 +25,33 @@ import org.mockito.stubbing.OngoingStubbing
 import play.api.i18n.{Lang, Messages, MessagesApi}
 import play.api.mvc.{AnyContent, RequestHeader}
 import play.api.test.FakeRequest
-import services.SicSearchService
-import uk.gov.hmrc.http.SessionKeys
+import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.http.{HeaderNames, SessionKeys}
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.FiniteDuration
 
 trait ControllerSpec extends UnitSpec with MockitoSugar with NoMaterializer with WithFakeApplication {
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
   val mockSicSearchService: SicSearchService = mock[SicSearchService]
+  val mockJourneyService: JourneyService = mock[JourneyService]
   val mockMessagesAPI: MessagesApi = mock[MessagesApi]
 
+  def mockWithJourney(sessionId: String, journey: Option[String]): OngoingStubbing[Future[Option[String]]] = {
+    when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
+      .thenReturn(Future.successful(journey))
+  }
+
   def resetMocks() {
-    reset(mockAuthConnector)
-    reset(mockSicSearchService)
+    reset(mockAuthConnector, mockSicSearchService, mockJourneyService)
   }
 
   implicit class FakeRequestImps[T <: AnyContent](fakeRequest: FakeRequest[T]) {
     def withSessionId(sessionId: String): FakeRequest[T] = {
-      fakeRequest.withHeaders(SessionKeys.sessionId -> sessionId)
+      fakeRequest.withHeaders(SessionKeys.sessionId -> sessionId, HeaderNames.xSessionId -> sessionId)
     }
   }
 }

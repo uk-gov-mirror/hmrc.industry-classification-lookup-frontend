@@ -20,16 +20,16 @@ import com.google.inject.AbstractModule
 import connectors.{ICLConnector, ICLConnectorImpl}
 import controllers._
 import controllers.test.{TestSetupController, TestSetupControllerImpl}
-import services.{SicSearchService, SicSearchServiceImpl}
+import services.{JourneyService, JourneyServiceImpl, SicSearchService, SicSearchServiceImpl}
 import uk.gov.hmrc.play.config.inject.{DefaultServicesConfig, ServicesConfig}
 
 class Module extends AbstractModule {
   override def configure(): Unit = {
 
     bindControllers()
+    bindServices()
 
     bind(classOf[ServicesConfig]) to classOf[DefaultServicesConfig]
-    bind(classOf[SicSearchService]) to classOf[SicSearchServiceImpl]
     bind(classOf[ICLConnector]) to classOf[ICLConnectorImpl]
     bind(classOf[FrontendAuthConnector]) to classOf[FrontendAuthConnectorImpl]
   }
@@ -40,5 +40,10 @@ class Module extends AbstractModule {
     bind(classOf[ConfirmationController]) to classOf[ConfirmationControllerImpl]
     bind(classOf[SignInOutController]) to classOf[SignInOutControllerImpl]
     bind(classOf[TestSetupController]) to classOf[TestSetupControllerImpl]
+  }
+
+  def bindServices() {
+    bind(classOf[SicSearchService]) to classOf[SicSearchServiceImpl]
+    bind(classOf[JourneyService]) to classOf[JourneyServiceImpl]
   }
 }

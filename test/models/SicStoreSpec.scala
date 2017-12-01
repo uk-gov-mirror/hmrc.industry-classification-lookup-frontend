@@ -24,13 +24,15 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 class SicStoreSpec extends UnitSpec {
 
   val query = "testQuery"
-  val dateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
-  val now = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
+  val journey: String = Journey.QUERY_BUILDER
+  val dateTime: DateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
+  val now: JsValue = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
 
   val sicStoreWithChoicesJson : JsValue = Json.parse(
     s"""
       |{
       |  "registrationID" : "12345678",
+      |  "journey" : "$journey",
       |  "search" : {
       |    "query":"$query",
       |    "numFound":1,
@@ -56,6 +58,7 @@ class SicStoreSpec extends UnitSpec {
     s"""
       |{
       |  "registrationID" : "12345678",
+      |   "journey" : "$journey",
       |  "search" : {
       |    "query":"$query",
       |    "numFound":1,
@@ -73,12 +76,13 @@ class SicStoreSpec extends UnitSpec {
 
   val sicStoreWithChoices = SicStore(
     "12345678",
-    SearchResults(
+    journey,
+    Some(SearchResults(
       query,
       1,
       List(SicCode("19283746", "Search Sic Code Result Description")),
       List(Sector("A", "Clearly fake business sector", 22))
-    ),
+    )),
     Some(List(
       SicCode("57384893", "Sic Code Test Description 1"),
       SicCode("11920233", "Sic Code Test Description 2"),
@@ -90,12 +94,13 @@ class SicStoreSpec extends UnitSpec {
 
   val sicStoreNoChoices = SicStore(
     "12345678",
-    SearchResults(
+    journey,
+    Some(SearchResults(
       query,
       1,
       List(SicCode("19283746", "Search Sic Code Result Description")),
       List(Sector("A", "Clearly fake business sector", 22))
-    ),
+    )),
     None,
     dateTime
   )

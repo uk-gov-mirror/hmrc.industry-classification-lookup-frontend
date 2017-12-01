@@ -23,8 +23,9 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 case class SicStore(
   registrationID: String,
-  searchResults: SearchResults,
-  choices: Option[List[SicCode]],
+  journey: String,
+  searchResults: Option[SearchResults] = None,
+  choices: Option[List[SicCode]] = None,
   lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
 )
 
@@ -52,7 +53,8 @@ object SicStore {
   implicit val format: Format[SicStore] =
     (
       (__ \ "registrationID").format[String] and
-      (__ \ "search").format[SearchResults](SearchResults.format) and
+      (__ \ "journey").format[String] and
+      (__ \ "search").formatNullable[SearchResults](SearchResults.format) and
       (__ \ "choices").formatNullable[List[SicCode]] and
       (__ \ "lastUpdated").format[DateTime]
     )(SicStore.apply, unlift(SicStore.unapply))

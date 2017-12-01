@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package models
+package forms
 
-import forms.ConfirmationForm
-import forms.chooseactivity.ChooseActivityForm
+import models.Confirmation
 import play.api.data.FormError
 import uk.gov.hmrc.play.test.UnitSpec
 
-class ConfirmationForm extends UnitSpec {
+class ConfirmationFormSpec extends UnitSpec {
 
   val testForm = ConfirmationForm.form
 

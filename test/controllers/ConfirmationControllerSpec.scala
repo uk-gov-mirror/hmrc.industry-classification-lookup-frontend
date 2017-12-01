@@ -17,7 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
-import models.{SearchResults, Sector, SicCode, SicStore}
+import models._
 import play.api.i18n.MessagesApi
 import services.SicSearchService
 import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
@@ -49,16 +49,18 @@ class ConfirmationControllerSpec extends ControllerSpec with WithFakeApplication
   val sicCodeCode = "12345"
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
+  val journey: String = Journey.QUERY_BUILDER
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
 
   val sicStore = SicStore(
     sessionId,
-    searchResults,
+    journey,
+    Some(searchResults),
     Some(List(sicCode))
   )
 
-  val sicStoreNoChoices = SicStore(sessionId, searchResults, None)
-  val sicStoreEmptyChoiceList = SicStore(sessionId, searchResults, Some(List()))
+  val sicStoreNoChoices = SicStore(sessionId, journey, Some(searchResults), None)
+  val sicStoreEmptyChoiceList = SicStore(sessionId, journey, Some(searchResults), Some(List()))
 
   "show" should {
 
