@@ -21,35 +21,37 @@ import javax.inject.{Inject, Singleton}
 import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.sicsearch.SicSearchForm
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
-import services.SicSearchService
-import uk.gov.hmrc.play.frontend.auth.Actions
+import services.{JourneyService, SicSearchService}
 
 import scala.concurrent.Future
 
 @Singleton
 class SicSearchControllerImpl @Inject()(val messagesApi: MessagesApi,
                                         val sicSearchService: SicSearchService,
+                                        val journeyService: JourneyService,
                                         val authConnector: FrontendAuthConnector) extends SicSearchController
 
-trait SicSearchController extends Actions with I18nSupport {
+trait SicSearchController extends ICLController {
 
   val sicSearchService : SicSearchService
 
   val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
-        Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
+        withJourney { _ =>
+          Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
+        }
   }
 
   val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
     implicit user =>
       implicit request =>
-        withSessionId { sessionId =>
+        withJourney { journey =>
           SicSearchForm.form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.pages.sicsearch(errors))),
-            form => sicSearchService.search(sessionId, form.sicSearch, None).map {
+            form => sicSearchService.search(journey.sessionId, form.sicSearch, None).map {
               case 0 => Ok(views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch)))
               case 1 => Redirect(routes.ConfirmationController.show())
               case _ => Redirect(routes.ChooseActivityController.show())

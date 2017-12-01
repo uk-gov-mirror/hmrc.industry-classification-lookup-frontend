@@ -48,7 +48,7 @@ trait SicSearchService {
   }
 
   def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
-    retrieveSicStore(sessionId).map(_.map(_.searchResults))
+    retrieveSicStore(sessionId).map(_.flatMap(_.searchResults))
   }
 
   def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCode]]] = {

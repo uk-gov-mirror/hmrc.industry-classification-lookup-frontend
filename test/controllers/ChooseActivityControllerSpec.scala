@@ -17,7 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
-import models.{SearchResults, Sector, SicCode, SicStore}
+import models._
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
@@ -53,10 +53,12 @@ class ChooseActivityControllerSpec extends ControllerSpec with WithFakeApplicati
   val query = "testQuery"
   val sicCode = SicCode("12345678", "Test Description")
   val sicCode2 = SicCode("12345679", "Test Description2")
+  val journey: String = Journey.QUERY_BUILDER
+
+  val sicStore = SicStore("TestId", journey, Some(searchResults))
   val noSearchResults = SearchResults(query, 0, List(), List())
   val searchResults = SearchResults(query, 1, List(sicCode), List(Sector(SECTOR_A, "Fake Sector", 1)))
   val multipleSearchResults = SearchResults(query, 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
-  val sicStore = SicStore("TestId", searchResults, None)
 
   "show" should {
 

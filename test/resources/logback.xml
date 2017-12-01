@@ -49,7 +49,7 @@
 
     <logger name="uk.gov" level="OFF"/>
 
-    <logger name="application" level="OFF"/>
+    <logger name="application" level="ERROR"/>
 
     <logger name="connector" level="ERROR">
         <appender-ref ref="STDOUT"/>

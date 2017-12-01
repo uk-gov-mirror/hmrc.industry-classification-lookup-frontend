@@ -18,15 +18,13 @@ package repositories
 
 import javax.inject.{Inject, Singleton}
 
-import models.{SearchResults, SicStore}
+import models.{Journey, SearchResults, SicStore}
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.api.libs.json.{JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.api.indexes.{Index, IndexType}
-import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID, BSONString}
-import reactivemongo.json.BSONFormats
+import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -73,21 +71,24 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   override def updateSearchResults(sessionId: String, searchResults: SearchResults)(implicit ec: ExecutionContext): Future[Boolean] = {
     val selector = sessionIdSelector(sessionId)
 
-    val searchjson = Json.obj("search" -> Json.obj(
-      "query" -> searchResults.query,
-      "numFound" -> searchResults.numFound,
-      "results" -> Json.toJson(searchResults.results),
-      "sectors" -> Json.toJson(searchResults.sectors)
-    ), "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite))
+    val searchjson = Json.obj(
+      "search" -> Json.obj(
+        "query" -> searchResults.query,
+        "numFound" -> searchResults.numFound,
+        "results" -> Json.toJson(searchResults.results),
+        "sectors" -> Json.toJson(searchResults.sectors)
+      ),
+      "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite))
+
     val update = Json.obj("$set" -> searchjson)
 
-    collection.update(selector, update, upsert = true).map(_.ok)
+    collection.update(selector, update).map(_.ok)
   }
 
   override def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     retrieveSicStore(sessionId) flatMap {
       case Some(store) =>
-        store.searchResults.results.find(_.sicCode == sicCode) match {
+        store.searchResults.flatMap(_.results.find(_.sicCode == sicCode)) match {
           case Some(sicCodeToAdd) =>
             val selector = sessionIdSelector(sessionId)
             val choicesjson = Json.obj("choices" -> Json.obj(
@@ -118,6 +119,29 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
         )
         collection.update(selector, update).map(_.nModified == 1)
       case None => Future.successful(false)
+    }
+  }
+
+  private def initJourney(journey: Journey): Future[SicStore] = {
+    val sicStore = SicStore(journey.sessionId, journey.name)
+    collection.insert(Json.toJson(sicStore).as[JsObject]) map (_ => sicStore)
+  }
+
+  def upsertJourney(journey: Journey): Future[SicStore] = {
+    retrieveSicStore(journey.sessionId) flatMap {
+      case Some(sicStore) =>
+        val selector = sessionIdSelector(journey.sessionId)
+        val sicStoreWithJourney = sicStore.copy(journey = journey.name)
+
+        collection.update(selector, Json.toJson(sicStoreWithJourney).as[JsObject]) map { updateResult =>
+          if(updateResult.nModified == 1) {
+            sicStoreWithJourney
+          } else {
+            throw new Exception(s"Did not update sic store with new journey for session id : ${journey.sessionId}" +
+              s" - number of documents modified ${updateResult.nModified}")
+          }
+        }
+      case None => initJourney(journey)
     }
   }
 }
