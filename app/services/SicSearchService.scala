@@ -39,11 +39,11 @@ trait SicSearchService {
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
-  def search(sessionId: String, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+  def search(sessionId: String, query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
       lookupSicCode(sessionId, query)
     } else {
-      searchQuery(sessionId, query, sector)
+      searchQuery(sessionId, query, journey, sector)
     }
   }
 
@@ -73,17 +73,15 @@ trait SicSearchService {
     }
   }
 
-  private[services] def searchQuery(sessionId: String, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
-    iCLConnector.search(query, sector) flatMap ( searchResults => {
+  private[services] def searchQuery(sessionId: String, query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+    iCLConnector.search(query, journey, sector) flatMap ( searchResults => {
         val store = searchResults.numFound match {
-          case 1 =>
-            updateSearchResults(sessionId, searchResults) flatMap { _ =>
-              insertChoice(sessionId, searchResults.results.head.sicCode)
-            }
+          case 1 => updateSearchResults(sessionId, searchResults) flatMap { _ =>
+                      insertChoice(sessionId, searchResults.results.head.sicCode)
+                    }
           case 0 => Future.successful(false)
           case _ => updateSearchResults(sessionId, searchResults)
         }
-
         store map (_ => searchResults.numFound)
       }
     ) recover {

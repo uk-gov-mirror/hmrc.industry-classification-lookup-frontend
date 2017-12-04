@@ -51,7 +51,7 @@ trait SicSearchController extends ICLController {
         withJourney { journey =>
           SicSearchForm.form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.pages.sicsearch(errors))),
-            form => sicSearchService.search(journey.sessionId, form.sicSearch, None).map {
+            form => sicSearchService.search(journey.sessionId, form.sicSearch, journey.name, None).map {
               case 0 => Ok(views.html.pages.sicsearch(SicSearchForm.form, Some(form.sicSearch)))
               case 1 => Redirect(routes.ConfirmationController.show())
               case _ => Redirect(routes.ChooseActivityController.show())

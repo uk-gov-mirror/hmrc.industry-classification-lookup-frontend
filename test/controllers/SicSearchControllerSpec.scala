@@ -89,16 +89,15 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
         "sicSearch" -> ""
       )
 
-      requestWithAuthorisedUser(controller.submit, request) {
-        (response: Future[Result]) =>
-          status(response) shouldBe BAD_REQUEST
+      requestWithAuthorisedUser(controller.submit, request) { result =>
+        status(result) shouldBe BAD_REQUEST
       }
     }
 
     "redirect to choose-business-activity when a search match is found" in new Setup {
       mockWithJourney(sessionId, Some(journey))
 
-      when(mockSicSearchService.search(any(), any(), any())(any[HeaderCarrier]()))
+      when(mockSicSearchService.search(any(), any(), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(2))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
@@ -119,7 +118,7 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
         "sicSearch" -> query
       )
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), eqTo(None))(any[HeaderCarrier]()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(0))
 
       requestWithAuthorisedUser(controller.submit, request) {
@@ -136,7 +135,7 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
         "sicSearch" -> query
       )
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), eqTo(None))(any[HeaderCarrier]()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(1))
 
       requestWithAuthorisedUser(controller.submit, request) {
