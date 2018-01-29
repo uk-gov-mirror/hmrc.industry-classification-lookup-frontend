@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,8 @@ class ICLConnectorSpec extends ConnectorSpec {
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")), List(Sector("A", "Example of a business sector", 1)))
     val sector = "B"
 
-    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&journey=$journey"
-    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector&journey=$journey"
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&queryType=$journey"
+    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector&queryType=$journey"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
