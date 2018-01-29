@@ -54,7 +54,7 @@ trait ICLConnector {
   def search(query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
     val sectorFilter = sector.fold("")(s => s"&sector=$s")
-    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter&journey=$journey") recover {
+    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter&queryType=$journey") recover {
       case e: HttpException =>
         Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}")
         SearchResults(
