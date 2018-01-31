@@ -18,7 +18,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.chooseactivity.ChooseActivityForm
 import models.SearchResults
@@ -33,32 +32,34 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class ChooseActivityControllerImpl @Inject()(val messagesApi: MessagesApi,
                                              val sicSearchService: SicSearchService,
                                              val journeyService: JourneyService,
-                                             val authConnector: FrontendAuthConnector) extends ChooseActivityController
+                                             val authConnector: FrontendAuthConnector) extends ChooseActivityController {
+}
 
 trait ChooseActivityController extends ICLController {
 
   val sicSearchService : SicSearchService
 
-  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  val show: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
             val numResults = searchResults.numFound
             numResults match {
-              case 1 => sicSearchService.insertChoice(journey.sessionId,searchResults.results.head.sicCode) map { _ =>
-                          Redirect(routes.ConfirmationController.show())
-                        }
+              case 1 => sicSearchService.insertChoice(journey.sessionId, searchResults.results.head.sicCode) map { _ =>
+                Redirect(routes.ConfirmationController.show())
+              }
               case 0 => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
               case _ => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults)))
             }
           }
         }
+      }
   }
 
-  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  val submit: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
             ChooseActivityForm.form.bindFromRequest.fold(
@@ -71,17 +72,19 @@ trait ChooseActivityController extends ICLController {
             )
           }
         }
+      }
   }
 
-  def filter(sectorCode: String): Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  def filter(sectorCode: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
             sicSearchService.search(journey.sessionId, searchResults.query, journey.name, Some(sectorCode)).map { _ =>
               Redirect(routes.ChooseActivityController.show())
             }
           }
+        }
       }
   }
 

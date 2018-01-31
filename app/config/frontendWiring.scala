@@ -19,6 +19,7 @@ package config
 import javax.inject.{Inject, Singleton}
 
 import play.api.mvc.Call
+import uk.gov.hmrc.auth.core.PlayAuthConnector
 import uk.gov.hmrc.http.hooks.HttpHooks
 import uk.gov.hmrc.http.{HttpDelete, HttpGet, HttpPost, HttpPut}
 import uk.gov.hmrc.play.audit.http.HttpAuditing
@@ -26,7 +27,6 @@ import uk.gov.hmrc.play.audit.http.config.AuditingConfig
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.config.{AppName, RunMode}
 import uk.gov.hmrc.play.config.inject.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.frontend.config.LoadAuditingConfig
 import uk.gov.hmrc.play.frontend.filters.MicroserviceFilterSupport
 import uk.gov.hmrc.play.http.ws.{WSDelete, WSGet, WSPost, WSPut}
@@ -47,9 +47,9 @@ object WSHttp extends WSHttp
 @Singleton
 class FrontendAuthConnectorImpl @Inject()(val config: ServicesConfig) extends FrontendAuthConnector
 
-trait FrontendAuthConnector extends AuthConnector with WSHttp {
+trait FrontendAuthConnector extends PlayAuthConnector with WSHttp {
   val config: ServicesConfig
-  val serviceUrl = config.baseUrl("auth")
+  val serviceUrl: String = config.baseUrl("auth")
   lazy val http = WSHttp
 }
 

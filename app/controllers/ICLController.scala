@@ -16,16 +16,15 @@
 
 package controllers
 
+import auth.AuthFunction
 import models.Journey
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Request, Result}
 import services.JourneyService
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
-trait ICLController extends FrontendController with Actions with I18nSupport {
+trait ICLController extends AuthFunction with I18nSupport {
 
   val journeyService: JourneyService
 
@@ -44,4 +43,5 @@ trait ICLController extends FrontendController with Actions with I18nSupport {
       }
     }
   }
+
 }

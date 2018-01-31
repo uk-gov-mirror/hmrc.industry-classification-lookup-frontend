@@ -17,6 +17,7 @@
 package controllers
 
 import builders.AuthBuilders
+import config.FrontendAuthConnector
 import models._
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -26,7 +27,7 @@ import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.{JourneyService, SicSearchService}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.Future
@@ -36,7 +37,7 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
   trait Setup {
     val controller: ChooseActivityController = new ChooseActivityController {
       override val sicSearchService: SicSearchService = mockSicSearchService
-      override val authConnector: AuthConnector = mockAuthConnector
+      override val authConnector: FrontendAuthConnector = mockAuthConnector
       implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
       override val journeyService: JourneyService = mockJourneyService
     }
@@ -126,17 +127,20 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
       }
     }
 
-    "should return a 303 for an unauthorised user" in new Setup {
-      val result = controller.show()(FakeRequest())
-      status(result) shouldBe SEE_OTHER
+    "return a 303 for an unauthorised user" in new Setup {
+      showWithUnauthorisedUser(controller.show()) {
+        (response: Future[Result]) =>
+          status(response) shouldBe SEE_OTHER
+      }
     }
   }
 
   "Submit" should {
 
     "return a 303 for an unauthorised user" in new Setup {
-      val result = controller.submit()(FakeRequest())
-      status(result) shouldBe SEE_OTHER
+      submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
+        status(request) shouldBe SEE_OTHER
+      }
     }
 
     "return the choices list page for an authorised user with a selected option" in new Setup {

@@ -16,11 +16,12 @@
 
 package controllers
 
+import config.FrontendAuthConnector
 import play.api.i18n.MessagesApi
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import services.JourneyService
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
@@ -29,7 +30,7 @@ class ICLControllerSpec extends ControllerSpec {
   trait Setup {
     val controller: ICLController = new ICLController {
       override val journeyService: JourneyService = mockJourneyService
-      override val authConnector: AuthConnector = mockAuthConnector
+      override val authConnector: FrontendAuthConnector = mockAuthConnector
       override val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
     }
   }

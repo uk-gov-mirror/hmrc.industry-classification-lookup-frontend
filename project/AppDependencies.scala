@@ -4,6 +4,7 @@ import play.core.PlayVersion
 private object AppDependencies {
   val compile = Seq(
     "uk.gov.hmrc" %% "frontend-bootstrap"     % "8.11.0",
+    "uk.gov.hmrc" %% "auth-client"            % "2.5.0",
     "uk.gov.hmrc" %% "play-whitelist-filter"  % "2.0.0",
     "uk.gov.hmrc" %% "play-reactivemongo"     % "5.2.0"
   )

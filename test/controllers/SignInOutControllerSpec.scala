@@ -19,7 +19,7 @@ import builders.AuthBuilders
 import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.test.WithFakeApplication
 
 class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {

@@ -18,7 +18,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.sicsearch.SicSearchForm
 import play.api.i18n.MessagesApi
@@ -37,17 +36,18 @@ trait SicSearchController extends ICLController {
 
   val sicSearchService : SicSearchService
 
-  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
+  val show: Action[AnyContent] = Action.async {
       implicit request =>
-        withJourney { _ =>
-          Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
+        authorised {
+          withJourney { _ =>
+            Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
+          }
         }
   }
 
-  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  val submit: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withJourney { journey =>
           SicSearchForm.form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.pages.sicsearch(errors))),
@@ -58,5 +58,6 @@ trait SicSearchController extends ICLController {
             }
           )
         }
+      }
   }
 }
