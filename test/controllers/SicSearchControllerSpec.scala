@@ -27,7 +27,7 @@ import play.api.test.Helpers._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import play.api.test.Helpers.redirectLocation
 import services.{JourneyService, SicSearchService}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
@@ -53,8 +53,9 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
   "show" should {
 
     "return 303 for an unauthorised user" in new Setup {
-      val result: Result = controller.show()(FakeRequest())
-      status(result) shouldBe SEE_OTHER
+      showWithUnauthorisedUser(controller.show()) { request =>
+        status(request) shouldBe SEE_OTHER
+      }
     }
 
     "return 200 for an authorised user with an initialised journey" in new Setup {
@@ -78,8 +79,9 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
   "submit" should {
 
     "return 303 for an unauthorised user" in new Setup {
-      val result: Result = controller.submit()(FakeRequest())
-      status(result) shouldBe SEE_OTHER
+      submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
+        status(request) shouldBe SEE_OTHER
+      }
     }
 
     "return 400 for an authorised user with no data" in new Setup {

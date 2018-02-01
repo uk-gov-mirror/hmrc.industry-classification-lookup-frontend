@@ -18,17 +18,14 @@ package controllers.test
 
 import javax.inject.Inject
 
-import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import controllers.ICLController
 import models.Journey
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import services.JourneyService
-import uk.gov.hmrc.play.frontend.auth.Actions
-import uk.gov.hmrc.play.frontend.controller.FrontendController
 
 import scala.concurrent.Future
 
@@ -44,23 +41,23 @@ class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
 trait TestSetupController extends ICLController {
 
   val journeyService: JourneyService
-
   val form: Form[String] = Form(single("journey" -> nonEmptyText))
 
-  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  val show: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withSessionId { sessionId =>
           journeyService.retrieveJourney(sessionId) map {
             case Some(journey) => Ok(views.html.test.SetupJourneyView(form.fill(journey)))
-            case None          => Ok(views.html.test.SetupJourneyView(form))
+            case None => Ok(views.html.test.SetupJourneyView(form))
           }
         }
+      }
   }
 
-  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
-    implicit user =>
-      implicit request =>
+  val submit: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
         withSessionId { sessionId =>
           form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.test.SetupJourneyView(errors))),
@@ -72,6 +69,7 @@ trait TestSetupController extends ICLController {
             }
           )
         }
+      }
   }
 }
 

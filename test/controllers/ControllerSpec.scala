@@ -18,6 +18,7 @@ package controllers
 
 import akka.actor.Cancellable
 import akka.stream.{Attributes, ClosedShape, Graph, Materializer}
+import config.FrontendAuthConnector
 import org.scalatest.mockito.MockitoSugar
 import org.mockito.Mockito.{reset, when}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -27,7 +28,6 @@ import play.api.mvc.{AnyContent, RequestHeader}
 import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.http.{HeaderNames, SessionKeys}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -35,7 +35,7 @@ import scala.concurrent.duration.FiniteDuration
 
 trait ControllerSpec extends UnitSpec with MockitoSugar with NoMaterializer with WithFakeApplication {
 
-  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val mockAuthConnector: FrontendAuthConnector = mock[FrontendAuthConnector]
   val mockSicSearchService: SicSearchService = mock[SicSearchService]
   val mockJourneyService: JourneyService = mock[JourneyService]
   val mockMessagesAPI: MessagesApi = mock[MessagesApi]

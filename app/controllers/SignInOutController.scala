@@ -18,12 +18,14 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import auth.SicSearchRegime
+import auth.AuthFunction
 import config.FrontendAuthConnector
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent}
+import uk.gov.hmrc.auth.core.AuthorisedFunctions
 import uk.gov.hmrc.play.config.ServicesConfig
-import uk.gov.hmrc.play.frontend.auth.Actions
+
+import scala.concurrent.Future
 
 @Singleton
 class SignInOutControllerImpl @Inject()(val messagesApi: MessagesApi,
@@ -32,21 +34,23 @@ class SignInOutControllerImpl @Inject()(val messagesApi: MessagesApi,
   lazy val compRegFEURI = getConfString("company-registration-frontend.www.uri", "")
 }
 
-trait SignInOutController extends Actions with I18nSupport {
+trait SignInOutController extends I18nSupport with AuthorisedFunctions with AuthFunction {
 
   val compRegFEURL: String
   val compRegFEURI: String
 
-  val postSignIn: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence) {
-    implicit user =>
-      implicit request =>
-        Redirect(s"$compRegFEURL$compRegFEURI/post-sign-in")
+  val postSignIn: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
+        Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/post-sign-in"))
+      }
   }
 
-  def signOut: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence) {
-    implicit user =>
-      implicit request =>
-        Redirect(s"$compRegFEURL$compRegFEURI/questionnaire").withNewSession
+  def signOut: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
+        Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/questionnaire").withNewSession)
+      }
   }
-
 }
+

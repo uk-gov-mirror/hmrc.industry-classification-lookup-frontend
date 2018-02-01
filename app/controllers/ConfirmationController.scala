@@ -18,7 +18,6 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import auth.SicSearchRegime
 import config.FrontendAuthConnector
 import forms.ConfirmationForm
 import models.SicCode
@@ -26,7 +25,6 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Result}
 import services.{JourneyService, SicSearchService}
 import models.Confirmation.{NO, YES}
-
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -38,22 +36,23 @@ class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
 trait ConfirmationController extends ICLController {
   val sicSearchService: SicSearchService
 
-  val show: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val show: Action[AnyContent] = Action.async {
     implicit request =>
-      implicit user =>
+      authorised {
         withJourney { journey =>
-          withCurrentUsersChoices(journey.sessionId){ choices =>
+          withCurrentUsersChoices(journey.sessionId) { choices =>
             Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
           }
         }
+      }
   }
 
-  val submit: Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  val submit: Action[AnyContent] = Action.async {
     implicit request =>
-      implicit user =>
+      authorised {
         withJourney { journey =>
-          withCurrentUsersChoices(journey.sessionId){ choices =>
-            if(choices.size >= 4){
+          withCurrentUsersChoices(journey.sessionId) { choices =>
+            if (choices.size >= 4) {
               Future.successful(Ok("End of journey"))
             } else {
               ConfirmationForm.form.bindFromRequest().fold(
@@ -66,18 +65,20 @@ trait ConfirmationController extends ICLController {
             }
           }
         }
+      }
   }
 
-  def removeChoice(sicCode: String): Action[AnyContent] = AuthorisedFor(taxRegime = new SicSearchRegime, pageVisibility = GGConfidence).async {
+  def removeChoice(sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      implicit user =>
+      authorised {
         withJourney { journey =>
           sicSearchService.removeChoice(journey.sessionId, sicCode) flatMap { _ =>
-            withCurrentUsersChoices(journey.sessionId){ choices =>
+            withCurrentUsersChoices(journey.sessionId) { choices =>
               Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
             }
           }
         }
+      }
   }
 
   private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {

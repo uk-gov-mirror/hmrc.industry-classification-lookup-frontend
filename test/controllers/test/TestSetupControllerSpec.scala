@@ -26,10 +26,9 @@ import play.api.test.Helpers._
 import services.JourneyService
 import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import uk.gov.hmrc.play.frontend.auth.connectors.AuthConnector
+import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with MockMessages {
 
