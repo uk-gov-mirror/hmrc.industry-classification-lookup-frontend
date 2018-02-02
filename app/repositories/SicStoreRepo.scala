@@ -21,12 +21,14 @@ import javax.inject.{Inject, Singleton}
 import models.{Journey, SearchResults, SicStore}
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Configuration
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
+import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString, Macros}
+import reactivemongo.play.json.BSONFormats
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
+import reactivemongo.play.json.ImplicitBSONHandlers.BSONDocumentWrites
 
 import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
@@ -80,7 +82,7 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
       ),
       "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite))
 
-    val update = Json.obj("$set" -> searchjson)
+    val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(searchjson).get)
 
     collection.update(selector, update).map(_.ok)
   }
@@ -91,13 +93,20 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
         store.searchResults.flatMap(_.results.find(_.sicCode == sicCode)) match {
           case Some(sicCodeToAdd) =>
             val selector = sessionIdSelector(sessionId)
+
             val choicesjson = Json.obj("choices" -> Json.obj(
               "code" -> sicCodeToAdd.sicCode,
               "desc" -> sicCodeToAdd.description
             ))
-            val update = Json.obj("$addToSet" -> choicesjson, "$set" -> Json.obj(
+
+            val set = Json.obj(
               "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite)
-            ))
+            )
+
+            val update = BSONDocument(
+              "$addToSet" -> BSONFormats.readAsBSONValue(choicesjson).get,
+              "$set" -> BSONFormats.readAsBSONValue(set).get
+            )
 
             collection.update(selector, update, upsert = true).map(_.ok)
           case None => Future.successful(false)
@@ -110,13 +119,20 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     retrieveSicStore(sessionId) flatMap {
       case Some(_) =>
         val selector = sessionIdSelector(sessionId)
-        val update = Json.obj(
-          "$pull" -> Json.obj(
-            "choices" -> Json.obj("code" -> sicCode)
-          ), "$set" -> Json.obj(
-            "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite)
-          )
+
+        val pull = Json.obj(
+          "choices" -> Json.obj("code" -> sicCode)
         )
+
+        val set = Json.obj(
+          "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite)
+        )
+
+        val update = BSONDocument(
+          "$pull" -> BSONFormats.readAsBSONValue(pull).get,
+          "$set" ->  BSONFormats.readAsBSONValue(set).get
+        )
+
         collection.update(selector, update).map(_.nModified == 1)
       case None => Future.successful(false)
     }
@@ -124,16 +140,22 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
 
   private def initJourney(journey: Journey): Future[SicStore] = {
     val sicStore = SicStore(journey.sessionId, journey.name)
-    collection.insert(Json.toJson(sicStore).as[JsObject]) map (_ => sicStore)
+    val insertion = Json.toJson(sicStore).as[JsObject]
+    val document = BSONDocument("$set" -> BSONFormats.readAsBSONValue(insertion).get)
+    val selector = sessionIdSelector(journey.sessionId)
+    collection.update(selector, document, upsert = true) map (_ => sicStore)
   }
 
   def upsertJourney(journey: Journey): Future[SicStore] = {
+
     retrieveSicStore(journey.sessionId) flatMap {
       case Some(sicStore) =>
         val selector = sessionIdSelector(journey.sessionId)
         val sicStoreWithJourney = sicStore.copy(journey = journey.name)
+        val json = Json.toJson(sicStoreWithJourney).as[JsObject]
+        val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(json).get)
 
-        collection.update(selector, Json.toJson(sicStoreWithJourney).as[JsObject]) map { updateResult =>
+        collection.update(selector, update, upsert = true) map { updateResult =>
           if(updateResult.nModified == 1) {
             sicStoreWithJourney
           } else {

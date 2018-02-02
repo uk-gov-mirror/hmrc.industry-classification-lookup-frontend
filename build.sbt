@@ -28,6 +28,7 @@ lazy val microservice = Project(appName, file("."))
     retrieveManaged                               := true,
     evictionWarningOptions in update              := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     routesGenerator                               := StaticRoutesGenerator,
+    cancelable in Global                          := true,
     Keys.fork in IntegrationTest                  := false,
     testGrouping in IntegrationTest               := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
     parallelExecution in IntegrationTest          := false,
