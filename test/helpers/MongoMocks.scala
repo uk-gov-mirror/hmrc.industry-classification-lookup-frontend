@@ -25,7 +25,7 @@ import play.api.libs.json.JsObject
 import reactivemongo.api.commands.{DefaultWriteResult, UpdateWriteResult, WriteConcern}
 import reactivemongo.api.indexes.CollectionIndexesManager
 import reactivemongo.api.{CollectionProducer, Cursor, DefaultDB, FailoverStrategy}
-import reactivemongo.json.collection.{JSONCollection, JSONQueryBuilder}
+import reactivemongo.play.json.collection.{JSONCollection, JSONQueryBuilder}
 
 import scala.collection.generic.CanBuildFrom
 import scala.concurrent.{ExecutionContext, Future}
