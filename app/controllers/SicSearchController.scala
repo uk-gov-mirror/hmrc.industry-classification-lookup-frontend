@@ -16,33 +16,37 @@
 
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
-import config.FrontendAuthConnector
+import auth.SicSearchExternalURLs
+import config.AppConfig
 import forms.sicsearch.SicSearchForm
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
-@Singleton
 class SicSearchControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                        val servicesConfig: ServicesConfig,
+                                        val appConfig: AppConfig,
                                         val sicSearchService: SicSearchService,
                                         val journeyService: JourneyService,
-                                        val authConnector: FrontendAuthConnector) extends SicSearchController
+                                        val authConnector: AuthConnector) extends SicSearchController with SicSearchExternalURLs
 
 trait SicSearchController extends ICLController {
 
   val sicSearchService : SicSearchService
 
   val show: Action[AnyContent] = Action.async {
-      implicit request =>
-        authorised {
-          withJourney { _ =>
-            Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
-          }
+    implicit request =>
+      authorised {
+        withJourney { _ =>
+          Future.successful(Ok(views.html.pages.sicsearch(SicSearchForm.form)))
         }
+      }
   }
 
   val submit: Action[AnyContent] = Action.async {

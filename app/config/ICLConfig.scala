@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package views
+package config
 
-import org.scalatest.mockito.MockitoSugar
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
+import javax.inject.Inject
 
-class SicSearchViewSpec extends UnitSpec with I18nSupport with MockitoSugar with WithFakeApplication{
-  implicit val request = FakeRequest()
-  implicit val messagesApi : MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.play.config.ServicesConfig
+
+class ICLConfig @Inject()(config: Configuration, enviro: Environment) extends ServicesConfig {
+  override protected def mode                 = enviro.mode
+  override protected def runModeConfiguration = config
 }

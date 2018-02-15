@@ -16,19 +16,16 @@
 
 package services
 
+import helpers.UnitTestSpec
 import models.{Journey, SicStore}
-import org.scalatest.mockito.MockitoSugar
-import repositories.SicStoreMongoRepository
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
+import repositories.SicStoreMongoRepository
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class JourneyServiceSpec extends UnitSpec with MockitoSugar {
-
-  val mockSicStoreRepo: SicStoreMongoRepository = mock[SicStoreMongoRepository]
+class JourneyServiceSpec extends UnitTestSpec {
 
   trait Setup {
     val service: JourneyService = new JourneyService {
@@ -47,8 +44,9 @@ class JourneyServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.upsertJourney(eqTo(journey)))
         .thenReturn(Future.successful(sicStore))
 
-      val result: SicStore = service.upsertJourney(journey)
-      result shouldBe sicStore
+      awaitAndAssert(service.upsertJourney(journey)) {
+        _ mustBe sicStore
+      }
     }
   }
 
@@ -58,16 +56,18 @@ class JourneyServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      val result: Option[String] = service.retrieveJourney(sessionId)
-      result shouldBe Some(journeyName)
+      awaitAndAssert(service.retrieveJourney(sessionId)) {
+        _ mustBe Some(journeyName)
+      }
     }
 
     "return a None when a sic store is not found" in new Setup {
       when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(None))
 
-      val result: Option[String] = service.retrieveJourney(sessionId)
-      result shouldBe None
+      awaitAndAssert(service.retrieveJourney(sessionId)) {
+        _ mustBe None
+      }
     }
   }
 

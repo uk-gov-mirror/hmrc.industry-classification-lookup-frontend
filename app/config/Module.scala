@@ -16,34 +16,42 @@
 
 package config
 
+import _root_.connectors.{ICLConnector, ICLConnectorImpl}
 import com.google.inject.AbstractModule
-import connectors.{ICLConnector, ICLConnectorImpl}
 import controllers._
 import controllers.test.{TestSetupController, TestSetupControllerImpl}
 import services.{JourneyService, JourneyServiceImpl, SicSearchService, SicSearchServiceImpl}
-import uk.gov.hmrc.play.config.inject.{DefaultServicesConfig, ServicesConfig}
+import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
 class Module extends AbstractModule {
   override def configure(): Unit = {
-
-    bindControllers()
+    bindOther()
+    bindConnectors()
     bindServices()
-
-    bind(classOf[ServicesConfig]) to classOf[DefaultServicesConfig]
-    bind(classOf[ICLConnector]) to classOf[ICLConnectorImpl]
-    bind(classOf[FrontendAuthConnector]) to classOf[FrontendAuthConnectorImpl]
+    bindControllers()
   }
 
-  def bindControllers() {
-    bind(classOf[SicSearchController]) to classOf[SicSearchControllerImpl]
-    bind(classOf[ChooseActivityController]) to classOf[ChooseActivityControllerImpl]
-    bind(classOf[ConfirmationController]) to classOf[ConfirmationControllerImpl]
-    bind(classOf[SignInOutController]) to classOf[SignInOutControllerImpl]
-    bind(classOf[TestSetupController]) to classOf[TestSetupControllerImpl]
+  private def bindOther(): Unit = {
+    bind(classOf[ServicesConfig]).to(classOf[ICLConfig]).asEagerSingleton()
+    bind(classOf[AkamaiWhitelistFilter]).to(classOf[WhitelistFilter]).asEagerSingleton()
+    bind(classOf[AppConfig]).to(classOf[FrontendAppConfig]).asEagerSingleton()
   }
 
-  def bindServices() {
-    bind(classOf[SicSearchService]) to classOf[SicSearchServiceImpl]
-    bind(classOf[JourneyService]) to classOf[JourneyServiceImpl]
+  private def bindControllers() {
+    bind(classOf[SicSearchController]).to(classOf[SicSearchControllerImpl]).asEagerSingleton()
+    bind(classOf[ChooseActivityController]).to(classOf[ChooseActivityControllerImpl]).asEagerSingleton()
+    bind(classOf[ConfirmationController]).to(classOf[ConfirmationControllerImpl]).asEagerSingleton()
+    bind(classOf[SignInOutController]).to(classOf[SignInOutControllerImpl]).asEagerSingleton()
+    bind(classOf[TestSetupController]).to(classOf[TestSetupControllerImpl]).asEagerSingleton()
+  }
+
+  private def bindServices() {
+    bind(classOf[SicSearchService]).to(classOf[SicSearchServiceImpl]).asEagerSingleton()
+    bind(classOf[JourneyService]).to(classOf[JourneyServiceImpl]).asEagerSingleton()
+  }
+
+  private def bindConnectors(): Unit = {
+    bind(classOf[ICLConnector]).to(classOf[ICLConnectorImpl]).asEagerSingleton()
   }
 }

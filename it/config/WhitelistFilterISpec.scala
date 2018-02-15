@@ -24,23 +24,25 @@ import helpers.Base64Helper._
 class WhitelistFilterISpec extends ClientSpec {
 
   val extraConfig: Map[String, Any] = Map(
+    "play.http.filters" -> "config.ProductionFilters",
     "whitelist-excluded" -> "/ping/ping,/healthcheck".toBase64,
     "whitelist" -> "11.22.33.44".toBase64
   )
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
-    .global(ProductionFrontendGlobal)
     .configure(testAppConfig ++ extraConfig)
     .build()
 
   "FrontendAppConfig must return a valid config item" when {
+    lazy val frontendAppConfig = app.injector.instanceOf[FrontendAppConfig]
+
 
     "the whitelist exclusion paths are requested" in {
-      FrontendAppConfig.whitelistExcluded mustBe Seq("/ping/ping", "/healthcheck")
+      frontendAppConfig.whitelistExcluded mustBe Seq("/ping/ping", "/healthcheck")
     }
 
     "the whitelist IPs are requested" in {
-      FrontendAppConfig.whitelist mustBe Seq("11.22.33.44")
+      frontendAppConfig.whitelist mustBe Seq("11.22.33.44")
     }
   }
 

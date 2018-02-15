@@ -14,33 +14,33 @@
  * limitations under the License.
  */
 
-package models
+package forms
 
 import forms.chooseactivity.ChooseActivityForm
+import helpers.UnitTestSpec
+import models.ChooseActivity
 import play.api.data.FormError
-import uk.gov.hmrc.play.test.UnitSpec
 
-class ChooseActivityFormSpec extends UnitSpec {
+class ChooseActivityFormSpec extends UnitTestSpec {
 
   val testForm = ChooseActivityForm.form
 
   "Binding BusinessActivityFormSpec to a model" should {
     "Bind successfully with full data" in {
-
-      val data = Map("code" -> "12345678")
-      val model = ChooseActivity(code = "12345678")
+      val data      = Map("code" -> "12345678")
+      val model     = ChooseActivity(code = "12345678")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
-      boundForm shouldBe model
+      boundForm mustBe model
     }
 
     "Provide the correct error when nothing was selected" in {
-      val data = Map("code" -> "")
-      val model = Seq(FormError("code", "errors.invalid.sic.noSelection"))
+      val data      = Map("code" -> "")
+      val model     = Seq(FormError("code", "errors.invalid.sic.noSelection"))
       val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
 
-      boundForm.errors shouldBe model
-      boundForm.data shouldBe data
+      boundForm.errors mustBe model
+      boundForm.data mustBe data
     }
   }
 

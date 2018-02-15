@@ -16,24 +16,27 @@
 
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
-import config.FrontendAuthConnector
+import auth.SicSearchExternalURLs
+import config.AppConfig
 import forms.chooseactivity.ChooseActivityForm
 import models.SearchResults
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Result}
 import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-@Singleton
 class ChooseActivityControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                             val servicesConfig: ServicesConfig,
+                                             val appConfig: AppConfig,
                                              val sicSearchService: SicSearchService,
                                              val journeyService: JourneyService,
-                                             val authConnector: FrontendAuthConnector) extends ChooseActivityController {
-}
+                                             val authConnector: AuthConnector) extends ChooseActivityController with SicSearchExternalURLs
 
 trait ChooseActivityController extends ICLController {
 

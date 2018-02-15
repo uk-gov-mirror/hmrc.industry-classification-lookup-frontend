@@ -17,15 +17,15 @@
 package auth
 
 import play.api.Logger
-import uk.gov.hmrc.auth.core.AuthorisedFunctions
 import play.api.mvc._
-import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.play.frontend.controller.FrontendController
+import uk.gov.hmrc.auth.core.{AuthorisedFunctions, _}
+import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
 
-
 trait AuthFunction extends FrontendController with AuthorisedFunctions {
+
+  val loginURL: String
 
   def authorised(body: => Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
     authorised() {
@@ -34,11 +34,10 @@ trait AuthFunction extends FrontendController with AuthorisedFunctions {
   }
 
   def authErrorHandling()(implicit request: Request[AnyContent]):PartialFunction[Throwable, Result] = {
-    case _: NoActiveSession => Redirect(SicSearchExternalURLs.loginURL)
+    case _: NoActiveSession => Redirect(loginURL)
     case e: AuthorisationException => {
       Logger.error("Unexpected auth exception ", e)
       InternalServerError
     }
   }
-
 }

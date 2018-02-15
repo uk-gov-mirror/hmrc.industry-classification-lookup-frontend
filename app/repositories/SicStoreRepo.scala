@@ -21,18 +21,18 @@ import javax.inject.{Inject, Singleton}
 import models.{Journey, SearchResults, SicStore}
 import org.joda.time.{DateTime, DateTimeZone}
 import play.api.Configuration
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString, Macros}
+import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
 import reactivemongo.play.json.BSONFormats
+import reactivemongo.play.json.ImplicitBSONHandlers.BSONDocumentWrites
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
-import reactivemongo.play.json.ImplicitBSONHandlers.BSONDocumentWrites
 
 import scala.collection.Seq
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SicStoreRepo @Inject()(configuration: Configuration, mongo: ReactiveMongoComponent) {

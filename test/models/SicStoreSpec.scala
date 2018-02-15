@@ -16,12 +16,12 @@
 
 package models
 
+import helpers.UnitTestSpec
 import org.joda.time.DateTime
-import uk.gov.hmrc.play.test.UnitSpec
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-class SicStoreSpec extends UnitSpec {
+class SicStoreSpec extends UnitTestSpec {
 
   val query = "testQuery"
   val journey: String = Journey.QUERY_BUILDER
@@ -108,19 +108,19 @@ class SicStoreSpec extends UnitSpec {
   "SicStore" should {
 
     "be able to be parsed into a json structure with choices" in {
-      Json.toJson(sicStoreWithChoices)(SicStore.format) shouldBe sicStoreWithChoicesJson
+      Json.toJson(sicStoreWithChoices)(SicStore.format) mustBe sicStoreWithChoicesJson
     }
 
     "be able to be parsed into a json structure without choices" in {
-      Json.toJson(sicStoreNoChoices)(SicStore.format) shouldBe sicStoreNoChoicesJson
+      Json.toJson(sicStoreNoChoices)(SicStore.format) mustBe sicStoreNoChoicesJson
     }
 
     "be able to be parsed from json structure with choices" in {
-      Json.fromJson(sicStoreWithChoicesJson)(SicStore.format) shouldBe JsSuccess(sicStoreWithChoices)
+      Json.fromJson(sicStoreWithChoicesJson)(SicStore.format) mustBe JsSuccess(sicStoreWithChoices)
     }
 
     "be able to be parsed from json structure without choices" in {
-      Json.fromJson(sicStoreNoChoicesJson)(SicStore.format) shouldBe JsSuccess(sicStoreNoChoices)
+      Json.fromJson(sicStoreNoChoicesJson)(SicStore.format) mustBe JsSuccess(sicStoreNoChoices)
     }
   }
 }

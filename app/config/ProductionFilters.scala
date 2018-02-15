@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package auth
+package config
 
-import uk.gov.hmrc.play.config.ServicesConfig
+import javax.inject.Inject
 
-trait SicSearchExternalURLs {
-  val servicesConfig: ServicesConfig
+import play.api.http.DefaultHttpFilters
+import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
+import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
-  private[SicSearchExternalURLs] lazy val companyAuthHost = servicesConfig.getConfString("auth.company-auth.url","")
-  private[SicSearchExternalURLs] lazy val loginCallback   = servicesConfig.getConfString("auth.login-callback.url","")
-  private[SicSearchExternalURLs] lazy val loginPath       = servicesConfig.getConfString("auth.login_path","")
-
-  val loginURL    = s"$companyAuthHost$loginPath"
-  val continueURL = s"$loginCallback???"
-}
+class ProductionFilters @Inject()(defaultFilters: FrontendFilters, whitelistFilter: AkamaiWhitelistFilter)
+  extends DefaultHttpFilters(defaultFilters.filters :+ whitelistFilter: _*)

@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-package views
+package views.pages
 
 import forms.chooseactivity.ChooseActivityForm
+import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models.{SearchResults, Sector, SicCode}
 import org.jsoup.Jsoup
-import org.scalatest.mockito.MockitoSugar
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.I18nSupport
 import play.api.test.FakeRequest
-import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 import views.html.pages.{chooseactivity => ChooseActivityPage}
 
-class ChooseActivityViewSpec extends UnitSpec with I18nSupport with MockitoSugar with WithFakeApplication {
+class ChooseActivityViewSpec extends UnitTestSpec with UnitTestFakeApp with I18nSupport {
   implicit val request: FakeRequest[_] = FakeRequest()
-  implicit val messagesApi : MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+  override def messagesApi = testMessagesApi
 
   val query = "test query"
 
@@ -40,18 +39,15 @@ class ChooseActivityViewSpec extends UnitSpec with I18nSupport with MockitoSugar
     lazy val document = Jsoup.parse(view.body)
 
     "have the correct title" in {
-      document.getElementById("page-title").text shouldBe messagesApi("page.icl.chooseactivity.heading")
+      document.getElementById("page-title").text mustBe messagesApi("page.icl.chooseactivity.heading")
     }
 
     "have a back link" in {
-      document.getElementById("back").text shouldBe messagesApi("app.common.back")
+      document.getElementById("back").text mustBe messagesApi("app.common.back")
     }
 
     "have the correct sic code displayed as your choice" in {
-      document.getElementById("search-term").text shouldBe s"'$query'"
+      document.getElementById("search-term").text mustBe s"'$query'"
     }
-
   }
-
 }
-

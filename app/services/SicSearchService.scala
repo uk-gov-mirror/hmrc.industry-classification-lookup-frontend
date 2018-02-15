@@ -16,18 +16,17 @@
 
 package services
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
 import connectors.ICLConnector
 import models.{SearchResults, SicCode, SicStore}
 import play.api.Logger
 import repositories.{SicStoreRepo, SicStoreRepository}
 import uk.gov.hmrc.http.HeaderCarrier
-
-import scala.concurrent.{ExecutionContext, Future}
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-@Singleton
+import scala.concurrent.{ExecutionContext, Future}
+
 class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
                                      sicStoreRepo: SicStoreRepo) extends SicSearchService {
   val sicStoreRepository: SicStoreRepository = sicStoreRepo.repo

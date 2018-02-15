@@ -16,32 +16,32 @@
 
 package controllers
 
-import builders.AuthBuilders
+import config.AppConfig
+import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models.Journey
-import uk.gov.hmrc.http.HeaderCarrier
-import org.mockito.Mockito._
-import play.api.i18n.MessagesApi
-import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import play.api.test.Helpers.redirectLocation
+import org.mockito.Mockito._
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
+import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
-class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
+class SicSearchControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
-  trait Setup {
-    val controller: SicSearchController = new SicSearchController {
+  class Setup {
+    val controller: SicSearchController = new SicSearchController with I18nSupport {
+      override val loginURL = "/test/login"
+
+      override implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
       override val sicSearchService: SicSearchService = mockSicSearchService
       override val authConnector: AuthConnector = mockAuthConnector
-      implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+      implicit val messagesApi: MessagesApi = testMessagesApi
       override val journeyService: JourneyService = mockJourneyService
     }
-
-    resetMocks()
   }
 
   val sessionId = "session-12345"
@@ -53,25 +53,25 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
   "show" should {
 
     "return 303 for an unauthorised user" in new Setup {
-      showWithUnauthorisedUser(controller.show()) { request =>
-        status(request) shouldBe SEE_OTHER
+      AuthHelpers.showWithUnauthorisedUser(controller.show(), FakeRequest()) { request =>
+        status(request) mustBe SEE_OTHER
       }
     }
 
     "return 200 for an authorised user with an initialised journey" in new Setup {
       mockWithJourney(sessionId, Some(journey))
 
-      requestWithAuthorisedUser(controller.show, requestWithSession) { result =>
-        status(result) shouldBe OK
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSession) { result =>
+        status(result) mustBe OK
       }
     }
 
     s"return 303 and redirect to ${controllers.test.routes.TestSetupController.show()} for an authorised user without an initialised journey" in new Setup {
       mockWithJourney(sessionId, None)
 
-      requestWithAuthorisedUser(controller.show, requestWithSession) { result =>
-        status(result) shouldBe SEE_OTHER
-        redirectLocation(result) shouldBe Some(controllers.test.routes.TestSetupController.show().toString)
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSession) { result =>
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some(controllers.test.routes.TestSetupController.show().toString)
       }
     }
   }
@@ -79,8 +79,8 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
   "submit" should {
 
     "return 303 for an unauthorised user" in new Setup {
-      submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
-        status(request) shouldBe SEE_OTHER
+      AuthHelpers.submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
+        status(request) mustBe SEE_OTHER
       }
     }
 
@@ -91,8 +91,8 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
         "sicSearch" -> ""
       )
 
-      requestWithAuthorisedUser(controller.submit, request) { result =>
-        status(result) shouldBe BAD_REQUEST
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request) { result =>
+        status(result) mustBe BAD_REQUEST
       }
     }
 
@@ -106,10 +106,10 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
         "sicSearch" -> sicCode
       )
 
-      requestWithAuthorisedUser(controller.submit, request) {
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request) {
         result =>
-          status(result) shouldBe SEE_OTHER
-          redirectLocation(result) shouldBe Some("/sic-search/choose-business-activity")
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some("/sic-search/choose-business-activity")
       }
     }
 
@@ -123,10 +123,9 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(0))
 
-      requestWithAuthorisedUser(controller.submit, request) {
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request) {
         result =>
-          status(result) shouldBe OK
-
+          status(result) mustBe OK
       }
     }
 
@@ -140,10 +139,10 @@ class SicSearchControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any[HeaderCarrier]()))
         .thenReturn(Future.successful(1))
 
-      requestWithAuthorisedUser(controller.submit, request) {
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request) {
         result =>
-          status(result) shouldBe SEE_OTHER
-          redirectLocation(result) shouldBe Some(routes.ConfirmationController.show().toString)
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ConfirmationController.show().toString)
       }
     }
   }

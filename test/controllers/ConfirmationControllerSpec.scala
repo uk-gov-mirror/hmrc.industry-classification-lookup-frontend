@@ -16,31 +16,32 @@
 
 package controllers
 
-import builders.AuthBuilders
+import config.AppConfig
+import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
-import play.api.i18n.MessagesApi
-import services.{JourneyService, SicSearchService}
-import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
+class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
-  trait Setup {
-    val controller: ConfirmationController = new ConfirmationController {
+  class Setup {
+    val controller: ConfirmationController = new ConfirmationController with I18nSupport {
+      override val loginURL = "/test/login"
+
+      override implicit val appConfig: AppConfig      = app.injector.instanceOf[AppConfig]
       override val sicSearchService: SicSearchService = mockSicSearchService
-      override val authConnector: AuthConnector = mockAuthConnector
-      override val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
-      override val journeyService: JourneyService = mockJourneyService
+      override val authConnector: AuthConnector       = mockAuthConnector
+      override val messagesApi: MessagesApi           = testMessagesApi
+      override val journeyService: JourneyService     = mockJourneyService
     }
-
-    resetMocks()
   }
 
   val sessionId = "session-12345"
@@ -70,9 +71,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
-      requestWithAuthorisedUser(controller.show, requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){
         result =>
-          status(result) shouldBe 200
+          status(result) mustBe 200
       }
     }
 
@@ -82,9 +83,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
-      requestWithAuthorisedUser(controller.show, requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){
         result =>
-          status(result) shouldBe 303
+          status(result) mustBe 303
       }
     }
   }
@@ -99,9 +100,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
-      requestWithAuthorisedUser(controller.submit, request){
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){
         result =>
-          status(result) shouldBe 200
+          status(result) mustBe 200
       }
     }
 
@@ -113,9 +114,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
-      requestWithAuthorisedUser(controller.submit, request){
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){
         result =>
-          status(result) shouldBe 303
+          status(result) mustBe 303
       }
     }
 
@@ -125,8 +126,8 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode, sicCode, sicCode))))
 
-      requestWithAuthorisedUser(controller.submit, requestWithSessionId){ result =>
-        status(result) shouldBe OK
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, requestWithSessionId.withFormUrlEncodedBody()){ result =>
+        status(result) mustBe OK
       }
     }
 
@@ -140,8 +141,8 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
         "addAnother" -> ""
       )
 
-      requestWithAuthorisedUser(controller.submit, request){ result =>
-        status(result) shouldBe BAD_REQUEST
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+        status(result) mustBe BAD_REQUEST
       }
     }
   }
@@ -157,9 +158,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
 
-      requestWithAuthorisedUser(controller.removeChoice(sicCodeCode), requestWithSessionId, mockAuthConnector){
+      AuthHelpers.showWithAuthorisedUser(controller.removeChoice(sicCodeCode), requestWithSessionId){
         result =>
-          status(result) shouldBe OK
+          status(result) mustBe OK
       }
     }
   }
@@ -171,10 +172,10 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
         .thenReturn(Future.successful(None))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
-      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
+      status(result) mustBe SEE_OTHER
+      redirectLocation(result) mustBe Some("/sic-search/enter-keywords")
     }
 
     "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
@@ -182,10 +183,10 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
         .thenReturn(Future.successful(Some(List())))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
-      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
-      status(result) shouldBe SEE_OTHER
-      redirectLocation(result) shouldBe Some("/sic-search/enter-keywords")
+      status(result) mustBe SEE_OTHER
+      redirectLocation(result) mustBe Some("/sic-search/enter-keywords")
     }
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
@@ -193,9 +194,9 @@ class ConfirmationControllerSpec extends ControllerSpec with AuthBuilders {
         .thenReturn(Future.successful(Some(List(sicCode))))
 
       val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
-      val result: Result = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
-      status(result) shouldBe OK
+      status(result) mustBe OK
     }
   }
 }

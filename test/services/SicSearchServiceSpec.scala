@@ -17,32 +17,24 @@
 package services
 
 import connectors.ICLConnector
+import helpers.UnitTestSpec
 import models._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.play.test.UnitSpec
 import org.mockito.Mockito._
 import repositories.SicStoreRepository
-import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
+import uk.gov.hmrc.http.NotFoundException
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
+class SicSearchServiceSpec extends UnitTestSpec {
 
-  val mockICLConnector: ICLConnector = mock[ICLConnector]
-  val mockSicStoreRepo: SicStoreRepository = mock[SicStoreRepository]
-
-  trait Setup {
+  class Setup {
     val service: SicSearchService = new SicSearchService {
       protected val iCLConnector: ICLConnector = mockICLConnector
       protected val sicStoreRepository: SicStoreRepository = mockSicStoreRepo
     }
-
-    reset(mockICLConnector, mockSicStoreRepo)
   }
-
-  implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val sessionId = "session-id-12345"
   val query = "testQuery"
@@ -67,8 +59,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Int = service.lookupSicCode(sessionId, sicCodeCode)
-      result shouldBe 1
+      awaitAndAssert(service.lookupSicCode(sessionId, sicCodeCode)) {
+        _ mustBe 1
+      }
     }
 
     "return false when a sic code is found in ICL but unsuccessfully saved" in new Setup {
@@ -77,16 +70,18 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(false))
 
-      val result: Int = service.lookupSicCode(sessionId, sicCodeCode)
-      result shouldBe 0
+      awaitAndAssert(service.lookupSicCode(sessionId, sicCodeCode)) {
+        _ mustBe 0
+      }
     }
 
     "return false when a sic code is not found" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(None))
 
-      val result: Int = service.lookupSicCode(sessionId, sicCodeCode)
-      result shouldBe 0
+      awaitAndAssert(service.lookupSicCode(sessionId, sicCodeCode)) {
+        _ mustBe 0
+      }
     }
   }
 
@@ -100,8 +95,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Int = service.searchQuery(sessionId, query, journey)
-      result shouldBe 1
+      awaitAndAssert(service.searchQuery(sessionId, query, journey)) {
+        _ mustBe 1
+      }
     }
 
     "return true when more than 1 search results are returned from ICL" in new Setup {
@@ -111,24 +107,27 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), eqTo(threeSearchResults))(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Int = service.searchQuery(sessionId, query, journey, None)
-      result shouldBe 3
+      awaitAndAssert(service.searchQuery(sessionId, query, journey, None)) {
+        _ mustBe 3
+      }
     }
 
     "return false when a set of search results are returned from ICL" in new Setup {
       when(mockICLConnector.search(eqTo(query), any(), any())(any()))
         .thenReturn(Future.successful(searchResultsEmpty))
 
-      val result: Int = service.searchQuery(sessionId, query, journey)
-      result shouldBe 0
+      awaitAndAssert(service.searchQuery(sessionId, query, journey)) {
+        _ mustBe 0
+      }
     }
 
     "return false when nothing is returned from ICL" in new Setup {
       when(mockICLConnector.search(eqTo(query), any(), any())(any()))
         .thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: Int = service.searchQuery(sessionId, query, journey)
-      result shouldBe 0
+      awaitAndAssert(service.searchQuery(sessionId, query, journey)) {
+        _ mustBe 0
+      }
     }
   }
 
@@ -144,8 +143,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Int = service.search(sessionId, query, journey)
-      result shouldBe 1
+      awaitAndAssert(service.search(sessionId, query, journey)) {
+        _ mustBe 1
+      }
     }
 
     "search using a query and return a set of search results" in new Setup {
@@ -158,8 +158,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Int = service.search(sessionId, query, journey)
-      result shouldBe 1
+      awaitAndAssert(service.search(sessionId, query, journey)) {
+        _ mustBe 1
+      }
     }
   }
 
@@ -169,8 +170,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Boolean = service.updateSearchResults(sessionId, oneSearchResult)
-      result shouldBe true
+      awaitAndAssert(service.updateSearchResults(sessionId, oneSearchResult)) {
+        _ mustBe true
+      }
     }
   }
 
@@ -180,8 +182,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStoreNoChoices)))
 
-      val result: Option[SicStore] = service.retrieveSicStore(sessionId)
-      result shouldBe Some(sicStoreNoChoices)
+      awaitAndAssert(service.retrieveSicStore(sessionId)) {
+        _ mustBe Some(sicStoreNoChoices)
+      }
     }
   }
 
@@ -191,8 +194,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Boolean = service.insertChoice(sessionId, sicCodeCode)
-      result shouldBe true
+      awaitAndAssert(service.insertChoice(sessionId, sicCodeCode)) {
+        _ mustBe true
+      }
     }
   }
 
@@ -202,8 +206,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.removeChoice(eqTo(sessionId), eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(true))
 
-      val result: Boolean = service.removeChoice(sessionId, sicCodeCode)
-      result shouldBe true
+      awaitAndAssert(service.removeChoice(sessionId, sicCodeCode)) {
+        _ mustBe true
+      }
     }
   }
 
@@ -213,8 +218,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      val result: Option[List[SicCode]] = service.retrieveChoices(sessionId)
-      result shouldBe Some(choices)
+      awaitAndAssert(service.retrieveChoices(sessionId)) {
+        _ mustBe Some(choices)
+      }
     }
   }
 
@@ -224,8 +230,9 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
       when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(sicStore)))
 
-      val result: Option[SearchResults] = service.retrieveSearchResults(sessionId)
-      result shouldBe Some(oneSearchResult)
+      awaitAndAssert(service.retrieveSearchResults(sessionId)) {
+        _ mustBe Some(oneSearchResult)
+      }
     }
   }
 
@@ -235,7 +242,7 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
       "a 8 digit String is supplied" in new Setup {
         val _8digit = "12345678"
-        service.isLookup(_8digit) shouldBe true
+        service.isLookup(_8digit) mustBe true
       }
     }
 
@@ -243,22 +250,22 @@ class SicSearchServiceSpec extends UnitSpec with MockitoSugar {
 
       "a 7 digit String is supplied" in new Setup {
         val _7digit = "1234567"
-        service.isLookup(_7digit) shouldBe false
+        service.isLookup(_7digit) mustBe false
       }
 
       "a normal String is supplied" in new Setup {
         val query = "some query"
-        service.isLookup(query) shouldBe false
+        service.isLookup(query) mustBe false
       }
 
       "a 8 digit String is supplied along with some text" in new Setup {
         val query = "12345678sometext"
-        service.isLookup(query) shouldBe false
+        service.isLookup(query) mustBe false
       }
 
       "a 8 digit String is supplied along with a space and then some text" in new Setup {
         val query = "12345678 sometext"
-        service.isLookup(query) shouldBe false
+        service.isLookup(query) mustBe false
       }
     }
   }

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package models
+package forms
 
 import forms.sicsearch.SicSearchForm
+import helpers.UnitTestSpec
+import models.SicSearch
 import play.api.data.FormError
-import uk.gov.hmrc.play.test.UnitSpec
 
-class SicSearchFormSpec extends UnitSpec {
+class SicSearchFormSpec extends UnitTestSpec {
   val testForm = SicSearchForm.form
 
   "Binding SicSearchFormSpec to a model" should {
@@ -29,7 +30,7 @@ class SicSearchFormSpec extends UnitSpec {
       val model = SicSearch(sicSearch = "12345678")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
-      boundForm shouldBe model
+      boundForm mustBe model
     }
 
     "Provide the correct error when nothing was entered" in {
@@ -37,9 +38,8 @@ class SicSearchFormSpec extends UnitSpec {
       val model = Seq(FormError("sicSearch", "errors.invalid.sic.noEntry"))
       val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
 
-      boundForm.errors shouldBe model
-      boundForm.data shouldBe data
+      boundForm.errors mustBe model
+      boundForm.data mustBe data
     }
   }
-
 }

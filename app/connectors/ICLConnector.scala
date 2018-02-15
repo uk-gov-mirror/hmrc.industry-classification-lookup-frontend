@@ -18,18 +18,17 @@ package connectors
 
 import javax.inject.Inject
 
-import config.WSHttp
 import models.{SearchResults, SicCode}
 import play.api.Logger
 import play.api.libs.json.Reads
 import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException}
-import uk.gov.hmrc.play.config.inject.ServicesConfig
-
-import scala.concurrent.Future
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
-class ICLConnectorImpl @Inject()(config : ServicesConfig) extends ICLConnector {
-  val http: CoreGet = WSHttp
+import scala.concurrent.Future
+
+class ICLConnectorImpl @Inject()(config : ServicesConfig, val http: HttpClient) extends ICLConnector {
   val ICLUrl: String = config.baseUrl("industry-classification-lookup")
 }
 
