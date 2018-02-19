@@ -63,7 +63,7 @@ trait ConfirmationController extends ICLController {
               ConfirmationForm.form.bindFromRequest().fold(
                 errors => Future.successful(BadRequest(views.html.pages.confirmation(errors, choices))),
                 form => form.addAnother match {
-                  case YES => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+                  case YES => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
                   case NO => Future.successful(Ok("End of journey"))
                 }
               )
@@ -89,10 +89,10 @@ trait ConfirmationController extends ICLController {
   private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
     sicSearchService.retrieveChoices(sessionId) flatMap {
       case Some(choices) => choices match {
-        case Nil => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
         case listOfChoices => f(listOfChoices)
       }
-      case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
     }
   }
 }

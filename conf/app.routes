@@ -3,11 +3,8 @@ GET        /assets/*file                                                     con
 
 GET        /sign-out                                                         controllers.SignInOutController.signOut
 
-GET        /enter-keywords                                                   controllers.SicSearchController.show
-POST       /enter-keywords                                                   controllers.SicSearchController.submit
-
-GET        /choose-business-activity                                         controllers.ChooseActivityController.show
-POST       /choose-business-activity                                         controllers.ChooseActivityController.submit
+GET        /choose-business-activity                                         controllers.ChooseActivityController.show(doSearch: Option[Boolean] ?= None)
+POST       /choose-business-activity                                         controllers.ChooseActivityController.submit(doSearch: Option[String] ?= None)
 GET        /filter-business-activities/:code                                 controllers.ChooseActivityController.filter(code)
 
 GET        /confirm-business-activities                                      controllers.ConfirmationController.show

@@ -52,7 +52,7 @@ class WhitelistFilterISpec extends ClientSpec {
     "allow requests through the whitelist" when {
 
       "the request is sent from a whitelisted ip address" in {
-        val client = buildClient("/sic-search/enter-keywords")
+        val client = buildClient("/sic-search/choose-business-activity")
           .withTrueClientIPHeader("11.22.33.44")
           .withSessionIdHeader()
 
@@ -78,7 +78,7 @@ class WhitelistFilterISpec extends ClientSpec {
     "redirect the request to the outage page" when {
 
       "the request is not sent from a white-listed IP and the requested Url is not a white-listed Url" in {
-        val client = buildClient("/sic-search/enter-keywords")
+        val client = buildClient("/sic-search/choose-business-activity")
           .withTrueClientIPHeader("00.00.00.01")
           .withSessionIdHeader()
 
@@ -91,7 +91,7 @@ class WhitelistFilterISpec extends ClientSpec {
     }
 
     "return a 501 when the request is missing a TrueClientIp header" in {
-      val client = buildClient("/sic-search/enter-keywords")
+      val client = buildClient("/sic-search/choose-business-activity")
         .withSessionIdHeader()
 
       mockAuthorise()

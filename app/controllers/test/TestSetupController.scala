@@ -69,7 +69,7 @@ trait TestSetupController extends ICLController {
             journeyName => {
               val journey = Journey(sessionId, journeyName)
               journeyService.upsertJourney(journey) map { _ =>
-                Redirect(controllers.routes.SicSearchController.show())
+                Redirect(controllers.routes.ChooseActivityController.show())
               }
             }
           )

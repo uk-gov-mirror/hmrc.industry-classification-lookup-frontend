@@ -20,6 +20,7 @@ import config.AppConfig
 import helpers.auth.AuthHelpers
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
+import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
@@ -62,7 +63,48 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val multipleSearchResults = SearchResults(query, 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
   val sicStore = SicStore("TestId", journey, Some(searchResults))
 
-  "show" should {
+  "show without results" should {
+    "return a 303 for an unauthorised user" in new Setup {
+      showWithUnauthorisedUser(controller.show(), FakeRequest()) {
+        response =>
+          status(response) mustBe SEE_OTHER
+      }
+    }
+
+    "return a 200 with a new search for an authorised user" in new Setup {
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
+
+      requestWithAuthorisedUser(controller.show(), requestWithSession) {
+        (response: Future[Result]) =>
+          status(response) mustBe OK
+          val document = Jsoup.parse(contentAsString(response))
+          document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
+          document.getElementById("sicSearch").attr("value") mustBe ""
+          an[Exception] mustBe thrownBy(document.getElementById("result-count").text)
+          an[Exception] mustBe thrownBy(document.getElementById("no-result").text)
+      }
+    }
+  }
+
+  "show with results" should {
+    "return a 200 with performed search returning nothing for an authorised user" in new Setup {
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
+
+      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
+        .thenReturn(Future.successful(None))
+
+      requestWithAuthorisedUser(controller.show(Some(true)), requestWithSession) {
+        (response: Future[Result]) =>
+          status(response) mustBe OK
+          val document = Jsoup.parse(contentAsString(response))
+          document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
+          document.getElementById("sicSearch").attr("value") mustBe ""
+          an[Exception] mustBe thrownBy(document.getElementById("result-count").text)
+          an[Exception] mustBe thrownBy(document.getElementById("no-result").text)
+      }
+    }
 
     "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
@@ -71,81 +113,107 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
-      when(mockSicSearchService.insertChoice(any(), any())(any()))
-        .thenReturn(Future.successful(true))
-
-      requestWithAuthorisedUser(controller.show, requestWithSession) {
+      requestWithAuthorisedUser(controller.show(Some(true)), requestWithSession) {
         (response: Future[Result]) =>
           status(response) mustBe SEE_OTHER
           redirectLocation(response) mustBe Some("/sic-search/confirm-business-activities")
       }
     }
 
-    "return a 303 for an authorised user with the sic code isn't found and redirect to search page" in new Setup {
-      when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
-
-      when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
-        .thenReturn(Future.successful(None))
-
-      requestWithAuthorisedUser(controller.show, requestWithSession) {
-        response =>
-          status(response) mustBe SEE_OTHER
-          redirectLocation(response) mustBe Some("/sic-search/enter-keywords")
-      }
-    }
-
-    "return a 303 for an authorised user with multiple sic codes being returned and show the choose activity page" in new Setup {
+    "return a 200 for an authorised user with multiple sic codes being returned and show the choose activity page and verify sicSearch bar is displayed" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(multipleSearchResults)))
 
-      requestWithAuthorisedUser(controller.show, requestWithSession) {
+      requestWithAuthorisedUser(controller.show(Some(true)), requestWithSession) {
         (response: Future[Result]) =>
           status(response) mustBe OK
+          val document = Jsoup.parse(contentAsString(response))
+          document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
+          document.getElementById("sicSearch").attr("value") mustBe multipleSearchResults.query
+          an[Exception] mustBe thrownBy(document.getElementById("no-result").text)
+          document.getElementById("result-count").text mustBe multipleSearchResults.numFound.toString
       }
     }
 
-    s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
+    s"return a 200 and show the choose activity page with no search results found and verify sicSearch bar is displayed" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(noSearchResults)))
 
-      requestWithAuthorisedUser(controller.show, requestWithSession) { result =>
-        status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some(routes.SicSearchController.show().toString)
+      requestWithAuthorisedUser(controller.show(Some(true)), requestWithSession) { result =>
+        status(result) mustBe OK
+        val document = Jsoup.parse(contentAsString(result))
+        document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
+        document.getElementById("sicSearch").attr("value") mustBe noSearchResults.query
+        document.getElementById("no-result").text mustBe "0"
+        an[Exception] mustBe thrownBy(document.getElementById("result-count").text)
+      }
+    }
+  }
+
+  "Submit a search" should {
+    "return a 303 with the search results page" in new Setup {
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
+
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+        .thenReturn(Future.successful(multipleSearchResults.numFound))
+
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
+        "sicSearch" -> query
+      )
+
+      requestWithAuthorisedUser(controller.submit(Some("test")), request) {
+        result =>
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(Some(true)).url)
       }
     }
 
-    "return a 303 for an authorised user without a sic search" in new Setup {
+    "return a 303 with the choices list page for an authorised user when the search returns only 1 result" in new Setup {
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
+
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+        .thenReturn(Future.successful(searchResults.numFound))
+
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
+        "sicSearch" -> query
+      )
+
+      requestWithAuthorisedUser(controller.submit(Some("test")), request) {
+        result =>
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ConfirmationController.show().url)
+      }
+    }
+
+    "return a 400 for an authorised user without a sic search" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
 
-      requestWithAuthorisedUser(controller.show, requestWithSession) {
-        (response: Future[Result]) =>
-          status(response) mustBe SEE_OTHER
-      }
-    }
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
+        "sicSearch" -> ""
+      )
 
-    "return a 303 for an unauthorised user" in new Setup {
-      showWithUnauthorisedUser(controller.show(), FakeRequest()) {
-        response =>
-          status(response) mustBe SEE_OTHER
+      requestWithAuthorisedUser(controller.submit(Some("test")), requestWithSession) {
+        (response: Future[Result]) =>
+          status(response) mustBe BAD_REQUEST
       }
     }
   }
 
-  "Submit" should {
-
+  "Submit an activity" should {
     "return a 303 for an unauthorised user" in new Setup {
-      submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
+      submitWithUnauthorisedUser(controller.submit(), FakeRequest().withFormUrlEncodedBody()) { request =>
         status(request) mustBe SEE_OTHER
       }
     }
@@ -164,9 +232,10 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         "code" -> "12345678"
       )
 
-      requestWithAuthorisedUser(controller.submit, request) {
+      requestWithAuthorisedUser(controller.submit(), request) {
         result =>
           status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ConfirmationController.show().url)
       }
     }
 
@@ -181,14 +250,13 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         "code" -> ""
       )
 
-      requestWithAuthorisedUser(controller.submit, request) { result =>
+      requestWithAuthorisedUser(controller.submit(), request) { result =>
         status(result) mustBe BAD_REQUEST
       }
     }
   }
 
   "filter" should {
-
     s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when search results are found" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some(journey)))
@@ -202,21 +270,24 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
         result =>
           status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().toString)
+          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(Some(true)).url)
       }
     }
 
-    s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
+    s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when no search results are found" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
-        .thenReturn(Future.successful(None))
+        .thenReturn(Future.successful(Some(noSearchResults)))
+
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+        .thenReturn(Future.successful(0))
 
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
         result =>
           status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some(routes.SicSearchController.show().toString)
+          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(Some(true)).url)
       }
     }
   }

@@ -47,11 +47,11 @@ trait SicSearchService {
   }
 
   def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
-    retrieveSicStore(sessionId).map(_.flatMap(_.searchResults))
+    sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.searchResults))
   }
 
   def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCode]]] = {
-    retrieveSicStore(sessionId).map(_.flatMap(_.choices))
+    sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.choices))
   }
 
   def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
@@ -63,39 +63,26 @@ trait SicSearchService {
   }
 
   private[services] def lookupSicCode(sessionId: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Int] = {
-    iCLConnector.lookup(sicCode) flatMap {
-      case Some(sic) =>
-        updateSearchResults(sessionId, SearchResults.fromSicCode(sic)) flatMap ( successful =>
-          if(successful) insertChoice(sessionId, sic.sicCode) map (_ => 1) else Future.successful(0)
-        )
-      case None => Future.successful(0)
-    }
+    for {
+      oSicCode      <- iCLConnector.lookup(sicCode)
+      searchResults = oSicCode.fold(SearchResults(sicCode, 0, Nil, Nil))(sic => SearchResults.fromSicCode(sic))
+      res           <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { successful =>
+        if (successful && oSicCode.isDefined) insertChoice(sessionId, oSicCode.get.sicCode) map (_ => 1) else Future.successful(0)
+      }
+    } yield res
   }
 
   private[services] def searchQuery(sessionId: String, query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
-    iCLConnector.search(query, journey, sector) flatMap ( searchResults => {
-        val store = searchResults.numFound match {
-          case 1 => updateSearchResults(sessionId, searchResults) flatMap { _ =>
-                      insertChoice(sessionId, searchResults.results.head.sicCode)
-                    }
-          case 0 => Future.successful(false)
-          case _ => updateSearchResults(sessionId, searchResults)
-        }
-        store map (_ => searchResults.numFound)
+    (for {
+      searchResults <- iCLConnector.search(query, journey, sector)
+      _             <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { res =>
+        if (searchResults.numFound == 1) insertChoice(sessionId, searchResults.results.head.sicCode) else Future.successful(res)
       }
-    ) recover {
+    } yield searchResults.numFound) recover {
       case _ =>
         Logger.error("[SicSearchService] [searchQuery] Exception encountered when attempting to fetch results from ICL")
         0
     }
-  }
-
-  private[services] def updateSearchResults(sessionId: String, searchResult: SearchResults)(implicit ec: ExecutionContext) : Future[Boolean] = {
-    sicStoreRepository.updateSearchResults(sessionId, searchResult)
-  }
-
-  private[services] def retrieveSicStore(sessionId: String)(implicit ec: ExecutionContext) : Future[Option[SicStore]] = {
-    sicStoreRepository.retrieveSicStore(sessionId)
   }
 
   private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){8}$")
