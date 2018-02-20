@@ -16,10 +16,10 @@
 
 package models
 
-import play.api.libs.json.{JsSuccess, JsValue, Json}
-import uk.gov.hmrc.play.test.UnitSpec
+import helpers.UnitTestSpec
+import play.api.libs.json.{JsValue, Json}
 
-class ChooseActivitySpec extends UnitSpec {
+class ChooseActivitySpec extends UnitTestSpec {
 
   val testBusinessActivityModel = ChooseActivity("12345678")
 
@@ -34,13 +34,11 @@ class ChooseActivitySpec extends UnitSpec {
   "Business Activity Model" should {
 
     "read from json with data" in {
-      Json.fromJson(testBusinessActivityJson)(ChooseActivity.format).get shouldBe testBusinessActivityModel
+      Json.fromJson(testBusinessActivityJson)(ChooseActivity.format).get mustBe testBusinessActivityModel
     }
 
     "write to json with data" in {
-      Json.toJson(testBusinessActivityModel)(ChooseActivity.format) shouldBe testBusinessActivityJson
+      Json.toJson(testBusinessActivityModel)(ChooseActivity.format) mustBe testBusinessActivityJson
     }
-
   }
-
 }

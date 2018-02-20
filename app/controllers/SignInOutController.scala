@@ -16,22 +16,21 @@
 
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Inject
 
-import auth.AuthFunction
-import config.FrontendAuthConnector
+import auth.{AuthFunction, SicSearchExternalURLs}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.auth.core.AuthorisedFunctions
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
-@Singleton
 class SignInOutControllerImpl @Inject()(val messagesApi: MessagesApi,
-                                    val authConnector: FrontendAuthConnector) extends SignInOutController with ServicesConfig {
-  lazy val compRegFEURL = getConfString("company-registration-frontend.www.url", "")
-  lazy val compRegFEURI = getConfString("company-registration-frontend.www.uri", "")
+                                        val servicesConfig: ServicesConfig,
+                                        val authConnector: AuthConnector) extends SignInOutController with SicSearchExternalURLs {
+  lazy val compRegFEURL = servicesConfig.getConfString("company-registration-frontend.www.url", "")
+  lazy val compRegFEURI = servicesConfig.getConfString("company-registration-frontend.www.uri", "")
 }
 
 trait SignInOutController extends I18nSupport with AuthorisedFunctions with AuthFunction {

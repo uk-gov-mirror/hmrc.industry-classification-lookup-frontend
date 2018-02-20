@@ -1,16 +1,16 @@
 # microservice specific routes
 GET        /assets/*file                                                     controllers.Assets.at(path="/public", file)
 
-GET        /sign-out                                                         @controllers.SignInOutController.signOut
+GET        /sign-out                                                         controllers.SignInOutController.signOut
 
-GET        /enter-keywords                                                   @controllers.SicSearchController.show
-POST       /enter-keywords                                                   @controllers.SicSearchController.submit
+GET        /enter-keywords                                                   controllers.SicSearchController.show
+POST       /enter-keywords                                                   controllers.SicSearchController.submit
 
-GET        /choose-business-activity                                         @controllers.ChooseActivityController.show
-POST       /choose-business-activity                                         @controllers.ChooseActivityController.submit
-GET        /filter-business-activities/:code                                 @controllers.ChooseActivityController.filter(code)
+GET        /choose-business-activity                                         controllers.ChooseActivityController.show
+POST       /choose-business-activity                                         controllers.ChooseActivityController.submit
+GET        /filter-business-activities/:code                                 controllers.ChooseActivityController.filter(code)
 
-GET        /confirm-business-activities                                      @controllers.ConfirmationController.show
-POST       /confirm-business-activities                                      @controllers.ConfirmationController.submit
+GET        /confirm-business-activities                                      controllers.ConfirmationController.show
+POST       /confirm-business-activities                                      controllers.ConfirmationController.submit
 
-GET        /remove-sic-code/:sicCode                                         @controllers.ConfirmationController.removeChoice(sicCode)
+GET        /remove-sic-code/:sicCode                                         controllers.ConfirmationController.removeChoice(sicCode)

@@ -16,34 +16,39 @@
 
 package controllers.test
 
-import builders.AuthBuilders
-import controllers.{ControllerSpec, MockMessages}
+import config.AppConfig
+import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
-import play.api.i18n.MessagesApi
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import services.JourneyService
-import org.mockito.Mockito._
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.Future
 
-class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with MockMessages {
+class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
-  override val mockMessagesAPI: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+  class Setup {
+    val controller: TestSetupController = new TestSetupController with I18nSupport {
+      override val loginURL = "/test/login"
 
-  trait Setup {
-    val controller: TestSetupController = new TestSetupController {
-      override val messagesApi: MessagesApi = mockMessagesAPI
-      override val authConnector: AuthConnector = mockAuthConnector
+      override implicit val appConfig: AppConfig  = testAppConfig
+      override val messagesApi: MessagesApi       = testMessagesApi
+      override val authConnector: AuthConnector   = mockAuthConnector
       override val journeyService: JourneyService = mockJourneyService
     }
+
+    val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession(
+      SessionKeys.sessionId -> sessionId
+    )
   }
 
   val sessionId = "session-12345"
-  val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
+
 
   val journeyName: String = Journey.QUERY_BUILDER
   val journey = Journey(sessionId, journeyName)
@@ -61,8 +66,8 @@ class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with Mock
       when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(journeyName)))
 
-      requestWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
-        status(result) shouldBe 200
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
+        status(result) mustBe 200
       }
     }
 
@@ -71,8 +76,8 @@ class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with Mock
       when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(None))
 
-      requestWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
-        status(result) shouldBe 200
+      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
+        status(result) mustBe 200
       }
     }
   }
@@ -84,8 +89,8 @@ class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with Mock
         "journey" -> ""
       )
 
-      requestWithAuthorisedUser(controller.submit, request){ result =>
-        status(result) shouldBe 400
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+        status(result) mustBe 400
       }
     }
 
@@ -97,9 +102,9 @@ class TestSetupControllerSpec extends ControllerSpec with AuthBuilders with Mock
       when(mockJourneyService.upsertJourney(eqTo(journey))(any()))
         .thenReturn(Future.successful(sicStore))
 
-      requestWithAuthorisedUser(controller.submit, request){ result =>
-        status(result) shouldBe SEE_OTHER
-        redirectLocation(result) shouldBe Some(controllers.routes.SicSearchController.show().toString)
+      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some(controllers.routes.SicSearchController.show().toString)
       }
     }
   }

@@ -18,7 +18,8 @@ package controllers.test
 
 import javax.inject.Inject
 
-import config.FrontendAuthConnector
+import auth.SicSearchExternalURLs
+import config.AppConfig
 import controllers.ICLController
 import models.Journey
 import play.api.data.Form
@@ -26,17 +27,21 @@ import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import services.JourneyService
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
 object Journeys {
   val QUERY_BUILDER = "query-builder"
-  val QUERY_PARSER = "query-parser"
+  val QUERY_PARSER  = "query-parser"
 }
 
 class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
+                                        val appConfig: AppConfig,
                                         val journeyService: JourneyService,
-                                        val authConnector: FrontendAuthConnector) extends TestSetupController
+                                        val servicesConfig: ServicesConfig,
+                                        val authConnector: AuthConnector) extends TestSetupController with SicSearchExternalURLs
 
 trait TestSetupController extends ICLController {
 

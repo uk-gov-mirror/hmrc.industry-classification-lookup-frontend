@@ -17,9 +17,9 @@
 package forms.chooseactivity
 
 import models.ChooseActivity
-import play.api.data.{Form, FormError, Forms, Mapping}
-import play.api.data.Forms.{mapping, _}
+import play.api.data.Forms.mapping
 import play.api.data.format.Formatter
+import play.api.data.{Form, FormError, Forms, Mapping}
 
 object ChooseActivityForm {
 

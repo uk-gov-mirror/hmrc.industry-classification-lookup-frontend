@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package helpers
+package helpers.mocks
 
-import org.mockito.{ArgumentCaptor, ArgumentMatchers}
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
+import org.mockito.{ArgumentCaptor, ArgumentMatchers}
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.JsObject
 import reactivemongo.api.commands.{DefaultWriteResult, UpdateWriteResult, WriteConcern}

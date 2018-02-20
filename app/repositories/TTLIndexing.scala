@@ -16,7 +16,7 @@
 
 package repositories
 
-import play.api.{Configuration, Logger}
+import play.api.Logger
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong}
 import reactivemongo.core.commands.DeleteIndex

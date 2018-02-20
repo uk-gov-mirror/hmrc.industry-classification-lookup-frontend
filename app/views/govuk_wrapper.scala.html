@@ -14,7 +14,9 @@
  * limitations under the License.
  *@
 
-@(appConfig: config.AppConfig,
+@import config.AppConfig
+
+@(appConfig: AppConfig,
   title: String,
   mainClass: Option[String] = None,
   mainDataAttributes: Option[Html] = None,

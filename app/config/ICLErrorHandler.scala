@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package auth
+package config
 
-import uk.gov.hmrc.play.config.ServicesConfig
+import javax.inject.Inject
 
-trait SicSearchExternalURLs {
-  val servicesConfig: ServicesConfig
+import play.api.i18n.MessagesApi
+import play.api.mvc.Request
+import uk.gov.hmrc.play.bootstrap.http.FrontendErrorHandler
+import views.html.error_template
 
-  private[SicSearchExternalURLs] lazy val companyAuthHost = servicesConfig.getConfString("auth.company-auth.url","")
-  private[SicSearchExternalURLs] lazy val loginCallback   = servicesConfig.getConfString("auth.login-callback.url","")
-  private[SicSearchExternalURLs] lazy val loginPath       = servicesConfig.getConfString("auth.login_path","")
+class ICLErrorHandler @Inject()(val messagesApi: MessagesApi,
+                                implicit val appConfiguration: AppConfig) extends FrontendErrorHandler {
 
-  val loginURL    = s"$companyAuthHost$loginPath"
-  val continueURL = s"$loginCallback???"
+  override def standardErrorTemplate(pageTitle: String, heading: String, message: String)(implicit request: Request[_]) = {
+    error_template(pageTitle, heading, message)
+  }
 }

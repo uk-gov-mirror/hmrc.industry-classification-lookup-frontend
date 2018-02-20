@@ -15,23 +15,24 @@
  */
 
 package controllers
-import builders.AuthBuilders
-import play.api.i18n.MessagesApi
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.test.WithFakeApplication
 
-class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication with AuthBuilders {
+import helpers.{UnitTestFakeApp, UnitTestSpec}
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.test.FakeRequest
+import uk.gov.hmrc.auth.core.AuthConnector
+
+class SignInOutControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   val cRUrl = "http://localhost:12345/"
   val cRUri = "test-uri"
 
   class Setup {
-    val controller: SignInOutController = new SignInOutController {
+    val controller: SignInOutController = new SignInOutController with I18nSupport {
+      override val loginURL = "/test/login"
+
       override val compRegFEURL: String = cRUrl
       override val compRegFEURI: String = cRUri
-      override val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+      override val messagesApi: MessagesApi = testMessagesApi
       override val authConnector: AuthConnector = mockAuthConnector
     }
   }
@@ -43,10 +44,10 @@ class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication wi
       val request = FakeRequest()
       val url = s"$cRUrl$cRUri/post-sign-in"
 
-      requestWithAuthorisedUser(controller.postSignIn, request, mockAuthConnector){
+      AuthHelpers.showWithAuthorisedUser(controller.postSignIn, request){
         result =>
-          status(result) shouldBe 303
-          redirectLocation(result) shouldBe Some(url)
+          status(result) mustBe 303
+          redirectLocation(result) mustBe Some(url)
       }
     }
   }
@@ -58,10 +59,10 @@ class SignInOutControllerSpec extends ControllerSpec with WithFakeApplication wi
       val request = FakeRequest()
       val url = s"$cRUrl$cRUri/questionnaire"
 
-      requestWithAuthorisedUser(controller.signOut, request, mockAuthConnector){
+      AuthHelpers.showWithAuthorisedUser(controller.signOut, request){
         result =>
-          status(result) shouldBe 303
-          redirectLocation(result) shouldBe Some(url)
+          status(result) mustBe 303
+          redirectLocation(result) mustBe Some(url)
       }
     }
   }

@@ -17,6 +17,7 @@
 package controllers
 
 import auth.AuthFunction
+import config.AppConfig
 import models.Journey
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Request, Result}
@@ -27,6 +28,7 @@ import scala.concurrent.Future
 trait ICLController extends AuthFunction with I18nSupport {
 
   val journeyService: JourneyService
+  implicit val appConfig: AppConfig
 
   def withSessionId(f: => String => Future[Result])(implicit req: Request[_]): Future[Result] = {
     hc(req).sessionId match {
@@ -43,5 +45,4 @@ trait ICLController extends AuthFunction with I18nSupport {
       }
     }
   }
-
 }

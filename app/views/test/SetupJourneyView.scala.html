@@ -14,11 +14,11 @@
  * limitations under the License.
  *@
 
+@import config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.form
 @import helpers.templates.inputRadioGroup
 @import controllers.test.Journeys._
-
-@(journeyForm: Form[String])(implicit request: Request[_], messages: Messages)
+@(journeyForm: Form[String])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.test.setup-journey.title"), bodyClasses = None) {
 

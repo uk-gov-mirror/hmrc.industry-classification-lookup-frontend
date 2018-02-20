@@ -17,9 +17,9 @@
 package forms
 
 import models.Confirmation
-import play.api.data.{Form, FormError, Forms, Mapping}
 import play.api.data.Forms._
 import play.api.data.format.Formatter
+import play.api.data.{Form, FormError, Forms, Mapping}
 
 object ConfirmationForm {
 

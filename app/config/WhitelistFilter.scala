@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package connectors
+package config
 
-import config.WSHttp
-import org.scalatest.mockito.MockitoSugar
-import uk.gov.hmrc.play.test.UnitSpec
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito._
-import org.mockito.stubbing.OngoingStubbing
+import javax.inject.Inject
 
-import scala.concurrent.Future
+import akka.stream.Materializer
+import play.api.mvc.Call
+import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
-trait ConnectorSpec extends UnitSpec with MockitoSugar {
+class WhitelistFilter @Inject()(implicit val mat: Materializer,
+                                appConfig: AppConfig) extends AkamaiWhitelistFilter {
 
-  val mockHttp: WSHttp = mock[WSHttp]
+  override def whitelist: Seq[String] = appConfig.whitelist
 
-  def mockHttpGet[T]: OngoingStubbing[Future[T]] = when(mockHttp.GET[T](any())(any(), any(), any()))
-  def mockHttpGet[T](url: String): OngoingStubbing[Future[T]] = when(mockHttp.GET[T](eqTo(url))(any(), any(), any()))
+  override def excludedPaths: Seq[Call] = {
+    appConfig.whitelistExcluded.map { path =>
+      Call("GET", path)
+    }
+  }
+
+  override def destination: Call = Call("GET", "https://www.tax.service.gov.uk/outage-sic-search")
 }

@@ -16,11 +16,11 @@
 
 package forms
 
+import helpers.UnitTestSpec
 import models.Confirmation
 import play.api.data.FormError
-import uk.gov.hmrc.play.test.UnitSpec
 
-class ConfirmationFormSpec extends UnitSpec {
+class ConfirmationFormSpec extends UnitTestSpec {
 
   val testForm = ConfirmationForm.form
 
@@ -31,7 +31,7 @@ class ConfirmationFormSpec extends UnitSpec {
       val model = Confirmation(addAnother = "yes")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
-      boundForm shouldBe model
+      boundForm mustBe model
     }
 
     "provide the correct error when nothing was selected" in {
@@ -39,8 +39,8 @@ class ConfirmationFormSpec extends UnitSpec {
       val model = Seq(FormError("addAnother", "errors.invalid.sic.confirm"))
       val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
 
-      boundForm.errors shouldBe model
-      boundForm.data shouldBe data
+      boundForm.errors mustBe model
+      boundForm.data mustBe data
     }
   }
 

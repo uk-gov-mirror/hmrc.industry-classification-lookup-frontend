@@ -16,10 +16,10 @@
 
 package models
 
-import uk.gov.hmrc.play.test.UnitSpec
+import helpers.UnitTestSpec
 import play.api.libs.json.{JsValue, Json}
 
-class SicSearchSpec extends UnitSpec {
+class SicSearchSpec extends UnitTestSpec {
 
   val testSicSearchModel = SicSearch("12345678")
 
@@ -34,13 +34,11 @@ class SicSearchSpec extends UnitSpec {
   "Sic Search Model" should {
 
     "read from json with data" in {
-      Json.fromJson(testSicSearchJson)(SicSearch.format).get shouldBe testSicSearchModel
+      Json.fromJson(testSicSearchJson)(SicSearch.format).get mustBe testSicSearchModel
     }
 
     "write to json with data" in {
-      Json.toJson(testSicSearchModel)(SicSearch.format) shouldBe testSicSearchJson
+      Json.toJson(testSicSearchModel)(SicSearch.format) mustBe testSicSearchJson
     }
-
   }
-
 }

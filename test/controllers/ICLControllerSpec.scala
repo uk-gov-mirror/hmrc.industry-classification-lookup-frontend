@@ -16,8 +16,9 @@
 
 package controllers
 
-import config.FrontendAuthConnector
-import play.api.i18n.MessagesApi
+import config.AppConfig
+import helpers.{UnitTestFakeApp, UnitTestSpec}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import services.JourneyService
@@ -25,13 +26,16 @@ import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
-class ICLControllerSpec extends ControllerSpec {
+class ICLControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   trait Setup {
-    val controller: ICLController = new ICLController {
-      override val journeyService: JourneyService = mockJourneyService
-      override val authConnector: FrontendAuthConnector = mockAuthConnector
-      override val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
+    val controller: ICLController = new ICLController with I18nSupport {
+      override val loginURL = "/test/login"
+
+      override implicit val appConfig: AppConfig        = app.injector.instanceOf[AppConfig]
+      override val journeyService: JourneyService       = mockJourneyService
+      override val authConnector: AuthConnector         = mockAuthConnector
+      override val messagesApi: MessagesApi             = testMessagesApi
     }
   }
 
@@ -39,19 +43,20 @@ class ICLControllerSpec extends ControllerSpec {
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
   "withSessionId" should {
-
     "supply the sessionId to the function parameter and return the supllied result" in new Setup {
       val suppliedFunction: String => Future[Result] = _ => Future.successful(Ok)
-      val result: Result = controller.withSessionId(suppliedFunction)(requestWithSessionId)
+      val result: Future[Result] = controller.withSessionId(suppliedFunction)(requestWithSessionId)
 
-      result shouldBe await(suppliedFunction(sessionId))
+      awaitAndAssert(controller.withSessionId(suppliedFunction)(requestWithSessionId)) {
+        _ mustBe await(suppliedFunction(sessionId))
+      }
     }
 
     "throw an exception when the request does not contain a session Id" in new Setup {
       val suppliedFunction: String => Future[Result] = _ => Future.successful(Ok)
       val result: RuntimeException = intercept[RuntimeException](await(controller.withSessionId(suppliedFunction)(FakeRequest())))
 
-      result.getMessage shouldBe "No session id found in request"
+      result.getMessage mustBe "No session id found in request"
     }
   }
 }

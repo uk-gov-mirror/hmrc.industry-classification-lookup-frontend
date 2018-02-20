@@ -16,24 +16,21 @@
 
 package connectors
 
+import helpers.UnitTestSpec
 import models.{Journey, SearchResults, Sector, SicCode}
-import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, NotFoundException}
-import org.mockito.Mockito._
+import uk.gov.hmrc.http.{CoreGet, NotFoundException}
 
 import scala.concurrent.Future
 
-class ICLConnectorSpec extends ConnectorSpec {
+class ICLConnectorSpec extends UnitTestSpec {
 
   val iCLUrl = "http://localhost:12345"
-  implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  trait Setup {
+  class Setup extends CodeMocks {
     val connector: ICLConnector = new ICLConnector {
-      val http: CoreGet = mockHttp
+      val http: CoreGet  = mockWSHttp
       val ICLUrl: String = iCLUrl
     }
-
-    reset(mockHttp)
   }
 
   "lookup" should {
@@ -46,22 +43,24 @@ class ICLConnectorSpec extends ConnectorSpec {
     "return a sic code case class matching the code provided" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.successful(sicCodeResult))
 
-      val result: Option[SicCode] = connector.lookup(sicCode)
-      result shouldBe Some(sicCodeResult)
+      awaitAndAssert(connector.lookup(sicCode)) {
+        _ mustBe Some(sicCodeResult)
+      }
     }
 
     "return none when ICL returns a 404" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: Option[SicCode] = connector.lookup(sicCode)
-      result shouldBe None
+      awaitAndAssert(connector.lookup(sicCode)) {
+        _ mustBe None
+      }
     }
 
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
       val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode)))
-      result.getMessage shouldBe "something went wrong"
+      result.getMessage mustBe "something went wrong"
     }
   }
 
@@ -79,29 +78,32 @@ class ICLConnectorSpec extends ConnectorSpec {
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
 
-      val result: SearchResults = connector.search(query, journey)
-      result shouldBe searchResults
+      awaitAndAssert(connector.search(query, journey)) {
+        _ mustBe searchResults
+      }
     }
 
     "return a SearchResults case class when a sector search is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchSectorUrl).thenReturn(Future.successful(searchResults))
 
-      val result: SearchResults = connector.search(query, journey, Some(sector))
-      result shouldBe searchResults
+      awaitAndAssert(connector.search(query, journey, Some(sector))) {
+        _ mustBe searchResults
+      }
     }
 
     "return 0 results when ICL returns a 404" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      val result: SearchResults = connector.search(query, journey)
-      result shouldBe zeroResults
+      awaitAndAssert(connector.search(query, journey)) {
+        _ mustBe zeroResults
+      }
     }
 
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
       val result: RuntimeException = intercept[RuntimeException](await(connector.search(query, journey)))
-      result.getMessage shouldBe "something went wrong"
+      result.getMessage mustBe "something went wrong"
     }
   }
 }

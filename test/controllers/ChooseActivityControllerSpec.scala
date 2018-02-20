@@ -16,39 +16,40 @@
 
 package controllers
 
-import builders.AuthBuilders
-import config.FrontendAuthConnector
+import config.AppConfig
+import helpers.auth.AuthHelpers
+import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
-import play.api.i18n.MessagesApi
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.Future
 
-class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
+class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
-  trait Setup {
-    val controller: ChooseActivityController = new ChooseActivityController {
-      override val sicSearchService: SicSearchService = mockSicSearchService
-      override val authConnector: FrontendAuthConnector = mockAuthConnector
-      implicit val messagesApi: MessagesApi = fakeApplication.injector.instanceOf[MessagesApi]
-      override val journeyService: JourneyService = mockJourneyService
+  class Setup extends CodeMocks with AuthHelpers {
+    override val authConnector = mockAuthConnector
+
+    val controller: ChooseActivityController = new ChooseActivityController with I18nSupport {
+      override val loginURL = "/test/login"
+
+      override implicit val appConfig: AppConfig        = testAppConfig
+      override val sicSearchService: SicSearchService   = mockSicSearchService
+      override val authConnector: AuthConnector         = mockAuthConnector
+      implicit val messagesApi: MessagesApi             = testMessagesApi
+      override val journeyService: JourneyService       = mockJourneyService
     }
 
-    resetMocks()
+    val requestWithSession: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
   }
 
   val sessionId = "session-12345"
-  val requestWithSession: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(
-    SessionKeys.sessionId -> sessionId
-  )
 
   val SECTOR_A = "A"
   val query = "testQuery"
@@ -64,73 +65,79 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
   "show" should {
 
     "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(searchResults)))
+
       when(mockSicSearchService.insertChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))
 
       requestWithAuthorisedUser(controller.show, requestWithSession) {
         (response: Future[Result]) =>
-          status(response) shouldBe SEE_OTHER
-          response.header.headers("Location") shouldBe "/sic-search/confirm-business-activities"
+          status(response) mustBe SEE_OTHER
+          redirectLocation(response) mustBe Some("/sic-search/confirm-business-activities")
       }
     }
 
     "return a 303 for an authorised user with the sic code isn't found and redirect to search page" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
 
       requestWithAuthorisedUser(controller.show, requestWithSession) {
-        (response: Future[Result]) =>
-          status(response) shouldBe SEE_OTHER
-          response.header.headers("Location") shouldBe "/sic-search/enter-keywords"
+        response =>
+          status(response) mustBe SEE_OTHER
+          redirectLocation(response) mustBe Some("/sic-search/enter-keywords")
       }
     }
 
     "return a 303 for an authorised user with multiple sic codes being returned and show the choose activity page" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(multipleSearchResults)))
 
       requestWithAuthorisedUser(controller.show, requestWithSession) {
         (response: Future[Result]) =>
-          status(response) shouldBe OK
+          status(response) mustBe OK
       }
     }
 
     s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(noSearchResults)))
 
       requestWithAuthorisedUser(controller.show, requestWithSession) { result =>
-        status(result) shouldBe SEE_OTHER
-        redirectLocation(result) shouldBe Some(routes.SicSearchController.show().toString)
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some(routes.SicSearchController.show().toString)
       }
     }
 
     "return a 303 for an authorised user without a sic search" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
 
       requestWithAuthorisedUser(controller.show, requestWithSession) {
         (response: Future[Result]) =>
-          status(response) shouldBe SEE_OTHER
+          status(response) mustBe SEE_OTHER
       }
     }
 
     "return a 303 for an unauthorised user" in new Setup {
-      showWithUnauthorisedUser(controller.show()) {
-        (response: Future[Result]) =>
-          status(response) shouldBe SEE_OTHER
+      showWithUnauthorisedUser(controller.show(), FakeRequest()) {
+        response =>
+          status(response) mustBe SEE_OTHER
       }
     }
   }
@@ -139,12 +146,13 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
 
     "return a 303 for an unauthorised user" in new Setup {
       submitWithUnauthorisedUser(controller.submit, FakeRequest().withFormUrlEncodedBody()) { request =>
-        status(request) shouldBe SEE_OTHER
+        status(request) mustBe SEE_OTHER
       }
     }
 
     "return the choices list page for an authorised user with a selected option" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -158,12 +166,13 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
 
       requestWithAuthorisedUser(controller.submit, request) {
         result =>
-          status(result) shouldBe SEE_OTHER
+          status(result) mustBe SEE_OTHER
       }
     }
 
     "return a 400 for an authorised user with no option selected" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -173,7 +182,7 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
       )
 
       requestWithAuthorisedUser(controller.submit, request) { result =>
-        status(result) shouldBe BAD_REQUEST
+        status(result) mustBe BAD_REQUEST
       }
     }
   }
@@ -181,7 +190,8 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
   "filter" should {
 
     s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when search results are found" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -191,21 +201,22 @@ class ChooseActivityControllerSpec extends ControllerSpec with AuthBuilders {
 
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
         result =>
-          status(result) shouldBe SEE_OTHER
-          redirectLocation(result) shouldBe Some(routes.ChooseActivityController.show().toString)
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().toString)
       }
     }
 
     s"return a 303 and redirect to ${routes.SicSearchController.show()} when no search results are found" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      when(mockJourneyService.retrieveJourney(any())(any()))
+        .thenReturn(Future.successful(Some(journey)))
 
       when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(None))
 
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
         result =>
-          status(result) shouldBe SEE_OTHER
-          redirectLocation(result) shouldBe Some(routes.SicSearchController.show().toString)
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.SicSearchController.show().toString)
       }
     }
   }

@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package auth
+package helpers.mocks
 
-import uk.gov.hmrc.play.config.ServicesConfig
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito.when
+import org.mockito.stubbing.OngoingStubbing
+import org.scalatest.mockito.MockitoSugar
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
-trait SicSearchExternalURLs {
-  val servicesConfig: ServicesConfig
+import scala.concurrent.Future
 
-  private[SicSearchExternalURLs] lazy val companyAuthHost = servicesConfig.getConfString("auth.company-auth.url","")
-  private[SicSearchExternalURLs] lazy val loginCallback   = servicesConfig.getConfString("auth.login-callback.url","")
-  private[SicSearchExternalURLs] lazy val loginPath       = servicesConfig.getConfString("auth.login_path","")
+trait WSHTTPMock {
+  self: MockitoSugar =>
 
-  val loginURL    = s"$companyAuthHost$loginPath"
-  val continueURL = s"$loginCallback???"
+  val mockWSHttp: HttpClient
+
+  def mockHttpGet[T]: OngoingStubbing[Future[T]] = when(mockWSHttp.GET[T](any())(any(), any(), any()))
+  def mockHttpGet[T](url: String): OngoingStubbing[Future[T]] = when(mockWSHttp.GET[T](eqTo(url))(any(), any(), any()))
 }
