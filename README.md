@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/hmrc/industry-classification-lookup-frontend.svg)](https://travis-ci.org/hmrc/industry-classification-lookup-frontend) [ ![Download](https://api.bintray.com/packages/hmrc/releases/industry-classification-lookup-frontend/images/download.svg) ](https://bintray.com/hmrc/releases/industry-classification-lookup-frontend/_latestVersion)
 
-This is a placeholder README.md for a new repository
+This is a placeholder README.md for a new repository.
 
 ### License
 
