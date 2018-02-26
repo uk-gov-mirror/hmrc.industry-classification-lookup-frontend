@@ -17,8 +17,9 @@
 @import config.AppConfig
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
 @import helpers.templates._
+@import forms.sicsearch.SicSearchForm
 
-@(chooseActForm: Form[ChooseActivity], searchResults: SearchResults)(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(sicSearchForm: Form[SicSearch], chooseActForm: Form[ChooseActivity], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = Some("full-width")) {
 
@@ -27,57 +28,57 @@
     </div>
 
     @errorSummary(
+        messages("app.common.errorSummaryLabel"), sicSearchForm, dataJourney=Some("sicSearch")
+    )
+
+    @errorSummary(
         messages("app.common.errorSummaryLabel"), chooseActForm, dataJourney=Some("sicSearch")
     )
 
     <h1 class="form-title heading-xlarge" id="page-title">@messages("page.icl.chooseactivity.heading")</h1>
 
-    @govHelpers.form(action = controllers.routes.ChooseActivityController.submit) {
+    @searchBar(sicSearchForm, controllers.routes.ChooseActivityController.submit(Some("invalid-search")))
 
-        <div class="form-group">
-            <section>
-                <table class="check-your-answers multiple-sections">
-                    <tbody>
-                        <tr>
-                            <td id="entered-keyword">@messages("page.icl.chooseactivity.enteredkeyword")</td>
-                            <td id="search-term" class="answer">'@searchResults.query'</td>
-                            <td class="change"><a href="enter-keywords">@messages("app.common.change")<span class="visuallyhidden">@messages("page.icl.chooseactivity.changehidden")</span></a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-        </div>
+    @oSearchResults.map { searchResults =>
+        @if(searchResults.numFound == 0) {
+            <p class=“result-info”>
+                <span id="no-result" class=“result-count” style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">0</span>
+                results found for '@searchResults.query'
+            </p>
+        } else {
+            @govHelpers.form(action = controllers.routes.ChooseActivityController.submit()) {
+                @sectorFilter(searchResults)
 
-        @sectorFilter(searchResults)
+                <div class="column-two-thirds">
+                    <div class="form-group">
 
-        <div class="column-two-thirds">
-            <div class="form-group">
+                        <p class=“result-info”>
+                        <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
+                            @searchResults.numFound
+                        </span>
+                            @messages("page.icl.chooseactivity.resultsfound")
+                        </p>
 
-                <p class=“result-info”>
-                <span id="result-count" class="result-count" style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">
-                    @searchResults.numFound
-                </span>
-                    @messages("page.icl.chooseactivity.resultsfound")
-                </p>
+                    </div>
 
-            </div>
+                    <div class="form-group">
 
-            <div class="form-group">
+                        @inputRadioGroup(
+                        field = chooseActForm("code"),
+                        searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
+                        '_labelAfter -> true,
+                        '_legend -> messages("page.icl.chooseactivity.title"),
+                        '_legendClass -> "hidden",
+                        '_labelClass -> "block-label"
+                        )
 
-                @inputRadioGroup(
-                field = chooseActForm("code"),
-                searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
-                '_labelAfter -> true,
-                '_legend -> messages("page.icl.chooseactivity.title"),
-                '_legendClass -> "hidden",
-                '_labelClass -> "block-label"
-                )
+                    </div>
 
-            </div>
-
-        <div class="form-group">
-            <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
-        </div>
-        </div>
+                    <div class="form-group">
+                        <button class="btn button" role="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
+                    </div>
+                </div>
+            }
+        }
     }
 }

@@ -21,9 +21,10 @@ import javax.inject.Inject
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import forms.chooseactivity.ChooseActivityForm
-import models.SearchResults
+import forms.sicsearch.SicSearchForm
+import models.{Journey, SearchResults, SicSearch}
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.config.ServicesConfig
@@ -42,38 +43,30 @@ trait ChooseActivityController extends ICLController {
 
   val sicSearchService : SicSearchService
 
-  val show: Action[AnyContent] = Action.async {
+  def show(doSearch: Option[Boolean] = None): Action[AnyContent] = Action.async {
     implicit request =>
       authorised {
         withJourney { journey =>
-          withSearchResults(journey.sessionId) { searchResults =>
-            val numResults = searchResults.numFound
-            numResults match {
-              case 1 => sicSearchService.insertChoice(journey.sessionId, searchResults.results.head.sicCode) map { _ =>
-                Redirect(routes.ConfirmationController.show())
+          if (doSearch.contains(true)) {
+            withSearchResults(journey.sessionId) { searchResults =>
+              if (searchResults.numFound == 1) {
+                Future.successful(Redirect(routes.ConfirmationController.show()))
+              } else {
+                Future.successful(Ok(views.html.pages.chooseactivity(SicSearchForm.form.fill(SicSearch(searchResults.query)), ChooseActivityForm.form, Some(searchResults))))
               }
-              case 0 => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
-              case _ => Future.successful(Ok(views.html.pages.chooseactivity(ChooseActivityForm.form, searchResults)))
             }
+          } else {
+            Future.successful(Ok(views.html.pages.chooseactivity(SicSearchForm.form, ChooseActivityForm.form, None)))
           }
         }
       }
   }
 
-  val submit: Action[AnyContent] = Action.async {
+  def submit(doSearch: Option[String] = None): Action[AnyContent] = Action.async {
     implicit request =>
       authorised {
         withJourney { journey =>
-          withSearchResults(journey.sessionId) { searchResults =>
-            ChooseActivityForm.form.bindFromRequest.fold(
-              errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, searchResults))),
-              form => {
-                sicSearchService.insertChoice(journey.sessionId, form.code) map { _ =>
-                  Redirect(routes.ConfirmationController.show())
-                }
-              }
-            )
-          }
+          doSearch.fold(performActivity(journey))(_ => performSearch(journey))
         }
       }
   }
@@ -84,17 +77,40 @@ trait ChooseActivityController extends ICLController {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
             sicSearchService.search(journey.sessionId, searchResults.query, journey.name, Some(sectorCode)).map { _ =>
-              Redirect(routes.ChooseActivityController.show())
+              Redirect(routes.ChooseActivityController.show(Some(true)))
             }
           }
         }
       }
   }
 
-  private[controllers] def withSearchResults(sessionId: String)(f: => SearchResults => Future[Result]): Future[Result] = {
+  private[controllers] def performSearch(journey: Journey)(implicit request: Request[_]): Future[Result] = {
+    SicSearchForm.form.bindFromRequest.fold(
+      errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, ChooseActivityForm.form, None))),
+      form => sicSearchService.search(journey.sessionId, form.sicSearch, journey.name, None) map {
+        case 1 => Redirect(routes.ConfirmationController.show())
+        case _ => Redirect(routes.ChooseActivityController.show(Some(true)))
+      }
+    )
+  }
+
+  private[controllers] def performActivity(journey: Journey)(implicit request: Request[_]): Future[Result] = {
+    withSearchResults(journey.sessionId) { searchResults =>
+      ChooseActivityForm.form.bindFromRequest.fold(
+        errors => Future.successful(BadRequest(views.html.pages.chooseactivity(SicSearchForm.form.fill(SicSearch(searchResults.query)), errors, Some(searchResults)))),
+        form => {
+          sicSearchService.insertChoice(journey.sessionId, form.code) map { _ =>
+            Redirect(routes.ConfirmationController.show())
+          }
+        }
+      )
+    }
+  }
+
+  private[controllers] def withSearchResults(sessionId: String)(f: => SearchResults => Future[Result])(implicit request: Request[_]): Future[Result] = {
     sicSearchService.retrieveSearchResults(sessionId) flatMap {
       case Some(searchResults) => f(searchResults)
-      case None => Future.successful(Redirect(controllers.routes.SicSearchController.show()))
+      case None => Future.successful(Ok(views.html.pages.chooseactivity(SicSearchForm.form, ChooseActivityForm.form, None)))
     }
   }
 }

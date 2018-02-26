@@ -175,7 +175,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
       status(result) mustBe SEE_OTHER
-      redirectLocation(result) mustBe Some("/sic-search/enter-keywords")
+      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().url)
     }
 
     "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
@@ -186,7 +186,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
       status(result) mustBe SEE_OTHER
-      redirectLocation(result) mustBe Some("/sic-search/enter-keywords")
+      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().url)
     }
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {

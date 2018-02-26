@@ -1,10 +1,11 @@
-app.title                                       =Register your company
+app.title                                       = Register your company
 
-app.common.continue                             =Continue
+app.common.continue                             = Continue
 app.common.confirmAndContinue                   = Confirm and continue
 app.common.back                                 = Back
 app.common.errorSummaryLabel                    = This page has errors
 app.common.change                               = Change
+app.common.search                               = Search
 
 errors.invalid.sic.noEntry                      = Enter one or two keywords for what the company does
 errors.invalid.sic.noSelection                  = Choose a business activity

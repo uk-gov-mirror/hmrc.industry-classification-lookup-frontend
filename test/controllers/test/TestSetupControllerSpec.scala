@@ -94,7 +94,7 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       }
     }
 
-    s"return a 303 and redirect to ${controllers.routes.SicSearchController.show()} when a journey is initialised" in new Setup {
+    s"return a 303 and redirect to ${controllers.routes.ChooseActivityController.show()} when a journey is initialised" in new Setup {
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
         "journey" -> journeyName
       )
@@ -104,7 +104,7 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
       AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
         status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some(controllers.routes.SicSearchController.show().toString)
+        redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show().toString)
       }
     }
   }

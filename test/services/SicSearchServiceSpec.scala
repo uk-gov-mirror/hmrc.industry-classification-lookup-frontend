@@ -54,9 +54,9 @@ class SicSearchServiceSpec extends UnitTestSpec {
     "return true when a sic code is found in ICL and successfully saved" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(Some(sicCode)))
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
-        .thenReturn(Future.successful(true))
       when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
+        .thenReturn(Future.successful(true))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(true))
 
       awaitAndAssert(service.lookupSicCode(sessionId, sicCodeCode)) {
@@ -67,6 +67,8 @@ class SicSearchServiceSpec extends UnitTestSpec {
     "return false when a sic code is found in ICL but unsuccessfully saved" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(Some(sicCode)))
+      when(mockSicStoreRepo.insertChoice(eqTo(sessionId), any())(any()))
+        .thenReturn(Future.successful(true))
       when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
         .thenReturn(Future.successful(false))
 
@@ -78,6 +80,8 @@ class SicSearchServiceSpec extends UnitTestSpec {
     "return false when a sic code is not found" in new Setup {
       when(mockICLConnector.lookup(eqTo(sicCodeCode))(any()))
         .thenReturn(Future.successful(None))
+      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
+        .thenReturn(Future.successful(true))
 
       awaitAndAssert(service.lookupSicCode(sessionId, sicCodeCode)) {
         _ mustBe 0
@@ -115,6 +119,9 @@ class SicSearchServiceSpec extends UnitTestSpec {
     "return false when a set of search results are returned from ICL" in new Setup {
       when(mockICLConnector.search(eqTo(query), any(), any())(any()))
         .thenReturn(Future.successful(searchResultsEmpty))
+
+      when(mockSicStoreRepo.updateSearchResults(any(), any())(any()))
+        .thenReturn(Future.successful(true))
 
       awaitAndAssert(service.searchQuery(sessionId, query, journey)) {
         _ mustBe 0
@@ -160,30 +167,6 @@ class SicSearchServiceSpec extends UnitTestSpec {
 
       awaitAndAssert(service.search(sessionId, query, journey)) {
         _ mustBe 1
-      }
-    }
-  }
-
-  "updateSearchResults" should {
-
-    "return a sic code on success" in new Setup {
-      when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
-        .thenReturn(Future.successful(true))
-
-      awaitAndAssert(service.updateSearchResults(sessionId, oneSearchResult)) {
-        _ mustBe true
-      }
-    }
-  }
-
-  "retrieveSicStore" should {
-
-    "return the sic store for the user specified" in new Setup {
-      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
-        .thenReturn(Future.successful(Some(sicStoreNoChoices)))
-
-      awaitAndAssert(service.retrieveSicStore(sessionId)) {
-        _ mustBe Some(sicStoreNoChoices)
       }
     }
   }
