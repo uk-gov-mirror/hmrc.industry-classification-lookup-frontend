@@ -40,7 +40,7 @@ trait ICLController extends AuthFunction with I18nSupport {
   def withJourney(f: => Journey => Future[Result])(implicit req: Request[_]): Future[Result] = {
     withSessionId { sessionId =>
       journeyService.retrieveJourney(sessionId) flatMap {
-        case Some(journey) => f(Journey(sessionId, journey))
+        case Some((journey, dataSet)) => f(Journey(sessionId, journey, dataSet))
         case None => Future.successful(Redirect(controllers.test.routes.TestSetupController.show()))//TODO should default the journey instead?
       }
     }

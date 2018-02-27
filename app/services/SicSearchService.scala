@@ -19,7 +19,7 @@ package services
 import javax.inject.Inject
 
 import connectors.ICLConnector
-import models.{SearchResults, SicCode, SicStore}
+import models.{SearchResults, SicCode}
 import play.api.Logger
 import repositories.{SicStoreRepo, SicStoreRepository}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -38,11 +38,11 @@ trait SicSearchService {
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreRepository
 
-  def search(sessionId: String, query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+  def search(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
-      lookupSicCode(sessionId, query)
+      lookupSicCode(sessionId, dataSet, query)
     } else {
-      searchQuery(sessionId, query, journey, sector)
+      searchQuery(sessionId, query, journey, dataSet, sector)
     }
   }
 
@@ -62,9 +62,9 @@ trait SicSearchService {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
-  private[services] def lookupSicCode(sessionId: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Int] = {
+  private[services] def lookupSicCode(sessionId: String, dataSet: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Int] = {
     for {
-      oSicCode      <- iCLConnector.lookup(sicCode)
+      oSicCode      <- iCLConnector.lookup(sicCode, dataSet)
       searchResults = oSicCode.fold(SearchResults(sicCode, 0, Nil, Nil))(sic => SearchResults.fromSicCode(sic))
       res           <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { successful =>
         if (successful && oSicCode.isDefined) insertChoice(sessionId, oSicCode.get.sicCode) map (_ => 1) else Future.successful(0)
@@ -72,9 +72,9 @@ trait SicSearchService {
     } yield res
   }
 
-  private[services] def searchQuery(sessionId: String, query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+  private[services] def searchQuery(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     (for {
-      searchResults <- iCLConnector.search(query, journey, sector)
+      searchResults <- iCLConnector.search(query, journey, dataSet, sector)
       _             <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { res =>
         if (searchResults.numFound == 1) insertChoice(sessionId, searchResults.results.head.sicCode) else Future.successful(res)
       }

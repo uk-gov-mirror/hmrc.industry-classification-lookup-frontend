@@ -88,7 +88,7 @@ trait UnitTestSpec
     assert(await(func))
   }
 
-  def mockWithJourney(sessionId: String, journey: Option[String]): OngoingStubbing[Future[Option[String]]] = {
+  def mockWithJourney(sessionId: String, journey: Option[(String, String)]): OngoingStubbing[Future[Option[(String, String)]]] = {
     when(mockJourneyService.retrieveJourney(any())(any()))
       .thenReturn(Future.successful(journey))
   }

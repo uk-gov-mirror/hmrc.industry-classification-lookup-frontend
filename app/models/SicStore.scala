@@ -22,8 +22,9 @@ import play.api.libs.json.{Format, _}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 case class SicStore(
-  registrationID: String,
+  sessionId: String,
   journey: String,
+  dataSet: String,
   searchResults: Option[SearchResults] = None,
   choices: Option[List[SicCode]] = None,
   lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
@@ -50,51 +51,46 @@ case class Sector(
 object SicStore {
   implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
 
-  implicit val format: Format[SicStore] =
-    (
-      (__ \ "registrationID").format[String] and
-      (__ \ "journey").format[String] and
-      (__ \ "search").formatNullable[SearchResults](SearchResults.format) and
-      (__ \ "choices").formatNullable[List[SicCode]] and
-      (__ \ "lastUpdated").format[DateTime]
-    )(SicStore.apply, unlift(SicStore.unapply))
+  implicit val format: Format[SicStore] = (
+    (__ \ "sessionId").format[String] and
+    (__ \ "journey").format[String] and
+    (__ \ "dataSet").format[String] and
+    (__ \ "search").formatNullable[SearchResults](SearchResults.format) and
+    (__ \ "choices").formatNullable[List[SicCode]] and
+    (__ \ "lastUpdated").format[DateTime]
+  )(SicStore.apply, unlift(SicStore.unapply))
 }
 
 object SicCode {
-  implicit val format: Format[SicCode] =
-    (
-      (__ \ "code").format[String] and
-      (__ \ "desc").format[String]
-    )(SicCode.apply, unlift(SicCode.unapply))
+  implicit val format: Format[SicCode] = (
+    (__ \ "code").format[String] and
+    (__ \ "desc").format[String]
+  )(SicCode.apply, unlift(SicCode.unapply))
 }
 
 object Sector {
-  implicit val format: Format[Sector] =
-    (
-      (__ \ "code").format[String] and
-      (__ \ "name").format[String] and
-      (__ \ "count").format[Int]
-    )(Sector.apply, unlift(Sector.unapply))
+  implicit val format: Format[Sector] = (
+    (__ \ "code").format[String] and
+    (__ \ "name").format[String] and
+    (__ \ "count").format[Int]
+  )(Sector.apply, unlift(Sector.unapply))
 }
 
 object SearchResults {
 
   def fromSicCode(sicCode: SicCode): SearchResults = SearchResults(sicCode.sicCode, 1, List(sicCode), List())
 
-  def readsWithQuery(query: String): Reads[SearchResults] =
-    (
-      Reads.pure(query) and
-      (__ \ "numFound").read[Int] and
-      (__ \ "results").read[List[SicCode]] and
-      (__ \ "sectors").read[List[Sector]]
-    )(SearchResults.apply _)
+  def readsWithQuery(query: String): Reads[SearchResults] = (
+    Reads.pure(query) and
+    (__ \ "numFound").read[Int] and
+    (__ \ "results").read[List[SicCode]] and
+    (__ \ "sectors").read[List[Sector]]
+  )(SearchResults.apply _)
 
-  implicit val format: Format[SearchResults] =
-    (
-      (__ \ "query").format[String] and
-      (__ \ "numFound").format[Int] and
-      (__ \ "results").format[List[SicCode]] and
-      (__ \ "sectors").format[List[Sector]]
-    )(SearchResults.apply, unlift(SearchResults.unapply))
-
+  implicit val format: Format[SearchResults] = (
+    (__ \ "query").format[String] and
+    (__ \ "numFound").format[Int] and
+    (__ \ "results").format[List[SicCode]] and
+    (__ \ "sectors").format[List[Sector]]
+  )(SearchResults.apply, unlift(SearchResults.unapply))
 }

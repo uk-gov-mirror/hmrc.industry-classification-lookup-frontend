@@ -35,8 +35,9 @@ class JourneyServiceSpec extends UnitTestSpec {
 
   val sessionId = "session-12345"
   val journeyName: String = Journey.QUERY_BUILDER
-  val journey = Journey(sessionId, journeyName)
-  val sicStore = SicStore(sessionId, journeyName)
+  val dataSet: String     = Journey.HMRC_SIC_8
+  val journey = Journey(sessionId, journeyName, Journey.HMRC_SIC_8)
+  val sicStore = SicStore(sessionId, journeyName, dataSet)
 
   "upsertJourney" should {
 
@@ -57,7 +58,7 @@ class JourneyServiceSpec extends UnitTestSpec {
         .thenReturn(Future.successful(Some(sicStore)))
 
       awaitAndAssert(service.retrieveJourney(sessionId)) {
-        _ mustBe Some(journeyName)
+        _ mustBe Some((journeyName, dataSet))
       }
     }
 

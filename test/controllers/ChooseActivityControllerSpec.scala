@@ -57,11 +57,12 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sicCode = SicCode("12345678", "Test Description")
   val sicCode2 = SicCode("12345679", "Test Description2")
   val journey: String = Journey.QUERY_BUILDER
+  val dataSet: String = Journey.HMRC_SIC_8
 
   val searchResults = SearchResults(query, 1, List(sicCode), List(Sector(SECTOR_A, "Fake Sector", 1)))
   val noSearchResults = SearchResults(query, 0, List(), List())
   val multipleSearchResults = SearchResults(query, 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
-  val sicStore = SicStore("TestId", journey, Some(searchResults))
+  val sicStore = SicStore("TestId", journey, dataSet, Some(searchResults))
 
   "show without results" should {
     "return a 303 for an unauthorised user" in new Setup {
@@ -73,7 +74,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 200 with a new search for an authorised user" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       requestWithAuthorisedUser(controller.show(), requestWithSession) {
         (response: Future[Result]) =>
@@ -90,7 +91,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "show with results" should {
     "return a 200 with performed search returning nothing for an authorised user" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
@@ -108,7 +109,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -122,7 +123,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 200 for an authorised user with multiple sic codes being returned and show the choose activity page and verify sicSearch bar is displayed" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(multipleSearchResults)))
@@ -140,7 +141,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     s"return a 200 and show the choose activity page with no search results found and verify sicSearch bar is displayed" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(any())(any()))
         .thenReturn(Future.successful(Some(noSearchResults)))
@@ -159,9 +160,9 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "Submit a search" should {
     "return a 303 with the search results page" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any(), any())(any()))
         .thenReturn(Future.successful(multipleSearchResults.numFound))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
@@ -177,9 +178,9 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 303 with the choices list page for an authorised user when the search returns only 1 result" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any(), any())(any()))
         .thenReturn(Future.successful(searchResults.numFound))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
@@ -195,7 +196,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 400 for an authorised user without a sic search" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(None))
@@ -220,7 +221,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return the choices list page for an authorised user with a selected option" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -241,7 +242,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 400 for an authorised user with no option selected" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
@@ -259,12 +260,12 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "filter" should {
     s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when search results are found" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any(), any())(any()))
         .thenReturn(Future.successful(1))
 
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {
@@ -276,12 +277,12 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     s"return a 303 and redirect to ${routes.ChooseActivityController.show()} when no search results are found" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
-        .thenReturn(Future.successful(Some(journey)))
+        .thenReturn(Future.successful(Some((journey, dataSet))))
 
       when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(noSearchResults)))
 
-      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any())(any()))
+      when(mockSicSearchService.search(eqTo(sessionId), eqTo(query), any(), any(), any())(any()))
         .thenReturn(Future.successful(0))
 
       requestWithAuthorisedUser(controller.filter(SECTOR_A), requestWithSession) {

@@ -33,7 +33,7 @@ trait JourneyService {
 
   def upsertJourney(journey: Journey)(implicit ec: ExecutionContext): Future[SicStore] = sicStore.upsertJourney(journey)
 
-  def retrieveJourney(sessionId: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
-    sicStore.retrieveSicStore(sessionId).map(_.map(_.journey))
+  def retrieveJourney(sessionId: String)(implicit ec: ExecutionContext): Future[Option[(String, String)]] = {
+    sicStore.retrieveSicStore(sessionId).map(_.map(x => (x.journey, x.dataSet)))
   }
 }

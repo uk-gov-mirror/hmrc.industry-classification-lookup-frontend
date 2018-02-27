@@ -25,14 +25,16 @@ class SicStoreSpec extends UnitTestSpec {
 
   val query = "testQuery"
   val journey: String = Journey.QUERY_BUILDER
+  val dataSet: String = Journey.HMRC_SIC_8
   val dateTime: DateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
   val now: JsValue = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
 
   val sicStoreWithChoicesJson : JsValue = Json.parse(
     s"""
       |{
-      |  "registrationID" : "12345678",
+      |  "sessionId" : "12345678",
       |  "journey" : "$journey",
+      |  "dataSet" : "$dataSet",
       |  "search" : {
       |    "query":"$query",
       |    "numFound":1,
@@ -57,17 +59,18 @@ class SicStoreSpec extends UnitTestSpec {
   val sicStoreNoChoicesJson : JsValue = Json.parse(
     s"""
       |{
-      |  "registrationID" : "12345678",
-      |   "journey" : "$journey",
+      |  "sessionId" : "12345678",
+      |  "journey" : "$journey",
+      |  "dataSet" : "$dataSet",
       |  "search" : {
-      |    "query":"$query",
-      |    "numFound":1,
-      |    "results":[
-      |      {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
-      |    ],
-      |    "sectors":[
-      |      {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
-      |    ]
+      |     "query":"$query",
+      |     "numFound":1,
+      |     "results":[
+      |       {"code" : "19283746", "desc" : "Search Sic Code Result Description"}
+      |     ],
+      |     "sectors":[
+      |       {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
+      |     ]
       |  },
       |  "lastUpdated" : $now
       |}
@@ -77,6 +80,7 @@ class SicStoreSpec extends UnitTestSpec {
   val sicStoreWithChoices = SicStore(
     "12345678",
     journey,
+    dataSet,
     Some(SearchResults(
       query,
       1,
@@ -95,6 +99,7 @@ class SicStoreSpec extends UnitTestSpec {
   val sicStoreNoChoices = SicStore(
     "12345678",
     journey,
+    dataSet,
     Some(SearchResults(
       query,
       1,
