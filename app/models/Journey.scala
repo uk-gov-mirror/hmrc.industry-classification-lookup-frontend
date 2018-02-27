@@ -16,16 +16,27 @@
 
 package models
 
-case class Journey(sessionId: String, name: String){
-  require(Journey.isValid(name), s"$name is not a valid journey identifier")
+case class Journey(sessionId: String,
+                   name: String,
+                   dataSet: String) {
+
+  require(Journey.validName(name), s"$name is not a valid journey identifier")
+  require(Journey.validDataSet(dataSet), s"$dataSet is not a valid data set identifier")
 }
 
 object Journey {
 
+  //Journeys
   val QUERY_BUILDER = "query-builder"
-  val QUERY_PARSER = "query-parser"
-
+  val QUERY_PARSER  = "query-parser"
   private val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER)
 
-  private[Journey] def isValid(journey: String): Boolean = journeyNames contains journey
+  //Data sets
+  val HMRC_SIC_8 = "hmrc-sic8"
+  val GDS        = "gds-register-sic5"
+  val ONS        = "ons-supplement-sic5"
+  private val dataSets = Seq(HMRC_SIC_8, GDS, ONS)
+
+  private def validName(journey: String): Boolean    = journeyNames contains journey
+  private def validDataSet(dataSet: String): Boolean = dataSets contains dataSet
 }

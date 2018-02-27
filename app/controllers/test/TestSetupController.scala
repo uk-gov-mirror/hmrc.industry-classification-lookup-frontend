@@ -32,11 +32,6 @@ import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.Future
 
-object Journeys {
-  val QUERY_BUILDER = "query-builder"
-  val QUERY_PARSER  = "query-parser"
-}
-
 class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
                                         val appConfig: AppConfig,
                                         val journeyService: JourneyService,
@@ -46,7 +41,11 @@ class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
 trait TestSetupController extends ICLController {
 
   val journeyService: JourneyService
-  val form: Form[String] = Form(single("journey" -> nonEmptyText))
+
+  val form: Form[(String, String)] = Form(tuple(
+    "journey" -> nonEmptyText,
+    "dataSet" -> nonEmptyText
+  ))
 
   val show: Action[AnyContent] = Action.async {
     implicit request =>
@@ -54,7 +53,7 @@ trait TestSetupController extends ICLController {
         withSessionId { sessionId =>
           journeyService.retrieveJourney(sessionId) map {
             case Some(journey) => Ok(views.html.test.SetupJourneyView(form.fill(journey)))
-            case None => Ok(views.html.test.SetupJourneyView(form))
+            case None          => Ok(views.html.test.SetupJourneyView(form))
           }
         }
       }
@@ -66,8 +65,9 @@ trait TestSetupController extends ICLController {
         withSessionId { sessionId =>
           form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.test.SetupJourneyView(errors))),
-            journeyName => {
-              val journey = Journey(sessionId, journeyName)
+            valid  => {
+              val (journeyName, dataSet) = valid
+              val journey = Journey(sessionId, journeyName, dataSet)
               journeyService.upsertJourney(journey) map { _ =>
                 Redirect(controllers.routes.ChooseActivityController.show())
               }

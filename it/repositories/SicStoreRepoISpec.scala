@@ -46,6 +46,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
   val sessionId = "session-id-12345"
   val journey: String = Journey.QUERY_BUILDER
+  val dataSet: String = Journey.HMRC_SIC_8
 
   val sicCodeCode = "12345678"
   val sicCode = SicCode(sicCodeCode, "Test sic code description")
@@ -54,9 +55,9 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Example", 1)))
   val searchResults2 = SearchResults("testQuery", 1, List(sicCode2), List(Sector("B", "Alternative", 1)))
 
-  val sicStoreNoChoices = SicStore(sessionId, journey, Some(searchResults), None, dateTime)
-  val sicStore1Choice = SicStore(sessionId, journey, Some(searchResults), Some(List(sicCode)), dateTime)
-  val sicStore2Choices = SicStore(sessionId, journey, Some(searchResults2), Some(List(sicCode, sicCode2)), dateTime)
+  val sicStoreNoChoices = SicStore(sessionId, journey, dataSet, Some(searchResults), None, dateTime)
+  val sicStore1Choice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode)), dateTime)
+  val sicStore2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults2), Some(List(sicCode, sicCode2)), dateTime)
 
   "retrieveSicStore" should {
 
@@ -122,14 +123,14 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
       val sicCodeToAdd = SicCode("67891234", "some description")
 
       val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd), List(Sector("A", "Fake", 1)))
-      val sicStoreWithExistingChoice = SicStore(sessionId, journey, Some(searchResults), Some(List(sicCode)), dateTime)
+      val sicStoreWithExistingChoice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode)), dateTime)
 
       insert(sicStoreWithExistingChoice)
 
       await(repository.insertChoice(sessionId, sicCodeToAdd.sicCode))
 
       val fetchedDocument: SicStore = fetchAll.head
-      val sicStoreWith2Choices = SicStore(sessionId, journey, Some(searchResults), Some(List(sicCode, sicCodeToAdd)), dateTime)
+      val sicStoreWith2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode, sicCodeToAdd)), dateTime)
 
       fetchedDocument.choices shouldBe sicStoreWith2Choices.choices
       fetchedDocument.lastUpdated isAfter sicStoreWith2Choices.lastUpdated shouldBe true
@@ -192,26 +193,24 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
     }
   }
 
-    "upsertJourney" should {
-      "Update a journey is it already exists" in new Setup {
-        await(repository.insert(sicStore2Choices))
-        await(repository.upsertJourney(Journey(sessionId, Journey.QUERY_PARSER)))
+  "upsertJourney" should {
+    "Update a journey is it already exists" in new Setup {
+      await(repository.insert(sicStore2Choices))
+      await(repository.upsertJourney(Journey(sessionId, Journey.QUERY_PARSER, dataSet)))
 
-        val fetchedDocument: SicStore = await(repository.retrieveSicStore(sessionId)).get
+      val fetchedDocument: SicStore = await(repository.retrieveSicStore(sessionId)).get
 
-        fetchedDocument.journey shouldBe Journey.QUERY_PARSER
-      }
-
-
-      "Create a journey if one doesn't exist" in new Setup {
-        count shouldBe 0
-        await(repository.upsertJourney(Journey(sessionId, Journey.QUERY_PARSER)))
-
-        val fetchedDocument: SicStore = await(repository.retrieveSicStore(sessionId)).get
-        fetchedDocument.journey shouldBe Journey.QUERY_PARSER
-
-      }
-
+      fetchedDocument.journey shouldBe Journey.QUERY_PARSER
     }
 
+
+    "Create a journey if one doesn't exist" in new Setup {
+      count shouldBe 0
+      await(repository.upsertJourney(Journey(sessionId, Journey.QUERY_PARSER, dataSet)))
+
+      val fetchedDocument: SicStore = await(repository.retrieveSicStore(sessionId)).get
+      fetchedDocument.journey shouldBe Journey.QUERY_PARSER
+
+    }
+  }
 }

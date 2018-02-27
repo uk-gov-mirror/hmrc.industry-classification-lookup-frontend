@@ -51,22 +51,24 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
   val journey: String = Journey.QUERY_BUILDER
+  val dataSet: String = Journey.HMRC_SIC_8
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
 
   val sicStore = SicStore(
     sessionId,
     journey,
+    dataSet,
     Some(searchResults),
     Some(List(sicCode))
   )
 
-  val sicStoreNoChoices = SicStore(sessionId, journey, Some(searchResults), None)
-  val sicStoreEmptyChoiceList = SicStore(sessionId, journey, Some(searchResults), Some(List()))
+  val sicStoreNoChoices = SicStore(sessionId, journey, dataSet, Some(searchResults), None)
+  val sicStoreEmptyChoiceList = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List()))
 
   "show" should {
 
     "return a 200 when a SicStore is returned from mongo" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCode))))
@@ -78,7 +80,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 303 when previous choices are not found in mongo" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
@@ -93,7 +95,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "submit" should {
 
     "return a 200 when the form field 'addAnother' is no" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
 
@@ -107,7 +109,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 303 when the form field 'addAnother' is yes" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
 
@@ -121,7 +123,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 200 and render end of journey page when 4 choices have already been made" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode, sicCode, sicCode))))
@@ -132,7 +134,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 400 when an empty form is submitted" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode))))
@@ -150,7 +152,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "removeChoice" should {
 
     "return a 200 when the supplied sic code is removed" in new Setup {
-      mockWithJourney(sessionId, Some(journey))
+      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.removeChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))

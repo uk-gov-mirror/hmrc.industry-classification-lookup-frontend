@@ -26,6 +26,8 @@ class ICLConnectorSpec extends UnitTestSpec {
 
   val iCLUrl = "http://localhost:12345"
 
+  val dataSet: String = Journey.HMRC_SIC_8
+
   class Setup extends CodeMocks {
     val connector: ICLConnector = new ICLConnector {
       val http: CoreGet  = mockWSHttp
@@ -38,12 +40,12 @@ class ICLConnectorSpec extends UnitTestSpec {
     val sicCode = "12345678"
     val sicCodeResult = SicCode(sicCode, "some description")
 
-    val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode"
+    val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode?indexName=$dataSet"
 
     "return a sic code case class matching the code provided" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.successful(sicCodeResult))
 
-      awaitAndAssert(connector.lookup(sicCode)) {
+      awaitAndAssert(connector.lookup(sicCode, dataSet)) {
         _ mustBe Some(sicCodeResult)
       }
     }
@@ -51,7 +53,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "return none when ICL returns a 404" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      awaitAndAssert(connector.lookup(sicCode)) {
+      awaitAndAssert(connector.lookup(sicCode, dataSet)) {
         _ mustBe None
       }
     }
@@ -59,7 +61,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
-      val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode)))
+      val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode, dataSet)))
       result.getMessage mustBe "something went wrong"
     }
   }
@@ -72,13 +74,13 @@ class ICLConnectorSpec extends UnitTestSpec {
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")), List(Sector("A", "Example of a business sector", 1)))
     val sector = "B"
 
-    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&queryType=$journey"
-    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector&queryType=$journey"
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&queryType=$journey&indexName=$dataSet"
+    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=500&sector=$sector&queryType=$journey&indexName=$dataSet"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))
 
-      awaitAndAssert(connector.search(query, journey)) {
+      awaitAndAssert(connector.search(query, journey, dataSet)) {
         _ mustBe searchResults
       }
     }
@@ -86,7 +88,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "return a SearchResults case class when a sector search is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchSectorUrl).thenReturn(Future.successful(searchResults))
 
-      awaitAndAssert(connector.search(query, journey, Some(sector))) {
+      awaitAndAssert(connector.search(query, journey, dataSet, Some(sector))) {
         _ mustBe searchResults
       }
     }
@@ -94,7 +96,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "return 0 results when ICL returns a 404" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      awaitAndAssert(connector.search(query, journey)) {
+      awaitAndAssert(connector.search(query, journey, dataSet)) {
         _ mustBe zeroResults
       }
     }
@@ -102,7 +104,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
-      val result: RuntimeException = intercept[RuntimeException](await(connector.search(query, journey)))
+      val result: RuntimeException = intercept[RuntimeException](await(connector.search(query, journey, dataSet)))
       result.getMessage mustBe "something went wrong"
     }
   }

@@ -51,11 +51,13 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
 
   val journeyName: String = Journey.QUERY_BUILDER
-  val journey = Journey(sessionId, journeyName)
+  val dataSet: String     = Journey.HMRC_SIC_8
+  val journey = Journey(sessionId, journeyName, Journey.HMRC_SIC_8)
 
   val sicStore = SicStore(
     sessionId,
     journeyName,
+    dataSet,
     Some(SearchResults("test-query", 1, List(SicCode("19283746", "Search Sic Code Result Description")), List()))
   )
 
@@ -64,7 +66,7 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     "return a 200 and render the SetupJourneyView page when a journey has already been initialised" in new Setup {
 
       when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
-        .thenReturn(Future.successful(Some(journeyName)))
+        .thenReturn(Future.successful(Some((journeyName, dataSet))))
 
       AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
         status(result) mustBe 200
@@ -96,7 +98,8 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     s"return a 303 and redirect to ${controllers.routes.ChooseActivityController.show()} when a journey is initialised" in new Setup {
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
-        "journey" -> journeyName
+        "journey" -> journeyName,
+        "dataSet" -> dataSet
       )
 
       when(mockJourneyService.upsertJourney(eqTo(journey))(any()))

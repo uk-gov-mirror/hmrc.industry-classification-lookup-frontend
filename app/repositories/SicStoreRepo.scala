@@ -51,7 +51,7 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   with SicStoreRepository with TTLIndexing[SicStore, BSONObjectID] {
 
   private[repositories] def sessionIdSelector(sessionId: String): BSONDocument = BSONDocument(
-    "registrationID" -> BSONString(sessionId)
+    "sessionId" -> BSONString(sessionId)
   )
 
   override val ttl: Long = config.getLong("mongodb.timeToLiveInSeconds").get
@@ -139,10 +139,10 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   }
 
   private def initJourney(journey: Journey): Future[SicStore] = {
-    val sicStore = SicStore(journey.sessionId, journey.name)
+    val sicStore  = SicStore(journey.sessionId, journey.name, journey.dataSet)
     val insertion = Json.toJson(sicStore).as[JsObject]
-    val document = BSONDocument("$set" -> BSONFormats.readAsBSONValue(insertion).get)
-    val selector = sessionIdSelector(journey.sessionId)
+    val document  = BSONDocument("$set" -> BSONFormats.readAsBSONValue(insertion).get)
+    val selector  = sessionIdSelector(journey.sessionId)
     collection.update(selector, document, upsert = true) map (_ => sicStore)
   }
 
@@ -151,16 +151,20 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     retrieveSicStore(journey.sessionId) flatMap {
       case Some(sicStore) =>
         val selector = sessionIdSelector(journey.sessionId)
-        val sicStoreWithJourney = sicStore.copy(journey = journey.name)
+        val sicStoreWithJourney = sicStore.copy(journey = journey.name, dataSet = journey.dataSet)
         val json = Json.toJson(sicStoreWithJourney).as[JsObject]
         val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(json).get)
 
-        collection.update(selector, update, upsert = true) map { updateResult =>
-          if(updateResult.nModified == 1) {
-            sicStoreWithJourney
-          } else {
-            throw new Exception(s"Did not update sic store with new journey for session id : ${journey.sessionId}" +
-              s" - number of documents modified ${updateResult.nModified}")
+        if(sicStoreWithJourney == sicStore) {
+          Future.successful(sicStoreWithJourney)
+        } else {
+          collection.update(selector, update, upsert = true) map { updateResult =>
+            if(updateResult.nModified == 1) {
+              sicStoreWithJourney
+            } else {
+              throw new Exception(s"Did not update sic store with new journey for session id : ${journey.sessionId}" +
+                s" - number of documents modified ${updateResult.nModified}")
+            }
           }
         }
       case None => initJourney(journey)

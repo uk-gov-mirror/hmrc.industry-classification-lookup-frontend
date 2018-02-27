@@ -20,7 +20,7 @@ import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.mockito.{ArgumentCaptor, ArgumentMatchers}
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import play.api.libs.json.JsObject
 import reactivemongo.api.commands.{DefaultWriteResult, UpdateWriteResult, WriteConcern}
 import reactivemongo.api.indexes.CollectionIndexesManager

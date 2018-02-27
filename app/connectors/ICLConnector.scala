@@ -37,8 +37,8 @@ trait ICLConnector {
   val http: CoreGet
   val ICLUrl: String
 
-  def lookup(sicCode: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {
-    http.GET[SicCode](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode") map {
+  def lookup(sicCode: String, dataSet: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {
+    http.GET[SicCode](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode?indexName=$dataSet") map {
       Some.apply
     } recover {
       case e: HttpException =>
@@ -50,10 +50,10 @@ trait ICLConnector {
     }
   }
 
-  def search(query: String, journey: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
+  def search(query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
     val sectorFilter = sector.fold("")(s => s"&sector=$s")
-    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter&queryType=$journey") recover {
+    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter&queryType=$journey&indexName=$dataSet") recover {
       case e: HttpException =>
         Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}")
         SearchResults(

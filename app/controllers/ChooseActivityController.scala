@@ -76,7 +76,7 @@ trait ChooseActivityController extends ICLController {
       authorised {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
-            sicSearchService.search(journey.sessionId, searchResults.query, journey.name, Some(sectorCode)).map { _ =>
+            sicSearchService.search(journey.sessionId, searchResults.query, journey.name, journey.dataSet, Some(sectorCode)).map { _ =>
               Redirect(routes.ChooseActivityController.show(Some(true)))
             }
           }
@@ -87,7 +87,7 @@ trait ChooseActivityController extends ICLController {
   private[controllers] def performSearch(journey: Journey)(implicit request: Request[_]): Future[Result] = {
     SicSearchForm.form.bindFromRequest.fold(
       errors => Future.successful(BadRequest(views.html.pages.chooseactivity(errors, ChooseActivityForm.form, None))),
-      form => sicSearchService.search(journey.sessionId, form.sicSearch, journey.name, None) map {
+      form => sicSearchService.search(journey.sessionId, form.sicSearch, journey.name, journey.dataSet, None) map {
         case 1 => Redirect(routes.ConfirmationController.show())
         case _ => Redirect(routes.ChooseActivityController.show(Some(true)))
       }
