@@ -29,7 +29,8 @@ object Journey {
   //Journeys
   val QUERY_BUILDER = "query-builder"
   val QUERY_PARSER  = "query-parser"
-  private val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER)
+  val QUERY_BOOSTER = "query-boost-first-term"
+  private val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER, QUERY_BOOSTER)
 
   //Data sets
   val HMRC_SIC_8 = "hmrc-sic8"
