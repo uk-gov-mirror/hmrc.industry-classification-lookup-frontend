@@ -20,7 +20,7 @@ import helpers.UnitTestSpec
 
 class JourneySpec extends UnitTestSpec {
 
-  val journeyNames = Seq(Journey.QUERY_BUILDER, Journey.QUERY_PARSER)
+  val journeyNames = Seq(Journey.QUERY_BUILDER, Journey.QUERY_PARSER, Journey.QUERY_BOOSTER)
   val dataSets     = Seq(Journey.HMRC_SIC_8, Journey.GDS, Journey.ONS)
 
   "Journey" should {
