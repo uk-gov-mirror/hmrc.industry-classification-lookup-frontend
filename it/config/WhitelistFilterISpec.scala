@@ -26,7 +26,7 @@ class WhitelistFilterISpec extends ClientSpec {
   val extraConfig: Map[String, Any] = Map(
     "play.http.filters" -> "config.ProductionFilters",
     "whitelist-excluded" -> "/ping/ping,/healthcheck".toBase64,
-    "whitelist" -> "11.22.33.44".toBase64
+    "whitelist" -> "whitelistIP".toBase64
   )
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
@@ -42,7 +42,7 @@ class WhitelistFilterISpec extends ClientSpec {
     }
 
     "the whitelist IPs are requested" in {
-      frontendAppConfig.whitelist mustBe Seq("11.22.33.44")
+      frontendAppConfig.whitelist mustBe Seq("whitelistIP")
     }
   }
 
@@ -53,7 +53,7 @@ class WhitelistFilterISpec extends ClientSpec {
 
       "the request is sent from a whitelisted ip address" in {
         val client = buildClient("/sic-search/choose-business-activity")
-          .withTrueClientIPHeader("11.22.33.44")
+          .withTrueClientIPHeader("whitelistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
@@ -65,7 +65,7 @@ class WhitelistFilterISpec extends ClientSpec {
 
       "the request is not sent from a white-listed IP but the requested Url is a white-listed Url" in {
         val client = buildClient("/ping/ping")
-          .withTrueClientIPHeader("11.22.33.44")
+          .withTrueClientIPHeader("whitelistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
@@ -79,7 +79,7 @@ class WhitelistFilterISpec extends ClientSpec {
 
       "the request is not sent from a white-listed IP and the requested Url is not a white-listed Url" in {
         val client = buildClient("/sic-search/choose-business-activity")
-          .withTrueClientIPHeader("00.00.00.01")
+          .withTrueClientIPHeader("nonWhitelistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
