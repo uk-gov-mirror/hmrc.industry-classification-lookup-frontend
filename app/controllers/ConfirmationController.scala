@@ -20,9 +20,6 @@ import javax.inject.Inject
 
 import auth.SicSearchExternalURLs
 import config.AppConfig
-import forms.ConfirmationForm
-import models.Confirmation.{NO, YES}
-import models.SicCode
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Result}
 import services.{JourneyService, SicSearchService}
@@ -46,7 +43,7 @@ trait ConfirmationController extends ICLController {
       authorised {
         withJourney { journey =>
           withCurrentUsersChoices(journey.sessionId) { choices =>
-            Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
+            Future.successful(Ok(views.html.pages.confirmation(choices)))
           }
         }
       }
@@ -57,42 +54,14 @@ trait ConfirmationController extends ICLController {
       authorised {
         withJourney { journey =>
           withCurrentUsersChoices(journey.sessionId) { choices =>
-            if (choices.size >= 4) {
+            if (choices.size <= 4) {
               Future.successful(Ok("End of journey"))
             } else {
-              ConfirmationForm.form.bindFromRequest().fold(
-                errors => Future.successful(BadRequest(views.html.pages.confirmation(errors, choices))),
-                form => form.addAnother match {
-                  case YES => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
-                  case NO => Future.successful(Ok("End of journey"))
-                }
-              )
+              val amountToRemove = (choices.size - 4).toString
+              Future.successful(BadRequest(views.html.pages.confirmation(choices, Some(Seq(amountToRemove)))))
             }
           }
         }
       }
-  }
-
-  def removeChoice(sicCode: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      authorised {
-        withJourney { journey =>
-          sicSearchService.removeChoice(journey.sessionId, sicCode) flatMap { _ =>
-            withCurrentUsersChoices(journey.sessionId) { choices =>
-              Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
-            }
-          }
-        }
-      }
-  }
-
-  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
-    sicSearchService.retrieveChoices(sessionId) flatMap {
-      case Some(choices) => choices match {
-        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
-        case listOfChoices => f(listOfChoices)
-      }
-      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
-    }
   }
 }

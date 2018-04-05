@@ -16,27 +16,25 @@
 
 package forms
 
-import forms.chooseactivity.ChooseActivityForm
 import helpers.UnitTestSpec
-import models.ChooseActivity
 import play.api.data.FormError
 
-class ChooseActivityFormSpec extends UnitTestSpec {
+class RemoveSicCodeFormSpec extends UnitTestSpec {
 
-  val testForm = ChooseActivityForm.form
+  val testForm = RemoveSicCodeForm.form("description")
 
   "Binding BusinessActivityFormSpec to a model" should {
-    "Bind successfully with full data" in {
-      val data      = Map("code" -> "12345678")
-      val model     = ChooseActivity(code = "12345678")
+    "bind successfully with full data" in {
+
+      val data = Map("removeCode" -> "yes")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
-      boundForm mustBe model
+      boundForm mustBe "yes"
     }
 
-    "Provide the correct error when nothing was selected" in {
-      val data      = Map("code" -> "")
-      val model     = Seq(FormError("code", "errors.invalid.sic.noSelection"))
+    "provide the correct error when nothing was selected" in {
+      val data = Map("removeCode" -> "")
+      val model = Seq(FormError("removeCode", "errors.invalid.sic.remove", Seq("description")))
       val boundForm = testForm.bind(data).fold(errors => errors, success => testForm.fill(success))
 
       boundForm.errors mustBe model

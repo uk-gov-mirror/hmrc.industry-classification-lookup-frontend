@@ -54,8 +54,8 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   val SECTOR_A = "A"
   val query = "testQuery"
-  val sicCode = SicCode("12345678", "Test Description")
-  val sicCode2 = SicCode("12345679", "Test Description2")
+  val sicCode = SicCode("12345", "Test Description")
+  val sicCode2 = SicCode("12345", "Test Description2")
   val journey: String = Journey.QUERY_BUILDER
   val dataSet: String = Journey.HMRC_SIC_8
 
@@ -107,7 +107,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       }
     }
 
-    "return a 303 for an authorised user when the sic code is found and redirect to confirmation page" in new Setup {
+    "return a 200 for an authorised user when there is only one sic code found is found and redirect to confirmation page" in new Setup {
       when(mockJourneyService.retrieveJourney(any())(any()))
         .thenReturn(Future.successful(Some((journey, dataSet))))
 
@@ -116,8 +116,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
       requestWithAuthorisedUser(controller.show(Some(true)), requestWithSession) {
         (response: Future[Result]) =>
-          status(response) mustBe SEE_OTHER
-          redirectLocation(response) mustBe Some("/sic-search/confirm-business-activities")
+          status(response) mustBe OK
       }
     }
 
@@ -226,11 +225,11 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveSearchResults(ArgumentMatchers.anyString())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
-      when(mockSicSearchService.insertChoice(ArgumentMatchers.anyString(), ArgumentMatchers.any())(ArgumentMatchers.any()))
-        .thenReturn(Future.successful(true))
+      when(mockSicSearchService.lookupSicCodes(any(), any())(any()))
+        .thenReturn(Future.successful(1))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
-        "code" -> "12345678"
+        "code[0]" -> "12345"
       )
 
       requestWithAuthorisedUser(controller.submit(), request) {

@@ -17,14 +17,13 @@
 package repositories
 
 import javax.inject.{Inject, Singleton}
-
-import models.{Journey, SearchResults, SicStore}
+import models.{Journey, SearchResults, SicCodeChoice, SicStore}
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.Configuration
-import play.api.libs.json.{JsObject, Json}
+import play.api.{Configuration, Logger}
+import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
+import reactivemongo.bson.{BSONArray, BSONDocument, BSONObjectID, BSONString}
 import reactivemongo.play.json.BSONFormats
 import reactivemongo.play.json.ImplicitBSONHandlers.BSONDocumentWrites
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -42,7 +41,7 @@ class SicStoreRepo @Inject()(configuration: Configuration, mongo: ReactiveMongoC
 trait SicStoreRepository {
   def updateSearchResults(sessionId: String, searchResult: SearchResults)(implicit ec: ExecutionContext): Future[Boolean]
   def retrieveSicStore(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SicStore]]
-  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean]
+  def insertChoices(sessionId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean]
   def removeChoice(sessionId: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
 }
 
@@ -73,13 +72,15 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   override def updateSearchResults(sessionId: String, searchResults: SearchResults)(implicit ec: ExecutionContext): Future[Boolean] = {
     val selector = sessionIdSelector(sessionId)
 
+    val getCurrentSectorJson: JsObject = searchResults.currentSector.fold(Json.obj())(sector => Json.obj("currentSector" -> Json.toJson(sector)))
+
     val searchjson = Json.obj(
       "search" -> Json.obj(
         "query" -> searchResults.query,
         "numFound" -> searchResults.numFound,
         "results" -> Json.toJson(searchResults.results),
         "sectors" -> Json.toJson(searchResults.sectors)
-      ),
+      ).++(getCurrentSectorJson),
       "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite))
 
     val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(searchjson).get)
@@ -87,30 +88,56 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
     collection.update(selector, update).map(_.ok)
   }
 
-  override def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+  private def getChoicesJsonObject(sicCodes: List[SicCodeChoice]): JsValue = JsArray(sicCodes.map {
+    scc => Json.obj(
+      "code" -> scc.code,
+      "desc"        -> scc.desc,
+      "indexes"     -> scc.indexes
+    )
+  })
+
+  private def getIndexesJsonObject(strings: List[String]): JsValue = JsArray(strings.map(Json.toJson[String]))
+
+  override def insertChoices(sessionId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean] = {
     retrieveSicStore(sessionId) flatMap {
       case Some(store) =>
-        store.searchResults.flatMap(_.results.find(_.sicCode == sicCode)) match {
-          case Some(sicCodeToAdd) =>
-            val selector = sessionIdSelector(sessionId)
 
-            val choicesjson = Json.obj("choices" -> Json.obj(
-              "code" -> sicCodeToAdd.sicCode,
-              "desc" -> sicCodeToAdd.description
-            ))
+        val selector = sessionIdSelector(sessionId)
 
-            val set = Json.obj(
-              "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite)
+        val (toUpdate, toAdd) = store.choices match {
+          case Some(choices) =>
+            sicCodes.partition (
+              x => choices.exists(_.code == x.code)
             )
-
-            val update = BSONDocument(
-              "$addToSet" -> BSONFormats.readAsBSONValue(choicesjson).get,
-              "$set" -> BSONFormats.readAsBSONValue(set).get
-            )
-
-            collection.update(selector, update, upsert = true).map(_.ok)
-          case None => Future.successful(false)
+          case None => (Nil, sicCodes)
         }
+
+        val set = Json.obj(
+          "lastUpdated" -> Json.toJson(now)(ReactiveMongoFormats.dateTimeWrite)
+        )
+
+        val update = BSONDocument(
+          "$addToSet" -> BSONDocument("choices" -> BSONDocument("$each" -> BSONFormats.readAsBSONValue(getChoicesJsonObject(toAdd)).get)),
+          "$set"      -> BSONFormats.readAsBSONValue(set).get
+        )
+
+        toUpdate.map{
+          sicCodeChoice =>
+            val indexes = store.choices match {
+              case Some(list) =>
+                list.find(_.code == sicCodeChoice.code)
+                  .fold(sicCodeChoice.indexes)(choice => (choice.indexes ++ sicCodeChoice.indexes).distinct)
+              case None => sicCodeChoice.indexes
+            }
+            val upsertSelector = BSONDocument("choices" -> BSONDocument("$elemMatch" -> BSONDocument("code" -> sicCodeChoice.code))) ++ selector
+            val upsert = BSONDocument(
+              "$addToSet" -> BSONDocument("choices.$.indexes" -> BSONDocument("$each" -> BSONFormats.readAsBSONValue(getIndexesJsonObject(indexes)).get)),
+              "$set"      -> BSONFormats.readAsBSONValue(set).get
+            )
+            collection.update(upsertSelector, upsert, upsert = true).map(_.ok)
+        }
+
+        collection.update(selector, update, upsert = true).map(_.ok)
       case None => Future.successful(false)
     }
   }

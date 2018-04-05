@@ -135,41 +135,6 @@ trait MongoMocks extends MockitoSugar {
 
 	}
 
-//	def setupFindFor[T](collection: JSONCollection, filter: any, returns: Option[T])(implicit manifest: Manifest[T]) = {
-//
-//		val queryBuilder = mock[JSONQueryBuilder]
-//
-//		when(
-//			collection.find(eqTo(filter))(ArgumentMatchers.any())
-//		) thenReturn queryBuilder
-//
-//		when(
-//			queryBuilder.one[T](ArgumentMatchers.any(), ArgumentMatchers.any)
-//		) thenReturn Future.successful(returns)
-//
-//	}
-//
-//	def setupFindFor[T](collection: JSONCollection, filter: any, returns: Traversable[T])(implicit manifest: Manifest[T]) = {
-//
-//		val queryBuilder = mock[JSONQueryBuilder]
-//		val cursor = mock[Cursor[T]]
-//
-//		when(
-//			collection.find(eqTo(filter))(ArgumentMatchers.any())
-//		) thenReturn queryBuilder
-//
-//		when(
-//			queryBuilder.cursor[T](ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any[ExecutionContext], ArgumentMatchers.any())
-//		) thenAnswer new Answer[Cursor[T]] {
-//			def answer(i: InvocationOnMock) = cursor
-//		}
-//
-//		when(
-//			cursor.collect[Traversable](ArgumentMatchers.anyInt(), ArgumentMatchers.anyBoolean)(ArgumentMatchers.any[CanBuildFrom[Traversable[_], T, Traversable[T]]], ArgumentMatchers.any[ExecutionContext])
-//		) thenReturn Future.successful(returns)
-//
-//	}
-
 	def setupInsertOn[T](collection: JSONCollection, obj: T, fails: Boolean = false) = {
 		val m = mockWriteResult(fails)
 		when(collection.insert(ArgumentMatchers.eq(obj), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))

@@ -16,27 +16,15 @@
 
 @(searchResults: SearchResults)(implicit request: Request[_], messages: Messages)
 
-@if(searchResults.sectors.size > 2){
+@if(searchResults.sectors.size > 1){
     <div class="column-one-third">
-        <div class="filtering">
-            <div class="filter-form">
-                <div class="inner-block">
-                    <div class="govuk-option-select js-collapsible" data-input-aria-controls="js-search-results-info">
-                        <span class="js-container-head">
-                            <div class="option-select-label" id="option-select-title-case-type">Filter by industry sector</div>
-                        </span>
-                        <div role="group" aria-labelledby="option-select-title-case-type" class="options-container" id="case_type" style="max-height: none; height: 214px;">
-                            <div class="js-auto-height-inner">
-                                @searchResults.sectors.map { sector =>
-                                    <label for="@{sector.code}">
-                                        <a href="@controllers.routes.ChooseActivityController.filter(sector.code)" id="@{sector.code}">@{sector.name} (@{sector.count})</a>
-                                    </label>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <h3 id="option-select-title-case-type">@messages("page.icl.chooseactivity.filter-heading")</h3>
+        <div role="group" aria-labelledby="option-select-title-case-type">
+        <ul class="list">
+            @searchResults.sectors.map { sector =>
+                <li><a href="@controllers.routes.ChooseActivityController.filter(sector.code)" id="@{sector.code}" @if(SearchResults.isCurrentSector(searchResults, sector)){class="bold"}>@{sector.name} (@{sector.count})</a></li>
+            }
+        </ul>
         </div>
     </div>
 }

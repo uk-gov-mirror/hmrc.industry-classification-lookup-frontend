@@ -17,7 +17,6 @@
 package controllers.test
 
 import javax.inject.Inject
-
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import controllers.ICLController
@@ -26,7 +25,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
-import services.JourneyService
+import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 
@@ -36,6 +35,7 @@ class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
                                         val appConfig: AppConfig,
                                         val journeyService: JourneyService,
                                         val servicesConfig: ServicesConfig,
+                                        val sicSearchService: SicSearchService,
                                         val authConnector: AuthConnector) extends TestSetupController with SicSearchExternalURLs
 
 trait TestSetupController extends ICLController {

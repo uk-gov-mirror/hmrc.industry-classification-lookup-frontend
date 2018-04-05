@@ -1,4 +1,4 @@
-/*
+@*
  * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *@
 
-package models
+@(list: List[String])(implicit messages: Messages)
 
-import play.api.libs.json.Json
-
-case class SicSearch(sicSearch: String)
-
-object SicSearch {
-  implicit val format = Json.format[SicSearch]
+@if(list.nonEmpty){
+<p class="font-small">@messages("app.common.includes")</p>
+<ul class="list-bullet">
+    @list.map{ index =>
+     <li>@index</li>
+    }
+</ul>
 }

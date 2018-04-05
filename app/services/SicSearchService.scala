@@ -17,9 +17,8 @@
 package services
 
 import javax.inject.Inject
-
 import connectors.ICLConnector
-import models.{SearchResults, SicCode}
+import models.{SearchResults, SicCode, SicCodeChoice}
 import play.api.Logger
 import repositories.{SicStoreRepo, SicStoreRepository}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -40,7 +39,7 @@ trait SicSearchService {
 
   def search(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
-      lookupSicCode(sessionId, dataSet, query)
+      lookupSicCodes(sessionId, List(SicCode(query,"")))
     } else {
       searchQuery(sessionId, query, journey, dataSet, sector)
     }
@@ -50,33 +49,46 @@ trait SicSearchService {
     sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.searchResults))
   }
 
-  def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCode]]] = {
+  def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCodeChoice]]] = {
     sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.choices))
   }
 
-  def insertChoice(sessionId: String, sicCode: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    sicStoreRepository.insertChoice(sessionId, sicCode)
-  }
+  def insertChoices(sessionId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean] =
+    sicStoreRepository.insertChoices(sessionId, sicCodes)
 
   def removeChoice(sessionId: String, sicCodeToRemove: String)(implicit ec: ExecutionContext): Future[Boolean] = {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
-  private[services] def lookupSicCode(sessionId: String, dataSet: String, sicCode: String)(implicit hc: HeaderCarrier): Future[Int] = {
+  def lookupSicCodes(sessionId: String, selectedCodes: List[SicCode])(implicit hc: HeaderCarrier): Future[Int] = {
     for {
-      oSicCode      <- iCLConnector.lookup(sicCode, dataSet)
-      searchResults = oSicCode.fold(SearchResults(sicCode, 0, Nil, Nil))(sic => SearchResults.fromSicCode(sic))
-      res           <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { successful =>
-        if (successful && oSicCode.isDefined) insertChoice(sessionId, oSicCode.get.sicCode) map (_ => 1) else Future.successful(0)
+      oSicCode      <- iCLConnector.lookup(getCommaSeparatedCodes(selectedCodes))
+      groups        = selectedCodes.groupBy(_.sicCode)
+      codes         = oSicCode map { sic =>
+        SicCodeChoice(sic, groups.get(sic.sicCode).fold(List.empty[String])(nSicCodes =>
+          nSicCodes.filterNot(sicCode => sicCode == sic || sicCode.description.isEmpty).map(_.description))
+        )
       }
+      res           <-
+        if (oSicCode.nonEmpty) {
+          insertChoices(sessionId, codes) map (_ => 1)
+        } else {
+          sicStoreRepository.updateSearchResults(sessionId, SearchResults(selectedCodes.head.sicCode, 0, Nil, Nil)) map (_ => 0)
+        }
     } yield res
+  }
+
+  private[services] def getCommaSeparatedCodes(sicCodes: List[SicCode]): String = {
+    sicCodes.groupBy(_.sicCode).keys.mkString(",")
   }
 
   private[services] def searchQuery(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     (for {
-      searchResults <- iCLConnector.search(query, journey, dataSet, sector)
-      _             <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { res =>
-        if (searchResults.numFound == 1) insertChoice(sessionId, searchResults.results.head.sicCode) else Future.successful(res)
+      oSearchResults  <- iCLConnector.search(query, journey, dataSet, sector)
+      sectorObject    = sector.flatMap(sicCode => oSearchResults.sectors.find(_.code == sicCode))
+      searchResults   = sectorObject.fold(oSearchResults)(s => oSearchResults.copy(currentSector = Some(s)))
+      _               <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { res =>
+        if (searchResults.numFound == 1) lookupSicCodes(sessionId, searchResults.results) else Future.successful(res)
       }
     } yield searchResults.numFound) recover {
       case _ =>
@@ -85,5 +97,5 @@ trait SicSearchService {
     }
   }
 
-  private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){8}$")
+  private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){5}$")
 }

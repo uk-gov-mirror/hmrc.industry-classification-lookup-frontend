@@ -18,7 +18,8 @@ package connectors
 
 import helpers.UnitTestSpec
 import models.{Journey, SearchResults, Sector, SicCode}
-import uk.gov.hmrc.http.{CoreGet, NotFoundException}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.{CoreGet, HttpException, HttpResponse, NotFoundException}
 
 import scala.concurrent.Future
 
@@ -26,7 +27,7 @@ class ICLConnectorSpec extends UnitTestSpec {
 
   val iCLUrl = "http://localhost:12345"
 
-  val dataSet: String = Journey.HMRC_SIC_8
+  val dataSet: String = Journey.ONS
 
   class Setup extends CodeMocks {
     val connector: ICLConnector = new ICLConnector {
@@ -37,32 +38,40 @@ class ICLConnectorSpec extends UnitTestSpec {
 
   "lookup" should {
 
-    val sicCode = "12345678"
+    val sicCode = "12345"
     val sicCodeResult = SicCode(sicCode, "some description")
 
-    val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode?indexName=$dataSet"
+    val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode"
 
     "return a sic code case class matching the code provided" in new Setup {
-      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.successful(sicCodeResult))
+      mockHttpGet[HttpResponse](lookupUrl).thenReturn(Future.successful(HttpResponse(200,Some(Json.toJson[List[SicCode]](List(sicCodeResult))))))
 
-      awaitAndAssert(connector.lookup(sicCode, dataSet)) {
-        _ mustBe Some(sicCodeResult)
+      awaitAndAssert(connector.lookup(sicCode)) {
+        _ mustBe List(sicCodeResult)
       }
     }
 
-    "return none when ICL returns a 404" in new Setup {
-      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new NotFoundException("404")))
+    "return an empty list when ICL returns a 204" in new Setup {
+      mockHttpGet[HttpResponse](lookupUrl).thenReturn(Future.successful(HttpResponse(204)))
 
-      awaitAndAssert(connector.lookup(sicCode, dataSet)) {
-        _ mustBe None
+      awaitAndAssert(connector.lookup(sicCode)) {
+        _ mustBe Nil
       }
     }
 
     "throw the exception when the future recovers an the exception is not http related" in new Setup {
       mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new RuntimeException("something went wrong")))
 
-      val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode, dataSet)))
+      val result: RuntimeException = intercept[RuntimeException](await(connector.lookup(sicCode)))
       result.getMessage mustBe "something went wrong"
+    }
+
+    "throw the exception when the future recovers an the exception is http related" in new Setup {
+      mockHttpGet[SicCode](lookupUrl).thenReturn(Future.failed(new HttpException("Not Found", 404)))
+
+      val result: HttpException = intercept[HttpException](await(connector.lookup(sicCode)))
+      result.getMessage mustBe "Not Found"
+      result.responseCode mustBe 404
     }
   }
 

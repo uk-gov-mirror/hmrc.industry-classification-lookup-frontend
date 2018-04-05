@@ -48,16 +48,19 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
   val journey: String = Journey.QUERY_BUILDER
   val dataSet: String = Journey.HMRC_SIC_8
 
-  val sicCodeCode = "12345678"
+  val sicCodeCode = "12345"
   val sicCode = SicCode(sicCodeCode, "Test sic code description")
+  val sicCodeGroup = SicCodeChoice(sicCode, Nil)
   val sicCode2 = SicCode("87654321", "Another test sic code description")
+  val sicCodeGroup2 = SicCodeChoice(sicCode2, Nil)
 
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Example", 1)))
   val searchResults2 = SearchResults("testQuery", 1, List(sicCode2), List(Sector("B", "Alternative", 1)))
-
+  def generateSicStoreWithIndexes(indexes: List[String]) =
+    SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCodeGroup.copy(indexes = indexes))), dateTime)
   val sicStoreNoChoices = SicStore(sessionId, journey, dataSet, Some(searchResults), None, dateTime)
-  val sicStore1Choice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode)), dateTime)
-  val sicStore2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults2), Some(List(sicCode, sicCode2)), dateTime)
+  val sicStore1Choice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCodeGroup)), dateTime)
+  val sicStore2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults2), Some(List(sicCodeGroup, sicCodeGroup2)), dateTime)
 
   "retrieveSicStore" should {
 
@@ -75,7 +78,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
     "not insert a new document when the journey has not been initialised" in new Setup {
 
-      val updateSuccess: Boolean = repository.updateSearchResults(sessionId, searchResults)
+      val updateSuccess: Boolean = repository.updateSearchResults(sessionId, searchResults.copy(currentSector = Some(Sector("A", "Fake Sector", 1))))
 
       updateSuccess shouldBe true
       count shouldBe 0
@@ -83,7 +86,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
     "update a document with the new sic code if the document already exists for a given session id" in new Setup {
 
-      val otherSearchResults = SearchResults("other query", 1, List(SicCode("87654321", "Another test sic code description")), List(Sector("A", "Fake", 1)))
+      val otherSearchResults = SearchResults("other query", 1, List(SicCode("87654", "Another test sic code description")), List(Sector("A", "Fake", 1)))
 
       insert(sicStoreNoChoices)
 
@@ -107,7 +110,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
       insert(sicStoreNoChoices)
       count shouldBe 1
 
-      val insertSuccess: Boolean = repository.insertChoice(sessionId, sicCodeCode)
+      val insertSuccess: Boolean = repository.insertChoices(sessionId, List(sicCodeGroup))
 
       insertSuccess shouldBe true
       count shouldBe 1
@@ -120,17 +123,17 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
     "insert a new sic code choice into a choices list with another choice already there" in new Setup {
 
-      val sicCodeToAdd = SicCode("67891234", "some description")
+      val sicCodeToAdd = SicCode("67891", "some description")
 
       val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd), List(Sector("A", "Fake", 1)))
-      val sicStoreWithExistingChoice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode)), dateTime)
+      val sicStoreWithExistingChoice = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCodeGroup)), dateTime)
 
       insert(sicStoreWithExistingChoice)
 
-      await(repository.insertChoice(sessionId, sicCodeToAdd.sicCode))
+      await(repository.insertChoices(sessionId, List(SicCodeChoice(sicCodeToAdd))))
 
       val fetchedDocument: SicStore = fetchAll.head
-      val sicStoreWith2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCode, sicCodeToAdd)), dateTime)
+      val sicStoreWith2Choices = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List(sicCodeGroup, SicCodeChoice(sicCodeToAdd))), dateTime)
 
       fetchedDocument.choices shouldBe sicStoreWith2Choices.choices
       fetchedDocument.lastUpdated isAfter sicStoreWith2Choices.lastUpdated shouldBe true
@@ -139,7 +142,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
     "inserting the same choice twice will not duplicate it in the documents choices" in new Setup {
       insert(sicStore1Choice)
 
-      await(repository.insertChoice(sessionId, sicCodeCode))
+      await(repository.insertChoices(sessionId, List(sicCodeGroup)))
 
       val fetchedDocument: SicStore = fetchAll.head
 
@@ -147,8 +150,19 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
       fetchedDocument.lastUpdated isAfter sicStore1Choice.lastUpdated shouldBe true
     }
 
+    "inserting the same sicCode with different indexes will not duplicate it in the documents choices" in new Setup {
+      insert(sicStore1Choice)
+
+      await(repository.insertChoices(sessionId, List(SicCodeChoice(sicCode, List("some description")))))
+
+      val fetchedDocument: SicStore = fetchAll.head
+
+      fetchedDocument.choices shouldBe generateSicStoreWithIndexes(List("some description")).choices
+      fetchedDocument.lastUpdated isAfter sicStore1Choice.lastUpdated shouldBe true
+    }
+
     "return None if the document wasn't found" in new Setup {
-      await(repository.insertChoice(sessionId, sicCode.sicCode)) shouldBe false
+      await(repository.insertChoices(sessionId, List(SicCodeChoice(sicCode)))) shouldBe false
     }
   }
 
@@ -160,7 +174,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
       val fetchedDocument: SicStore = await(repository.retrieveSicStore(sessionId)).get
 
-      fetchedDocument.choices shouldBe Some(List(sicCode2))
+      fetchedDocument.choices shouldBe Some(List(sicCodeGroup2))
       fetchedDocument.lastUpdated isAfter sicStore2Choices.lastUpdated shouldBe true
     }
 

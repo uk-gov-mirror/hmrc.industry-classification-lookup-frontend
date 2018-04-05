@@ -26,8 +26,8 @@ class SicSearchFormSpec extends UnitTestSpec {
 
   "Binding SicSearchFormSpec to a model" should {
     "Bind successfully with full data" in {
-      val data = Map("sicSearch" -> "12345678")
-      val model = SicSearch(sicSearch = "12345678")
+      val data = Map("sicSearch" -> "12345")
+      val model = SicSearch(sicSearch = "12345")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
       boundForm mustBe model
