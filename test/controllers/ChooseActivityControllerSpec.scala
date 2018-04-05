@@ -230,7 +230,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         .thenReturn(Future.successful(true))
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSession.withFormUrlEncodedBody(
-        "code" -> "12345678"
+        "code[0]" -> "12345678"
       )
 
       requestWithAuthorisedUser(controller.submit(), request) {
