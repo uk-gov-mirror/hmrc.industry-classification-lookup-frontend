@@ -16,7 +16,7 @@
 
 package views.pages
 
-import forms.chooseactivity.ChooseActivityForm
+import forms.chooseactivity.{ChooseActivityForm, ChooseMultipleActivityForm}
 import forms.sicsearch.SicSearchForm
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models.{SearchResults, Sector, SicCode, SicSearch}
@@ -36,7 +36,7 @@ class ChooseActivityViewSpec extends UnitTestSpec with UnitTestFakeApp with I18n
   val searchResults = SearchResults(query, 1, List(testSicCode), List(Sector("A", "Fake Sector", 1)))
 
   "The choose activity screen" should {
-    lazy val view = ChooseActivityPage(SicSearchForm.form.fill(SicSearch(query)), ChooseActivityForm.form, Some(searchResults))
+    lazy val view = ChooseActivityPage(SicSearchForm.form.fill(SicSearch(query)), ChooseMultipleActivityForm.form, Some(searchResults))
     lazy val document = Jsoup.parse(view.body)
 
     "have the correct title" in {

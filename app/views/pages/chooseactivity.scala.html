@@ -19,7 +19,7 @@
 @import helpers.templates._
 @import forms.sicsearch.SicSearchForm
 
-@(sicSearchForm: Form[SicSearch], chooseActForm: Form[ChooseActivity], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(sicSearchForm: Form[SicSearch], chooseActForm: Form[List[String]], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = Some("full-width")) {
 
@@ -63,7 +63,7 @@
 
                     <div class="form-group">
 
-                        @inputRadioGroup(
+                        @inputCheckboxGroup(
                         field = chooseActForm("code"),
                         searchResults.results.map(sicCode => (sicCode.sicCode, sicCode.description)),
                         '_labelAfter -> true,

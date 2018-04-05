@@ -18,8 +18,8 @@ package models
 
 import play.api.libs.json.Json
 
-case class SicSearch(sicSearch: String)
+case class SicSearchMultiple(sicSearch: List[String])
 
-object SicSearch {
-  implicit val format = Json.format[SicSearch]
+object SicSearchMultiple {
+  implicit val format = Json.format[SicSearchMultiple]
 }
