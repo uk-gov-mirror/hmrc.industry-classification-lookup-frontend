@@ -17,14 +17,14 @@
 package connectors
 
 import javax.inject.Inject
-
 import models.{SearchResults, SicCode}
 import play.api.Logger
-import play.api.libs.json.Reads
-import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException}
+import play.api.libs.json.{Json, Reads}
+import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
+import play.api.http.Status.{NO_CONTENT, OK}
 
 import scala.concurrent.Future
 
@@ -37,13 +37,13 @@ trait ICLConnector {
   val http: CoreGet
   val ICLUrl: String
 
-  def lookup(sicCode: String, dataSet: String)(implicit hc: HeaderCarrier): Future[Option[SicCode]] = {
-    http.GET[SicCode](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode?indexName=$dataSet") map {
-      Some.apply
+  def lookup(sicCode: String, dataSet: String)(implicit hc: HeaderCarrier): Future[List[SicCode]] = {
+    http.GET[HttpResponse](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode") map { resp =>
+      if(resp.status == NO_CONTENT) List.empty[SicCode] else Json.fromJson[List[SicCode]](resp.json)
     } recover {
       case e: HttpException =>
         Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a ${e.responseCode}")
-        None
+        throw e
       case e: Throwable =>
         Logger.error(s"[Lookup] Looking up sic code : $sicCode has thrown a non-http exception")
         throw e
