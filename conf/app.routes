@@ -10,4 +10,7 @@ GET        /filter-business-activities/:code                                 con
 GET        /confirm-business-activities                                      controllers.ConfirmationController.show
 POST       /confirm-business-activities                                      controllers.ConfirmationController.submit
 
-GET        /remove-sic-code/:sicCode                                         controllers.ConfirmationController.removeChoice(sicCode)
+#GET        /remove-sic-code/:sicCode                                         controllers.ConfirmationController.removeChoice(sicCode)
+
+GET        /remove-sic-code/:sicCode                                         controllers.RemoveSicCodeController.show(sicCode)
+POST       /remove-sic-code/:sicCode                                         controllers.RemoveSicCodeController.submit(sicCode)

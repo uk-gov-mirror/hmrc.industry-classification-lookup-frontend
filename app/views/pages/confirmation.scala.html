@@ -38,7 +38,7 @@
                 <tr>
                     <td id="applicant" class="answer"><strong>@sicCode.description</strong></td>
                     <td class="change">
-                        <a href="@controllers.routes.ConfirmationController.removeChoice(sicCode.sicCode)" id="change-applicant">@Messages("Remove")
+                        <a href="@controllers.routes.RemoveSicCodeController.show(sicCode.sicCode)" id="change-applicant">@Messages("Remove")
                             <span class="visuallyhidden">@Messages("page.reg.summary.applicant.change")</span>
                         </a>
                     </td>

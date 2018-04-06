@@ -2,6 +2,7 @@ app.title                                       = Register your company
 
 app.common.continue                             = Continue
 app.common.confirmAndContinue                   = Confirm and continue
+app.common.choose-activity                      = Choose activities
 app.common.back                                 = Back
 app.common.errorSummaryLabel                    = This page has errors
 app.common.change                               = Change
@@ -20,13 +21,16 @@ page.icl.sicsearch.heading                      = Search for a business activity
 page.icl.sicsearch.form.label                   = Enter one or two keywords
 page.icl.sicsearch.form.hint                    = For example, ''plumbing'', ''property management''
 
-page.icl.chooseactivity.title                   = Business activities search results
+page.icl.chooseactivity.title                   = Search for business activities
 page.icl.chooseactivity.heading                 = Business activities
 page.icl.chooseactivity.subheading              = Search for a business activity
 page.icl.chooseactivity.enteredkeyword          = You searched for
 page.icl.chooseactivity.resultsfound            = results
 page.icl.chooseactivity.searchagain             = Please try searching again using different words
 page.icl.chooseactivity.changehidden            = Change sic code used to search
+page.icl.chooseactivity.selection-heading       = Choose business activities
+page.icl.chooseactivity.selection-hint          = Select as many as you want. You can refine them later.
+page.icl.chooseactivity.filter-heading          = Filter results by industry
 
 page.icl.confirmation.title                     = Confirm the company''s business activities
 page.icl.confirmation.heading                   = Confirm the company''s business activities
@@ -34,8 +38,9 @@ page.icl.confirmation.choice.text               = You have chosen:
 page.icl.confirmation.addAnother                = Do you want to add another business activity?
 page.icl.confirmation.activities                = You can have up to 4 activities.
 
+page.icl.confirmremoval.title                   = Do you want to remove ''{0}''?
 page.icl.confirmremoval.heading                 = Do you want to remove ''{0}''?
-page.icl.confirmremoval.including               = this includes:
+page.icl.confirmremoval.including               = This includes:
 
 page.test.setup-journey.title                   = Setup ICL journey settings
 page.test.setup-journey.radio.alg.title         = Select the Lucene algorithm to use

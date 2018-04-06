@@ -28,10 +28,9 @@ class ConfirmationFormSpec extends UnitTestSpec {
     "bind successfully with full data" in {
 
       val data = Map("addAnother" -> "yes")
-      val model = Confirmation(addAnother = "yes")
       val boundForm = testForm.bind(data).fold(errors => errors, success => success)
 
-      boundForm mustBe model
+      boundForm mustBe "yes"
     }
 
     "provide the correct error when nothing was selected" in {

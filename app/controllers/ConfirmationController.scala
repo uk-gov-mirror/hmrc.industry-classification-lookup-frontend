@@ -86,13 +86,14 @@ trait ConfirmationController extends ICLController {
       }
   }
 
-  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCode] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
-    sicSearchService.retrieveChoices(sessionId) flatMap {
-      case Some(choices) => choices match {
-        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
-        case listOfChoices => f(listOfChoices)
+  def confirmation: Action[AnyContent] = Action.async {
+    implicit request =>
+      authorised {
+        withJourney { journey =>
+            withCurrentUsersChoices(journey.sessionId) { choices =>
+              Future.successful(Ok(views.html.pages.confirmation(ConfirmationForm.form, choices)))
+            }
+        }
       }
-      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
-    }
   }
 }

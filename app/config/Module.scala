@@ -43,6 +43,7 @@ class Module extends AbstractModule {
     bind(classOf[ConfirmationController]).to(classOf[ConfirmationControllerImpl]).asEagerSingleton()
     bind(classOf[SignInOutController]).to(classOf[SignInOutControllerImpl]).asEagerSingleton()
     bind(classOf[TestSetupController]).to(classOf[TestSetupControllerImpl]).asEagerSingleton()
+    bind(classOf[RemoveSicCodeController]).to(classOf[RemoveSicCodeControllerImpl]).asEagerSingleton()
   }
 
   private def bindServices() {
