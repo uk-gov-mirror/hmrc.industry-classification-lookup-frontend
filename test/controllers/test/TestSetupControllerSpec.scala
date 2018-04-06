@@ -24,7 +24,7 @@ import org.mockito.Mockito._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
-import services.JourneyService
+import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.SessionKeys
 
@@ -36,10 +36,11 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     val controller: TestSetupController = new TestSetupController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig  = testAppConfig
-      override val messagesApi: MessagesApi       = testMessagesApi
-      override val authConnector: AuthConnector   = mockAuthConnector
-      override val journeyService: JourneyService = mockJourneyService
+      override implicit val appConfig: AppConfig      = testAppConfig
+      override val messagesApi: MessagesApi           = testMessagesApi
+      override val authConnector: AuthConnector       = mockAuthConnector
+      override val journeyService: JourneyService     = mockJourneyService
+      override val sicSearchService: SicSearchService = mockSicSearchService
     }
 
     val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession(
