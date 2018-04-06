@@ -37,14 +37,29 @@
 
     <h1 class="form-title heading-xlarge" id="page-title">@messages("page.icl.chooseactivity.heading")</h1>
 
+    <h2 class="heading-medium" id="page-sub-heading">@messages("page.icl.chooseactivity.subheading")</h2>
+
     @searchBar(sicSearchForm, controllers.routes.ChooseActivityController.submit(Some("invalid-search")))
 
     @oSearchResults.map { searchResults =>
         @if(searchResults.numFound == 0) {
-            <p class=“result-info”>
-                <span id="no-result" class=“result-count” style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">0</span>
-                results found for '@searchResults.query'
-            </p>
+            <div class="column-two-thirds">
+                <table>
+                    <tr>
+                        <td>
+                            <p class=“result-info”>
+                                <span id="no-result" class=“result-count” style="font-size: -webkit-xxx-large; font-weight: 700; font-family: 'nta', Arial, sans-serif; margin-right:5px;">0</span>
+                                @messages("page.icl.chooseactivity.resultsfound")
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            @messages("page.icl.chooseactivity.searchagain")
+                        </td>
+                    </tr>
+                </table>
+            </div>
         } else {
             @govHelpers.form(action = controllers.routes.ChooseActivityController.submit()) {
                 @sectorFilter(searchResults)

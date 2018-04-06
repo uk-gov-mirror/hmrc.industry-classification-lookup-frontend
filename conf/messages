@@ -18,12 +18,14 @@ common.feedbackThird                            = will help us to improve it.
 page.icl.sicsearch.title                        = Search for a business activity
 page.icl.sicsearch.heading                      = Search for a business activity
 page.icl.sicsearch.form.label                   = Enter one or two keywords
-page.icl.sicsearch.form.hint                    = For example, ''plumbing'' or ''property management''
+page.icl.sicsearch.form.hint                    = For example, ''plumbing'', ''property management''
 
 page.icl.chooseactivity.title                   = Business activities search results
-page.icl.chooseactivity.heading                 = Choose a business activity
+page.icl.chooseactivity.heading                 = Business activities
+page.icl.chooseactivity.subheading              = Search for a business activity
 page.icl.chooseactivity.enteredkeyword          = You searched for
-page.icl.chooseactivity.resultsfound            = results found
+page.icl.chooseactivity.resultsfound            = results
+page.icl.chooseactivity.searchagain             = Please try searching again using different words
 page.icl.chooseactivity.changehidden            = Change sic code used to search
 
 page.icl.confirmation.title                     = Confirm the company''s business activities
