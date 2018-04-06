@@ -18,7 +18,7 @@
 @import helpers.templates._
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
 
-@(confirmationForm: Form[Confirmation], listOfChoices: List[SicCode])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(confirmationForm: Form[String], listOfChoices: List[SicCode])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.confirmation.title"), bodyClasses = None) {
 

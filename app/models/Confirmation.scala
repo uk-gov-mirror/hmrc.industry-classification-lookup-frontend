@@ -16,6 +16,7 @@
 
 package models
 
+//TODO: Can be removed
 case class Confirmation(addAnother: String)
 
 object Confirmation {

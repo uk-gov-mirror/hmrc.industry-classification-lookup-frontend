@@ -31,9 +31,9 @@ object ChooseMultipleActivityForm {
   val toSicIdent: (String) => (String) = _.split("-", 2).head
 
   def validateList: Mapping[List[String]] = {
-    val textConstraint: Constraint[List[String]] = Constraint("constraints.text"){
+    val textConstraint: Constraint[List[String]] = Constraint {
       case s if s.isEmpty => Invalid(ValidationError("errors.invalid.sic.noSelection"))
-      case s              => Valid
+      case _              => Valid
     }
     list(text).verifying(textConstraint).transform(_.filterNot(_.isEmpty).map(toSicIdent), _ => List.empty[String])
   }

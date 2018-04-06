@@ -19,31 +19,46 @@ package forms
 import models.Confirmation
 import play.api.data.Forms._
 import play.api.data.format.Formatter
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.data.{Form, FormError, Forms, Mapping}
 
 object ConfirmationForm {
 
-  implicit def confirmationFormatter: Formatter[String] = new Formatter[String] {
+//  implicit def confirmationFormatter: Formatter[String] = new Formatter[String] {
+//
+//    def validate(entry: String): Either[Seq[FormError], String] = {
+//      entry match {
+//        case ""  => Left(Seq(FormError("addAnother", "errors.invalid.sic.confirm")))
+//        case select => Right(select)
+//      }
+//    }
+//
+//    override def bind(key: String, data: Map[String, String]) = {
+//      validate(data.getOrElse(key, ""))
+//    }
+//
+//    override def unbind(key: String, value: String) = Map(key -> value)
+//  }
+//
+//  def confirmationField: Mapping[String] = Forms.of[String](confirmationFormatter)
 
-    def validate(entry: String): Either[Seq[FormError], String] = {
-      entry match {
-        case ""  => Left(Seq(FormError("addAnother", "errors.invalid.sic.confirm")))
-        case select => Right(select)
-      }
+  def confirmationField: Mapping[String] = {
+    val textConstraint: Constraint[String] = Constraint {
+      case "yes" | "no" => Valid
+      case _            => Invalid(ValidationError("errors.invalid.sic.confirm"))
     }
-
-    override def bind(key: String, data: Map[String, String]) = {
-      validate(data.getOrElse(key, ""))
-    }
-
-    override def unbind(key: String, value: String) = Map(key -> value)
+    text.verifying(textConstraint)
   }
 
-  def confirmationField: Mapping[String] = Forms.of[String](confirmationFormatter)
-
-  val form = Form(
-    mapping(
+  val form: Form[String] = Form[String](
+    single(
       "addAnother" -> confirmationField
-    )(Confirmation.apply)(Confirmation.unapply)
+    )
   )
+
+//  val form = Form(
+//    mapping(
+//      "addAnother" -> confirmationField
+//    )(Confirmation.apply)(Confirmation.unapply)
+//  )
 }

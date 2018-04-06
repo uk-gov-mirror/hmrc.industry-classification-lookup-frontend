@@ -34,6 +34,9 @@ page.icl.confirmation.choice.text               = You have chosen:
 page.icl.confirmation.addAnother                = Do you want to add another business activity?
 page.icl.confirmation.activities                = You can have up to 4 activities.
 
+page.icl.confirmremoval.heading                 = Do you want to remove ''{0}''?
+page.icl.confirmremoval.including               = this includes:
+
 page.test.setup-journey.title                   = Setup ICL journey settings
 page.test.setup-journey.radio.alg.title         = Select the Lucene algorithm to use
 page.test.setup-journey.radio.query-builder     = Query builder

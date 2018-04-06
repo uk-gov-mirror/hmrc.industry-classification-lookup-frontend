@@ -62,7 +62,7 @@ trait ConfirmationController extends ICLController {
             } else {
               ConfirmationForm.form.bindFromRequest().fold(
                 errors => Future.successful(BadRequest(views.html.pages.confirmation(errors, choices))),
-                form => form.addAnother match {
+                 {
                   case YES => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
                   case NO => Future.successful(Ok("End of journey"))
                 }
