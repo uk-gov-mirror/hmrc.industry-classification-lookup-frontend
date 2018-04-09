@@ -85,5 +85,5 @@ trait SicSearchService {
     }
   }
 
-  private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){8}$")
+  private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){5}$")
 }

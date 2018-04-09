@@ -39,9 +39,9 @@ class SicSearchServiceSpec extends UnitTestSpec {
   val sessionId = "session-id-12345"
   val query = "testQuery"
   val journey: String = Journey.QUERY_BUILDER
-  val dataSet: String = Journey.HMRC_SIC_8
+  val dataSet: String = Journey.ONS
 
-  val sicCodeCode = "12345678"
+  val sicCodeCode = "12345"
   val sicCode = SicCode(sicCodeCode, "some sic code description")
   val oneSearchResult = SearchResults(query, 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
   val threeSearchResults = SearchResults(query, 3, List(sicCode, sicCode, sicCode), List(Sector("A", "Fake Sector A", 2), Sector("B", "Fake Sector B", 1)))
@@ -148,9 +148,9 @@ class SicSearchServiceSpec extends UnitTestSpec {
 
   "search" should {
     "lookup and return a sic code" in new Setup {
-      val query = "12345678"
+      val query = "12345"
 
-      when(mockICLConnector.lookup(eqTo(sicCodeCode), any())(any()))
+      when(mockICLConnector.lookup(eqTo(query), any())(any()))
         .thenReturn(Future.successful(Some(sicCode)))
 
       when(mockSicStoreRepo.updateSearchResults(eqTo(sessionId), any())(any()))
@@ -232,17 +232,17 @@ class SicSearchServiceSpec extends UnitTestSpec {
 
     "return true" when {
 
-      "a 8 digit String is supplied" in new Setup {
-        val _8digit = "12345678"
-        service.isLookup(_8digit) mustBe true
+      "a 5 digit String is supplied" in new Setup {
+        val _5digit = "12345"
+        service.isLookup(_5digit) mustBe true
       }
     }
 
     "return false" when {
 
-      "a 7 digit String is supplied" in new Setup {
-        val _7digit = "1234567"
-        service.isLookup(_7digit) mustBe false
+      "a 4 digit String is supplied" in new Setup {
+        val _4digit = "1234"
+        service.isLookup(_4digit) mustBe false
       }
 
       "a normal String is supplied" in new Setup {
@@ -250,13 +250,13 @@ class SicSearchServiceSpec extends UnitTestSpec {
         service.isLookup(query) mustBe false
       }
 
-      "a 8 digit String is supplied along with some text" in new Setup {
-        val query = "12345678sometext"
+      "a 5 digit String is supplied along with some text" in new Setup {
+        val query = "12345sometext"
         service.isLookup(query) mustBe false
       }
 
-      "a 8 digit String is supplied along with a space and then some text" in new Setup {
-        val query = "12345678 sometext"
+      "a 5 digit String is supplied along with a space and then some text" in new Setup {
+        val query = "12345 sometext"
         service.isLookup(query) mustBe false
       }
     }
