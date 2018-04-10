@@ -16,8 +16,6 @@
 
 package models
 
-case class Confirmation(addAnother: String)
-
 object Confirmation {
   final val YES = "yes"
   final val NO = "no"

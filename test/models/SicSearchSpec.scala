@@ -21,12 +21,12 @@ import play.api.libs.json.{JsValue, Json}
 
 class SicSearchSpec extends UnitTestSpec {
 
-  val testSicSearchModel = SicSearch("12345678")
+  val testSicSearchModel = SicSearch("12345")
 
   val testSicSearchJson : JsValue = Json.parse(
     """
       |{
-      |  "sicSearch":"12345678"
+      |  "sicSearch":"12345"
       |}
     """.stripMargin
   )

@@ -71,6 +71,10 @@
     height: 20px;
 }
 
+.no-padding-margin {
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
 
 @media (min-width: 641px)
 header-footer-o…28505bfc.css:1

@@ -20,8 +20,9 @@ import config.AppConfig
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.mvc.Results.Ok
 import play.api.test.FakeRequest
-import services.JourneyService
+import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
@@ -36,6 +37,7 @@ class ICLControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       override val journeyService: JourneyService       = mockJourneyService
       override val authConnector: AuthConnector         = mockAuthConnector
       override val messagesApi: MessagesApi             = testMessagesApi
+      override val sicSearchService: SicSearchService   = mockSicSearchService
     }
   }
 

@@ -16,10 +16,17 @@
 
 package models
 
+
 import play.api.libs.json.Json
 
-case class ChooseActivity(code: String)
+case class SicCodeChoice(code: String, desc: String, indexes: List[String])
 
-object ChooseActivity {
-  implicit val format = Json.format[ChooseActivity]
+object SicCodeChoice {
+  implicit val format = Json.format[SicCodeChoice]
+
+  def apply(sicCode: SicCode, indexes: List[String]): SicCodeChoice =
+    new SicCodeChoice(sicCode.sicCode, sicCode.description, indexes)
+
+  def apply(sicCode: SicCode): SicCodeChoice =
+    new SicCodeChoice(sicCode.sicCode, sicCode.description, Nil)
 }

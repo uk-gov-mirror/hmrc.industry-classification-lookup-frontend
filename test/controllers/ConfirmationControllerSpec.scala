@@ -50,8 +50,9 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sicCodeCode = "12345"
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
+  val sicCodeChoice = SicCodeChoice(sicCode, List("fake item"))
   val journey: String = Journey.QUERY_BUILDER
-  val dataSet: String = Journey.HMRC_SIC_8
+  val dataSet: String = Journey.ONS
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
 
   val sicStore = SicStore(
@@ -59,7 +60,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     journey,
     dataSet,
     Some(searchResults),
-    Some(List(sicCode))
+    Some(List(sicCodeChoice))
   )
 
   val sicStoreNoChoices = SicStore(sessionId, journey, dataSet, Some(searchResults), None)
@@ -71,7 +72,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
-        .thenReturn(Future.successful(Some(List(sicCode))))
+        .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
       AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){
         result =>
@@ -93,76 +94,27 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   }
 
   "submit" should {
-
-    "return a 200 when the form field 'addAnother' is no" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
-
-      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "no")
-
-      when(mockSicSearchService.retrieveChoices(any())(any()))
-        .thenReturn(Future.successful(Some(List(sicCode))))
-
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){
-        result =>
-          status(result) mustBe 200
-      }
-    }
-
-    "return a 303 when the form field 'addAnother' is yes" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
-
-      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("addAnother" -> "yes")
-
-      when(mockSicSearchService.retrieveChoices(any())(any()))
-        .thenReturn(Future.successful(Some(List(sicCode))))
-
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){
-        result =>
-          status(result) mustBe 303
-      }
-    }
-
     "return a 200 and render end of journey page when 4 choices have already been made" in new Setup {
       mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
-        .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode, sicCode, sicCode))))
+        .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
       AuthHelpers.submitWithAuthorisedUser(controller.submit, requestWithSessionId.withFormUrlEncodedBody()){ result =>
         status(result) mustBe OK
       }
     }
 
-    "return a 400 when an empty form is submitted" in new Setup {
+    "return a 400 when more than 4 choices have been made" in new Setup {
       mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
-        .thenReturn(Future.successful(Some(List(sicCode, sicCode, sicCode))))
+        .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
-      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
-        "addAnother" -> ""
-      )
+      val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody()
 
       AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
         status(result) mustBe BAD_REQUEST
-      }
-    }
-  }
-
-  "removeChoice" should {
-
-    "return a 200 when the supplied sic code is removed" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
-
-      when(mockSicSearchService.removeChoice(any(), any())(any()))
-        .thenReturn(Future.successful(true))
-
-      when(mockSicSearchService.retrieveChoices(any())(any()))
-        .thenReturn(Future.successful(Some(List(sicCode))))
-
-      AuthHelpers.showWithAuthorisedUser(controller.removeChoice(sicCodeCode), requestWithSessionId){
-        result =>
-          status(result) mustBe OK
       }
     }
   }
@@ -173,7 +125,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
-      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
       status(result) mustBe SEE_OTHER
@@ -184,7 +136,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List())))
 
-      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
       status(result) mustBe SEE_OTHER
@@ -193,9 +145,9 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
       when(mockSicSearchService.retrieveChoices(any())(any()))
-        .thenReturn(Future.successful(Some(List(sicCode))))
+        .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
-      val f: List[SicCode] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
 
       status(result) mustBe OK

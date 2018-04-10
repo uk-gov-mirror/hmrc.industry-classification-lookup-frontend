@@ -29,6 +29,8 @@ class WhitelistFilterISpec extends ClientSpec {
     "whitelist" -> "whitelistIP".toBase64
   )
 
+  val searchUri = "/sic-search/search-standard-industry-classification-codes"
+
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(testAppConfig ++ extraConfig)
     .build()
@@ -52,7 +54,7 @@ class WhitelistFilterISpec extends ClientSpec {
     "allow requests through the whitelist" when {
 
       "the request is sent from a whitelisted ip address" in {
-        val client = buildClient("/sic-search/choose-business-activity")
+        val client = buildClient(searchUri)
           .withTrueClientIPHeader("whitelistIP")
           .withSessionIdHeader()
 
@@ -78,7 +80,7 @@ class WhitelistFilterISpec extends ClientSpec {
     "redirect the request to the outage page" when {
 
       "the request is not sent from a white-listed IP and the requested Url is not a white-listed Url" in {
-        val client = buildClient("/sic-search/choose-business-activity")
+        val client = buildClient(searchUri)
           .withTrueClientIPHeader("nonWhitelistIP")
           .withSessionIdHeader()
 
@@ -91,7 +93,7 @@ class WhitelistFilterISpec extends ClientSpec {
     }
 
     "return a 501 when the request is missing a TrueClientIp header" in {
-      val client = buildClient("/sic-search/choose-business-activity")
+      val client = buildClient(searchUri)
         .withSessionIdHeader()
 
       mockAuthorise()

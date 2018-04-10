@@ -18,16 +18,17 @@ package controllers
 
 import auth.AuthFunction
 import config.AppConfig
-import models.Journey
+import models.{Journey, SicCode, SicCodeChoice}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Request, Result}
-import services.JourneyService
+import services.{JourneyService, SicSearchService}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait ICLController extends AuthFunction with I18nSupport {
 
   val journeyService: JourneyService
+  val sicSearchService: SicSearchService
   implicit val appConfig: AppConfig
 
   def withSessionId(f: => String => Future[Result])(implicit req: Request[_]): Future[Result] = {
@@ -45,4 +46,15 @@ trait ICLController extends AuthFunction with I18nSupport {
       }
     }
   }
+
+  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCodeChoice] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
+    sicSearchService.retrieveChoices(sessionId) flatMap {
+      case Some(choices) => choices match {
+        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
+        case listOfChoices => f(listOfChoices)
+      }
+      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
+    }
+  }
+
 }
