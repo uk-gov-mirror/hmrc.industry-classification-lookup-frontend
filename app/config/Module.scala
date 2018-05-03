@@ -19,8 +19,9 @@ package config
 import _root_.connectors.{ICLConnector, ICLConnectorImpl}
 import com.google.inject.AbstractModule
 import controllers._
+import controllers.internal.{ApiController, ApiControllerImpl}
 import controllers.test.{TestSetupController, TestSetupControllerImpl}
-import services.{JourneyService, JourneyServiceImpl, SicSearchService, SicSearchServiceImpl}
+import services._
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
@@ -44,11 +45,13 @@ class Module extends AbstractModule {
     bind(classOf[SignInOutController]).to(classOf[SignInOutControllerImpl]).asEagerSingleton()
     bind(classOf[TestSetupController]).to(classOf[TestSetupControllerImpl]).asEagerSingleton()
     bind(classOf[RemoveSicCodeController]).to(classOf[RemoveSicCodeControllerImpl]).asEagerSingleton()
+    bind(classOf[ApiController]).to(classOf[ApiControllerImpl]).asEagerSingleton()
   }
 
   private def bindServices() {
     bind(classOf[SicSearchService]).to(classOf[SicSearchServiceImpl]).asEagerSingleton()
     bind(classOf[JourneyService]).to(classOf[JourneyServiceImpl]).asEagerSingleton()
+    bind(classOf[JourneySetupService]).to(classOf[JourneySetupServiceImpl]).asEagerSingleton()
   }
 
   private def bindConnectors(): Unit = {

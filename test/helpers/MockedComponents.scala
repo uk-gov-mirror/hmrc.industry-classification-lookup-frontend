@@ -19,7 +19,7 @@ package helpers
 import connectors.ICLConnector
 import org.scalatest.mockito.MockitoSugar
 import repositories.SicStoreMongoRepository
-import services.{JourneyService, SicSearchService}
+import services.{JourneyService, JourneySetupService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
@@ -37,6 +37,7 @@ trait MockedComponents {
   //Service mocks
   val mockJourneyService   = mock[JourneyService]
   val mockSicSearchService = mock[SicSearchService]
+  val mockJourneySetupService = mock[JourneySetupService]
 
   //Repo mocks
   val mockSicStoreRepo     = mock[SicStoreMongoRepository]

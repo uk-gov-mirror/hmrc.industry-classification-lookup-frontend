@@ -49,7 +49,7 @@ trait TestSetupController extends ICLController {
 
   val show: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withSessionId { sessionId =>
           journeyService.retrieveJourney(sessionId) map {
             case Some(journey) => Ok(views.html.test.SetupJourneyView(form.fill(journey)))
@@ -61,7 +61,7 @@ trait TestSetupController extends ICLController {
 
   val submit: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withSessionId { sessionId =>
           form.bindFromRequest.fold(
             errors => Future.successful(BadRequest(views.html.test.SetupJourneyView(errors))),

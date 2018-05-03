@@ -46,7 +46,7 @@ trait ChooseActivityController extends ICLController {
 
   def show(doSearch: Option[Boolean] = None): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           if (doSearch.contains(true)) {
             withSearchResults(journey.sessionId) { searchResults =>
@@ -61,7 +61,7 @@ trait ChooseActivityController extends ICLController {
 
   def submit(doSearch: Option[String] = None): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           doSearch.fold(performActivity(journey))(_ => performSearch(journey))
         }
@@ -70,7 +70,7 @@ trait ChooseActivityController extends ICLController {
 
   def filter(sectorCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           withSearchResults(journey.sessionId) { searchResults =>
             sicSearchService.search(journey.sessionId, searchResults.query, journey.name, journey.dataSet, Some(sectorCode)).map { _ =>

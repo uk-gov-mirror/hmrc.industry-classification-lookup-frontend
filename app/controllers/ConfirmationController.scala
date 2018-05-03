@@ -16,17 +16,16 @@
 
 package controllers
 
-import javax.inject.Inject
-
 import auth.SicSearchExternalURLs
 import config.AppConfig
+import javax.inject.Inject
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
                                            val servicesConfig: ServicesConfig,
@@ -40,7 +39,7 @@ trait ConfirmationController extends ICLController {
 
   val show: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           withCurrentUsersChoices(journey.sessionId) { choices =>
             Future.successful(Ok(views.html.pages.confirmation(choices)))
@@ -51,7 +50,7 @@ trait ConfirmationController extends ICLController {
 
   val submit: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           withCurrentUsersChoices(journey.sessionId) { choices =>
             if (choices.size <= 4) {

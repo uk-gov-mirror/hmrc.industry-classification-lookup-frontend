@@ -19,6 +19,7 @@ package auth
 import play.api.Logger
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.{AuthorisedFunctions, _}
+import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
 import scala.concurrent.Future
@@ -27,17 +28,24 @@ trait AuthFunction extends FrontendController with AuthorisedFunctions {
 
   val loginURL: String
 
-  def authorised(body: => Future[Result])(implicit request: Request[AnyContent]): Future[Result] = {
+  def userAuthorised(api: Boolean = false)(body: => Future[Result])(implicit request: Request[_], hc: HeaderCarrier): Future[Result] = {
     authorised() {
       body
-    }.recover(authErrorHandling)
+    }(hc, implicitly).recover(if(api) apiAuthErrorHandling() else authErrorHandling)
   }
 
-  def authErrorHandling()(implicit request: Request[AnyContent]):PartialFunction[Throwable, Result] = {
-    case _: NoActiveSession => Redirect(loginURL)
-    case e: AuthorisationException => {
+  def authErrorHandling()(implicit request: Request[_]):PartialFunction[Throwable, Result] = {
+    case _: NoActiveSession        => Redirect(loginURL)
+    case e: AuthorisationException =>
       Logger.error("Unexpected auth exception ", e)
       InternalServerError
-    }
+  }
+
+  def apiAuthErrorHandling()(implicit request: Request[_]):PartialFunction[Throwable, Result] = {
+    case _: NoActiveSession        => Forbidden
+    case _: NotFoundException      => Forbidden
+    case e: AuthorisationException =>
+      Logger.error("Unexpected auth exception ", e)
+      InternalServerError
   }
 }

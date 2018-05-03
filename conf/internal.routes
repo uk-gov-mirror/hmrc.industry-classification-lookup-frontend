@@ -1,0 +1,2 @@
+# JOURNEY API ROUTES
+POST        /initialise-journey                    controllers.internal.ApiController.journeyInitialisation()

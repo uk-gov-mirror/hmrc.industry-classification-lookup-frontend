@@ -45,6 +45,7 @@ trait SicStoreRepository {
   def removeChoice(sessionId: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
 }
 
+
 class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   extends ReactiveRepository[SicStore, BSONObjectID]("sic-store", mongo, SicStore.format)
   with SicStoreRepository with TTLIndexing[SicStore, BSONObjectID] {
@@ -181,6 +182,7 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
         val sicStoreWithJourney = sicStore.copy(journey = journey.name, dataSet = journey.dataSet)
         val json = Json.toJson(sicStoreWithJourney).as[JsObject]
         val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(json).get)
+
 
         if(sicStoreWithJourney == sicStore) {
           Future.successful(sicStoreWithJourney)

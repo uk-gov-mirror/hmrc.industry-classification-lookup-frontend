@@ -16,24 +16,29 @@
 
 package helpers
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.http.HeaderNames
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.{WSClient, WSRequest, WSResponse}
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
 import uk.gov.hmrc.http.{HeaderNames => HmrcHeaderNames}
 
+import scala.concurrent.Future
+
 trait ClientSpec extends PlaySpec with GuiceOneServerPerSuite with Wiremock with TestAppConfig
   with FutureAwaits with DefaultAwaitTimeout with HeaderNames with ClientHelper
-  with BeforeAndAfterEach with BeforeAndAfterAll {
+  with BeforeAndAfterEach with BeforeAndAfterAll with LoginStub {
 
   def buildClient(path: String)(implicit app: Application): WSRequest = {
     app.injector.instanceOf[WSClient]
       .url(s"http://localhost:$port$path")
       .withFollowRedirects(false)
+  }
+
+  def assertFutureResponse(func: => Future[WSResponse])(assertions: WSResponse => Assertion): Assertion = {
+    assertions(await(func))
   }
 
   override def beforeEach(): Unit = resetWiremock()

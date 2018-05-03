@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package config
+package models.api
 
-import filters.CSRFExceptionsFilter
-import javax.inject.Inject
-import play.api.http.DefaultHttpFilters
-import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
-import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
+import play.api.libs.json.{Json, Writes}
 
-class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, whitelistFilter: AkamaiWhitelistFilter)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, whitelistFilter) ++ defaultFilters.filters:_*)
+case class ApiResultSet(code: Option[String],
+                        description: Option[String],
+                        synonyms: List[String])
+
+object ApiResultSet {
+  implicit val writes: Writes[ApiResultSet] = Json.writes[ApiResultSet]
+}

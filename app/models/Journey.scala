@@ -16,6 +16,7 @@
 
 package models
 
+@deprecated
 case class Journey(sessionId: String,
                    name: String,
                    dataSet: String) {
@@ -24,6 +25,7 @@ case class Journey(sessionId: String,
   require(Journey.validDataSet(dataSet), s"$dataSet is not a valid data set identifier")
 }
 
+@deprecated
 object Journey {
 
   //Journeys

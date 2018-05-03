@@ -49,10 +49,12 @@ trait RemoveSicCodeController extends ICLController {
 
   def show(sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      withJourney { journey =>
-        withCurrentUsersChoices(journey.sessionId) { codes =>
-          withSicCodeChoice(codes, sicCode){ code =>
-            Future.successful(Ok(views.html.pages.removeActivityConfirmation(confirmationForm(code.desc), code)))
+      userAuthorised() {
+        withJourney { journey =>
+          withCurrentUsersChoices(journey.sessionId) { codes =>
+            withSicCodeChoice(codes, sicCode){ code =>
+              Future.successful(Ok(views.html.pages.removeActivityConfirmation(confirmationForm(code.desc), code)))
+            }
           }
         }
       }
@@ -60,7 +62,7 @@ trait RemoveSicCodeController extends ICLController {
 
   def submit(sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         withJourney { journey =>
           withCurrentUsersChoices(journey.sessionId) { codes =>
             withSicCodeChoice(codes, sicCode) { code =>

@@ -45,20 +45,21 @@ class ICLControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
   "withSessionId" should {
-    "supply the sessionId to the function parameter and return the supllied result" in new Setup {
-      val suppliedFunction: String => Future[Result] = _ => Future.successful(Ok)
-      val result: Future[Result] = controller.withSessionId(suppliedFunction)(requestWithSessionId)
+    "supply the sessionId to the function parameter and return the supplied result" in new Setup {
+      val suppliedFunction: String => Future[Result] = sessionId => Future.successful(Ok(sessionId))
 
-      awaitAndAssert(controller.withSessionId(suppliedFunction)(requestWithSessionId)) {
-        _ mustBe await(suppliedFunction(sessionId))
+      assertFutureResult(controller.withSessionId(suppliedFunction)(requestWithSessionId)) { res =>
+        status(res)          mustBe OK
+        contentAsString(res) mustBe sessionId
       }
     }
 
-    "throw an exception when the request does not contain a session Id" in new Setup {
+    "return a Precondition failed when the request does not contain a session id" in new Setup {
       val suppliedFunction: String => Future[Result] = _ => Future.successful(Ok)
-      val result: RuntimeException = intercept[RuntimeException](await(controller.withSessionId(suppliedFunction)(FakeRequest())))
 
-      result.getMessage mustBe "No session id found in request"
+      assertFutureResult(controller.withSessionId(suppliedFunction)(FakeRequest())) { res =>
+        status(res) mustBe PRECONDITION_FAILED
+      }
     }
   }
 }

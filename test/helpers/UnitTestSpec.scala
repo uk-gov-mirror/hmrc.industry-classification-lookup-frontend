@@ -27,7 +27,7 @@ import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.PlaySpec
 import play.api.http.{HeaderNames, HttpProtocol, MimeTypes, Status}
-import play.api.mvc.AnyContent
+import play.api.mvc.{AnyContent, Result}
 import play.api.test._
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
@@ -57,7 +57,7 @@ trait UnitTestSpec
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  implicit val ec: ExecutionContext = global.prepare()
+  //implicit val ec: ExecutionContext = global.prepare()
 
   private def resetMocks(): Unit = {
     reset(
@@ -84,8 +84,12 @@ trait UnitTestSpec
     override val authConnector = mockAuthConnector
   }
 
-  def awaitAndAssert[T](func: => Future[T])(assert: T => Assertion): Assertion = {
-    assert(await(func))
+  def awaitAndAssert[T](func: => Future[T])(assertions: T => Assertion): Assertion = {
+    assertions(await(func))
+  }
+
+  def assertFutureResult(func: => Future[Result])(assertions: Future[Result] => Assertion): Assertion = {
+    assertions(func)
   }
 
   def mockWithJourney(sessionId: String, journey: Option[(String, String)]): OngoingStubbing[Future[Option[(String, String)]]] = {
@@ -108,5 +112,9 @@ trait UnitTestSpec
 
   object MockAuthRedirects {
     val loginURL = "/test/login"
+  }
+
+  def assertAndAwait[T](testMethod: => Future[T])(assertions: T => Assertion): Assertion = {
+    assertions(await(testMethod))
   }
 }
