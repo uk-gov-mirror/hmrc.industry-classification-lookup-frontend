@@ -1,3 +1,6 @@
 
-GET        /setup-journey                           controllers.test.TestSetupController.show
-POST       /setup-journey                           controllers.test.TestSetupController.submit
+GET        /:jId/setup-journey                           controllers.test.TestSetupController.show(jId)
+POST       /:jId/setup-journey                           controllers.test.TestSetupController.submit(jId)
+
+GET        /test-setup                                   controllers.test.TestSetupController.testSetup
+GET        /:jId/end-of-journey                          controllers.test.TestSetupController.endOfJourney(jId)

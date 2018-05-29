@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-package config
+package controllers
 
-import filters.CSRFExceptionsFilter
-import javax.inject.Inject
-import play.api.http.DefaultHttpFilters
-import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
-import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
+import models.setup.Identifiers
+import play.api.mvc.{Request, Result}
+import services.JourneyService
 
-class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, whitelistFilter: AkamaiWhitelistFilter)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, whitelistFilter) ++ defaultFilters.filters:_*)
+import scala.concurrent.Future
+
+trait JourneyManager {
+
+  val journeyService: JourneyService
+
+  def hasJourney(identifiers: Identifiers)(f: => Future[Result])(implicit req: Request[_]): Future[Result] = {
+    journeyService.getJourney(identifiers) flatMap { _ =>
+      f
+    } recover {
+      case _ => NotFound
+    }
+  }
+}

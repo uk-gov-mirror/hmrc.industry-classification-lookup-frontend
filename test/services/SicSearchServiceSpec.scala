@@ -21,7 +21,7 @@ import helpers.UnitTestSpec
 import models._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
-import repositories.SicStoreRepository
+import repositories.SicStoreMongoRepository
 import uk.gov.hmrc.http.NotFoundException
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,7 +32,7 @@ class SicSearchServiceSpec extends UnitTestSpec {
   class Setup {
     val service: SicSearchService = new SicSearchService {
       protected val iCLConnector: ICLConnector = mockICLConnector
-      protected val sicStoreRepository: SicStoreRepository = mockSicStoreRepo
+      protected val sicStoreRepository: SicStoreMongoRepository = mockSicStoreRepo
     }
   }
 

@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.play.views.html.helpers.form
 @import helpers.templates.inputRadioGroup
 
-@(journeyForm: Form[(String, String)])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, journeyForm: Form[(String, String)])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.test.setup-journey.title"), bodyClasses = None) {
 
@@ -27,7 +27,7 @@
 
   <h1 class="form-title heading-xlarge" id="page-title">@messages("page.test.setup-journey.title")</h1>
 
-    @form(action = controllers.test.routes.TestSetupController.submit) {
+    @form(action = controllers.test.routes.TestSetupController.submit(journeyId)) {
         <p>@messages("page.test.setup-journey.radio.alg.title")</p>
         @inputRadioGroup(
             field = journeyForm("journey"),

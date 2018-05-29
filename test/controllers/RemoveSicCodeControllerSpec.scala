@@ -16,9 +16,12 @@
 
 package controllers
 
+import java.time.LocalDateTime
+
 import config.AppConfig
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
+import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import org.mockito.ArgumentMatchers.any
@@ -43,7 +46,11 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
   }
 
+  val journeyId = "testJourneyId"
   val sessionId = "session-12345"
+  val identifiers = Identifiers(journeyId, sessionId)
+  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(), LocalDateTime.now())
+
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
   def formRequestWithSessionId(answer: String): FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("removeCode" -> answer)
 
@@ -58,11 +65,16 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "show" should {
     "return a 200 when the page is rendered" in new Setup {
       mockWithJourney(sessionId, Some((journey, dataSet)))
+
       when(mockSicSearchService.removeChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))
+
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
-      AuthHelpers.showWithAuthorisedUser(controller.show(sicCodeCode), requestWithSessionId){
+
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, sicCodeCode), requestWithSessionId){
         result =>
           status(result) mustBe OK
       }
@@ -70,12 +82,16 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "redirect to search page when the supplied sic code doesn't exist" in new Setup {
       mockWithJourney(sessionId, Some((journey, dataSet)))
+
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
-      AuthHelpers.showWithAuthorisedUser(controller.show("Unknown"), requestWithSessionId){
+
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, "Unknown"), requestWithSessionId){
         result =>
           status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show(Some(true)).url)
+          redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show(journeyId, Some(true)).url)
       }
     }
   }
@@ -87,7 +103,9 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(sicCodeCode), formRequestWithSessionId("")){
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("")){
         result =>
           status(result) mustBe BAD_REQUEST
           verify(mockSicSearchService, times(0)).removeChoice(any(), any())(any())
@@ -102,10 +120,12 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.removeChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(sicCodeCode), formRequestWithSessionId("yes")){
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("yes")){
         result =>
           status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show().url)
+          redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show(journeyId).url)
           verify(mockSicSearchService, times(1)).removeChoice(any(), any())(any())
       }
     }
@@ -115,10 +135,12 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(sicCodeCode), formRequestWithSessionId("no")){
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("no")){
         result =>
           status(result) mustBe SEE_OTHER
-          redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show().url)
+          redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show(journeyId).url)
           verify(mockSicSearchService, times(0)).removeChoice(any(), any())(any())
       }
     }

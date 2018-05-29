@@ -16,12 +16,16 @@
 
 package controllers.test
 
+import java.time.LocalDateTime
+
 import config.AppConfig
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
+import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
 import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
@@ -48,8 +52,10 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     )
   }
 
+  val journeyId = "testJourneyId"
   val sessionId = "session-12345"
-
+  val identifiers = Identifiers(journeyId, sessionId)
+  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(), LocalDateTime.now())
 
   val journeyName: String = Journey.QUERY_BUILDER
   val dataSet: String     = Journey.HMRC_SIC_8
@@ -66,21 +72,35 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
     "return a 200 and render the SetupJourneyView page when a journey has already been initialised" in new Setup {
 
-      when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveJourney(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some((journeyName, dataSet))))
 
-      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){ result =>
         status(result) mustBe 200
       }
     }
 
     "return a 200 and render the SetupJourneyView page when a journey has not been initialised" in new Setup {
 
-      when(mockJourneyService.retrieveJourney(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveJourney(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(None))
 
-      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){ result =>
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){ result =>
         status(result) mustBe 200
+      }
+    }
+
+    "return a 404" when {
+      "a journey has not been initialised" in new Setup {
+
+        AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId) { result =>
+          status(result) mustBe 404
+        }
+
       }
     }
   }
@@ -92,23 +112,74 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         "journey" -> ""
       )
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
         status(result) mustBe 400
       }
     }
 
-    s"return a 303 and redirect to ${controllers.routes.ChooseActivityController.show()} when a journey is initialised" in new Setup {
+    s"return a 303 and redirect to ${controllers.routes.ChooseActivityController.show(journeyId)} when a journey is initialised" in new Setup {
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
         "journey" -> journeyName,
         "dataSet" -> dataSet
       )
 
-      when(mockJourneyService.upsertJourney(eqTo(journey))(any()))
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      when(mockSicSearchService.upsertJourney(eqTo(journey))(any()))
         .thenReturn(Future.successful(sicStore))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
         status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show().toString)
+        redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show(journeyId).toString)
+      }
+    }
+  }
+
+  "testSetup" must {
+    "redirect to the test setup show page" in new Setup {
+      when(mockJourneyService.initialiseJourney(any())) thenReturn Future.successful(Json.parse("""{}"""))
+
+      AuthHelpers.showWithAuthorisedUser(controller.testSetup, requestWithSessionId) { result =>
+        status(result) mustBe SEE_OTHER
+        redirectLocation(result) mustBe Some("/testJourneyId/setup-journey")
+      }
+    }
+
+    "return a Bad Request when there is no session" in new Setup {
+      AuthHelpers.showWithAuthorisedUser(controller.testSetup, FakeRequest()) { result =>
+        status(result) mustBe BAD_REQUEST
+      }
+    }
+  }
+
+  "endOfJourney" must {
+    "return Ok when a journey exists and have a session" in new Setup {
+
+      val sicCodeChoices = Some(List(SicCodeChoice(SicCode("12345", "test description"))))
+
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      when(mockSicSearchService.retrieveChoices(any())(any()))
+        .thenReturn(Future.successful(sicCodeChoices))
+
+      AuthHelpers.showWithAuthorisedUser(controller.endOfJourney(journeyId), requestWithSessionId) { result =>
+        status(result) mustBe OK
+        contentAsString(result) mustBe "End of Journey" + Json.prettyPrint(Json.toJson(sicCodeChoices))
+      }
+    }
+
+    "return a Bad Request when there is no session" in new Setup {
+      AuthHelpers.showWithAuthorisedUser(controller.endOfJourney(journeyId), FakeRequest()) { result =>
+        status(result) mustBe BAD_REQUEST
+        contentAsString(result) mustBe "SessionId is missing from request"
+      }
+    }
+
+    "return a NotFound when there is no journey setup" in new Setup {
+      AuthHelpers.showWithAuthorisedUser(controller.endOfJourney(journeyId), requestWithSessionId) { result =>
+        status(result) mustBe NOT_FOUND
       }
     }
   }

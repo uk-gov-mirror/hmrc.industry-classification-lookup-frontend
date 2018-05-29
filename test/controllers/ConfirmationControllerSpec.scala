@@ -16,9 +16,12 @@
 
 package controllers
 
+import java.time.LocalDateTime
+
 import config.AppConfig
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
+import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -44,7 +47,11 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
   }
 
+  val journeyId = "testJourneyId"
   val sessionId = "session-12345"
+  val identifiers = Identifiers(journeyId, sessionId)
+  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(), LocalDateTime.now())
+
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
   val sicCodeCode = "12345"
@@ -54,6 +61,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val journey: String = Journey.QUERY_BUILDER
   val dataSet: String = Journey.ONS
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
+
 
   val sicStore = SicStore(
     sessionId,
@@ -74,7 +82,9 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
-      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){
         result =>
           status(result) mustBe 200
       }
@@ -86,7 +96,9 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
-      AuthHelpers.showWithAuthorisedUser(controller.show, requestWithSessionId){
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){
         result =>
           status(result) mustBe 303
       }
@@ -94,14 +106,19 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   }
 
   "submit" should {
-    "return a 200 and render end of journey page when 4 choices have already been made" in new Setup {
+    "redirect out of the service to the redirect url setup via the api" in new Setup {
       mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, requestWithSessionId.withFormUrlEncodedBody()){ result =>
-        status(result) mustBe OK
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
+      when(mockJourneyService.getRedirectUrl(any())) thenReturn Future.successful("redirect-url")
+
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), requestWithSessionId.withFormUrlEncodedBody()){ result =>
+        status(result) mustBe 303
+        redirectLocation(result) mustBe Some("redirect-url")
       }
     }
 
@@ -111,9 +128,11 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
+      when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody()
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit, request){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
         status(result) mustBe BAD_REQUEST
       }
     }
@@ -126,10 +145,10 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         .thenReturn(Future.successful(None))
 
       val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
-      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe SEE_OTHER
-      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().url)
+      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(journeyId).url)
     }
 
     "return a 303 and redirect to SicSearch when a SicStore does exist but does not contain any choices" in new Setup {
@@ -137,10 +156,10 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         .thenReturn(Future.successful(Some(List())))
 
       val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
-      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe SEE_OTHER
-      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show().url)
+      redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(journeyId).url)
     }
 
     "return a 200 when a SicStore does exist and the choices list is populated" in new Setup {
@@ -148,7 +167,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
       val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
-      val result: Future[Result] = controller.withCurrentUsersChoices(sessionId)(f)
+      val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe OK
     }

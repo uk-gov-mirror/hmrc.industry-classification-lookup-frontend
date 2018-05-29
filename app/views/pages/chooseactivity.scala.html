@@ -19,7 +19,7 @@
 @import helpers.templates._
 @import forms.sicsearch.SicSearchForm
 
-@(sicSearchForm: Form[SicSearch], chooseActForm: Form[List[SicCode]], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, sicSearchForm: Form[SicSearch], chooseActForm: Form[List[SicCode]], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = Some("full-width")) {
 
@@ -40,7 +40,7 @@
     <h2 class="heading-medium" id="page-sub-heading">@messages("page.icl.chooseactivity.subheading")</h2>
 
 
-    @searchBar(sicSearchForm, controllers.routes.ChooseActivityController.submit(Some("invalid-search")))
+    @searchBar(sicSearchForm, controllers.routes.ChooseActivityController.submit(journeyId, Some("invalid-search")))
 
 
     @oSearchResults.map { searchResults =>
@@ -66,10 +66,9 @@
             <h2 class="heading-medium">@messages("page.icl.chooseactivity.selection-heading")</h2>
             <p>@messages("page.icl.chooseactivity.selection-hint")</p>
 
-            @govHelpers.form(action = controllers.routes.ChooseActivityController.submit()) {
+            @govHelpers.form(action = controllers.routes.ChooseActivityController.submit(journeyId)) {
               <div class="grid-row">
-                @sectorFilter(searchResults)
-
+                @sectorFilter(journeyId, searchResults)
                 <div class="column-two-thirds">
                     <div class="form-group">
                         <table>

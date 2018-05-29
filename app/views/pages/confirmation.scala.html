@@ -18,7 +18,7 @@
 @import helpers.templates._
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
 
-@(listOfChoices: List[SicCodeChoice], errorArgs: Option[Seq[String]] = None)(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, listOfChoices: List[SicCodeChoice], errorArgs: Option[Seq[String]] = None)(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.confirmation.title"), bodyClasses = None) {
 
@@ -49,7 +49,7 @@
                         @includesHelper(sicCodeChoice.indexes)
                     </td>
                     <td class="change">
-                        <a href="@controllers.routes.RemoveSicCodeController.show(sicCodeChoice.code)" id="change-applicant">
+                        <a href="@controllers.routes.RemoveSicCodeController.show(journeyId, sicCodeChoice.code)" id="change-applicant">
                             @messages("app.common.remove")
                             <!--TODO Talk to Russell-->
                             <!--<span class="visuallyhidden">@messages("app.common.remove")</span>-->
@@ -63,10 +63,10 @@
   </div>
 
     <div class="form-group">
-        <a href="@controllers.routes.ChooseActivityController.show()" id="add-more-sic-codes-link">@messages("page.icl.confirmation.addMoreSicCodes")</a>
+        <a href="@controllers.routes.ChooseActivityController.show(journeyId)" id="add-more-sic-codes-link">@messages("page.icl.confirmation.addMoreSicCodes")</a>
     </div>
 
-    @govHelpers.form(action = controllers.routes.ConfirmationController.submit) {
+    @govHelpers.form(action = controllers.routes.ConfirmationController.submit(journeyId)) {
         <div class="form-group">
           <button class="button" type="submit" id="continue" >@messages("app.common.confirmAndContinue")</button>
         </div>

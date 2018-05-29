@@ -17,10 +17,11 @@
 package services
 
 import javax.inject.Inject
+
 import connectors.ICLConnector
-import models.{SearchResults, SicCode, SicCodeChoice}
+import models._
 import play.api.Logger
-import repositories.{SicStoreRepo, SicStoreRepository}
+import repositories.{SicStoreMongoRepository, SicStoreRepo}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
@@ -28,14 +29,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
                                      sicStoreRepo: SicStoreRepo) extends SicSearchService {
-  val sicStoreRepository: SicStoreRepository = sicStoreRepo.repo
-
+  val sicStoreRepository: SicStoreMongoRepository = sicStoreRepo.repo
 }
 
 trait SicSearchService {
 
   protected val iCLConnector: ICLConnector
-  protected val sicStoreRepository: SicStoreRepository
+  protected val sicStoreRepository: SicStoreMongoRepository
 
   def search(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
@@ -98,4 +98,10 @@ trait SicSearchService {
   }
 
   private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){5}$")
+
+  def upsertJourney(journey: Journey)(implicit ec: ExecutionContext): Future[SicStore] = sicStoreRepository.upsertJourney(journey)
+
+  def retrieveJourney(sessionId: String)(implicit ec: ExecutionContext): Future[Option[(String, String)]] = {
+    sicStoreRepository.retrieveSicStore(sessionId).map(_.map(x => (x.journey, x.dataSet)))
+  }
 }

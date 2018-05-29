@@ -14,7 +14,7 @@
  * limitations under the License.
  *@
 
-@(searchResults: SearchResults)(implicit request: Request[_], messages: Messages)
+@(journeyId: String, searchResults: SearchResults)(implicit request: Request[_], messages: Messages)
 
 @if(searchResults.sectors.size > 1){
     <div class="column-one-third">
@@ -22,7 +22,7 @@
         <div role="group" aria-labelledby="option-select-title-case-type">
         <ul class="list">
             @searchResults.sectors.map { sector =>
-                <li><a href="@controllers.routes.ChooseActivityController.filter(sector.code)" id="@{sector.code}" @if(SearchResults.isCurrentSector(searchResults, sector)){class="bold"}>@{sector.name} (@{sector.count})</a></li>
+                <li><a href="@controllers.routes.ChooseActivityController.filter(journeyId, sector.code)" id="@{sector.code}" @if(SearchResults.isCurrentSector(searchResults, sector)){class="bold"}>@{sector.name} (@{sector.count})</a></li>
             }
         </ul>
         </div>

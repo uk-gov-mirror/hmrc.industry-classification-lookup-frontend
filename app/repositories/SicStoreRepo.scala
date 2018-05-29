@@ -17,13 +17,14 @@
 package repositories
 
 import javax.inject.{Inject, Singleton}
+
 import models.{Journey, SearchResults, SicCodeChoice, SicStore}
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.bson.{BSONArray, BSONDocument, BSONObjectID, BSONString}
+import reactivemongo.bson.{BSONDocument, BSONObjectID, BSONString}
 import reactivemongo.play.json.BSONFormats
 import reactivemongo.play.json.ImplicitBSONHandlers.BSONDocumentWrites
 import uk.gov.hmrc.mongo.ReactiveRepository
@@ -44,6 +45,7 @@ trait SicStoreRepository {
   def insertChoices(sessionId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean]
   def removeChoice(sessionId: String, choice: String)(implicit ec: ExecutionContext): Future[Boolean]
 }
+
 
 class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
   extends ReactiveRepository[SicStore, BSONObjectID]("sic-store", mongo, SicStore.format)
@@ -181,6 +183,7 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
         val sicStoreWithJourney = sicStore.copy(journey = journey.name, dataSet = journey.dataSet)
         val json = Json.toJson(sicStoreWithJourney).as[JsObject]
         val update = BSONDocument("$set" -> BSONFormats.readAsBSONValue(json).get)
+
 
         if(sicStoreWithJourney == sicStore) {
           Future.successful(sicStoreWithJourney)

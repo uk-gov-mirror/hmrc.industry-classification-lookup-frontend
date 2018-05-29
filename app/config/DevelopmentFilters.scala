@@ -20,7 +20,6 @@ import filters.CSRFExceptionsFilter
 import javax.inject.Inject
 import play.api.http.DefaultHttpFilters
 import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
-import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
 
-class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, whitelistFilter: AkamaiWhitelistFilter)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, whitelistFilter) ++ defaultFilters.filters:_*)
+class DevelopmentFilters @Inject()(csrfExceptionsFilter: CSRFExceptionsFilter, defaultFilters: FrontendFilters)
+  extends DefaultHttpFilters(Seq(csrfExceptionsFilter) ++ defaultFilters.filters:_*)

@@ -20,13 +20,14 @@ import javax.inject.Inject
 
 import auth.SicSearchExternalURLs
 import config.AppConfig
+import models.setup.Identifiers
 import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Result}
+import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.config.ServicesConfig
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
                                            val servicesConfig: ServicesConfig,
@@ -38,27 +39,30 @@ class ConfirmationControllerImpl @Inject()(val messagesApi: MessagesApi,
 trait ConfirmationController extends ICLController {
   val sicSearchService: SicSearchService
 
-  val show: Action[AnyContent] = Action.async {
+  def show(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
-        withJourney { journey =>
-          withCurrentUsersChoices(journey.sessionId) { choices =>
-            Future.successful(Ok(views.html.pages.confirmation(choices)))
+      userAuthorised() {
+        withJourney(journeyId) { journey =>
+          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { choices =>
+            Future.successful(Ok(views.html.pages.confirmation(journeyId, choices)))
           }
         }
       }
   }
 
-  val submit: Action[AnyContent] = Action.async {
+  def submit(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
-        withJourney { journey =>
-          withCurrentUsersChoices(journey.sessionId) { choices =>
+      userAuthorised() {
+        withJourney(journeyId) { journey =>
+          val identifiers = Identifiers(journeyId, journey.sessionId)
+          withCurrentUsersChoices(identifiers) { choices =>
             if (choices.size <= 4) {
-              Future.successful(Ok("End of journey"))
+              journeyService.getRedirectUrl(identifiers) map { url =>
+                Redirect(url)
+              }
             } else {
               val amountToRemove = (choices.size - 4).toString
-              Future.successful(BadRequest(views.html.pages.confirmation(choices, Some(Seq(amountToRemove)))))
+              Future.successful(BadRequest(views.html.pages.confirmation(journeyId, choices, Some(Seq(amountToRemove)))))
             }
           }
         }

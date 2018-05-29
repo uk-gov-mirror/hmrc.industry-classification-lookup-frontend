@@ -16,6 +16,7 @@
 
 package services
 
+import connectors.ICLConnector
 import helpers.UnitTestSpec
 import models.{Journey, SicStore}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -28,8 +29,9 @@ import scala.concurrent.Future
 class JourneyServiceSpec extends UnitTestSpec {
 
   trait Setup {
-    val service: JourneyService = new JourneyService {
-      override val sicStore: SicStoreMongoRepository = mockSicStoreRepo
+    val service: SicSearchService = new SicSearchService {
+      override protected val iCLConnector: ICLConnector = mockICLConnector
+      override protected val sicStoreRepository: SicStoreMongoRepository = mockSicStoreRepo
     }
   }
 
