@@ -57,7 +57,7 @@ class JourneyDataMongoRepository(config: Configuration, mongo: () => DB)
       key = Seq(
         "identifiers.journeyId" -> IndexType.Ascending,
         "identifiers.sessionId" -> IndexType.Ascending
-        ),
+      ),
       name = Some("SessionIdAndJourneyId"),
       unique = true
     )
@@ -65,9 +65,10 @@ class JourneyDataMongoRepository(config: Configuration, mongo: () => DB)
 
   private def identifiersSelector(identifiers: Identifiers) = BSONDocument("identifiers.journeyId" -> identifiers.journeyId, "identifiers.sessionId" -> identifiers.sessionId)
 
-  private def renewJourney[T](identifiers: Identifiers)(f: => T): Future[T] = {
+  private[repositories] def renewJourney[T](identifiers: Identifiers)(f: => T): Future[T] = {
     val selector = identifiersSelector(identifiers)
-    collection.update(selector, BSONDocument("$set" -> BSONDocument("lastUpdated" -> BSONDocument("$date" -> LocalDateTime.now.toEpochSecond(ZoneOffset.UTC))))) map { _ =>
+    val dateTime = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli
+    collection.update(selector, BSONDocument("$set" -> BSONDocument("lastUpdated" -> BSONDocument("$date" -> dateTime)))) map { _ =>
       f
     }
   }

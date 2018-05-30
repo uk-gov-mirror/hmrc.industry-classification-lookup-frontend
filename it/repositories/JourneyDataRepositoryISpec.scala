@@ -16,7 +16,7 @@
 
 package repositories
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime}
 
 import models.setup.messages.{CustomMessages, Summary}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
@@ -48,6 +48,22 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
 
   val now = LocalDateTime.now
 
+  val journeyData = JourneyData(
+    identifiers = Identifiers(
+      journeyId = "testJourneyId",
+      sessionId = "testSessionId"
+    ),
+    redirectUrl = "test/url",
+    customMessages = Some(CustomMessages(
+      summary = Some(Summary(
+        heading = Some("testMessage1"),
+        lead = Some("testMessage2")
+      ))
+    )),
+    journeySetupDetails = JourneySetup(),
+    lastUpdated = now
+  )
+
   "initialiseJourney" should {
     "successfully insert JourneyData into collection" in new Setup {
       val data = JourneyData(
@@ -68,29 +84,13 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
   }
 
   "retrieveJourneyData" should {
-    val data = JourneyData(
-      identifiers = Identifiers(
-        journeyId = "testJourneyId",
-        sessionId = "testSessionId"
-      ),
-      redirectUrl = "test/url",
-      customMessages = Some(CustomMessages(
-        summary = Some(Summary(
-          heading = Some("testMessage1"),
-          lead = Some("testMessage2")
-        ))
-      )),
-      journeySetupDetails = JourneySetup(),
-      lastUpdated = now
-    )
-
     "successfully return a JourneyData" in new Setup {
-      insert(data)
-      await(repository.retrieveJourneyData(data.identifiers)).journeySetupDetails mustBe JourneySetup()
+      insert(journeyData)
+      await(repository.retrieveJourneyData(journeyData.identifiers)).journeySetupDetails mustBe JourneySetup()
     }
 
     "throw a RuntimeException when the journey does not exist in the repo" in new Setup {
-      intercept[RuntimeException](await(repository.retrieveJourneyData(data.identifiers)))
+      intercept[RuntimeException](await(repository.retrieveJourneyData(journeyData.identifiers)))
     }
 
     "throw a JsResultException when a journey exists but journey data isn't defined" in new Setup {
@@ -100,6 +100,18 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
       await(mongo.mongoConnector.db().collection[JSONCollection]("journey-data").insert(JID(Identifiers("testJourneyId", "testSessionId"))))
 
       a[JsResultException] mustBe thrownBy(await(repository.retrieveJourneyData(Identifiers(journeyId = "testJourneyId", sessionId = "testSessionId"))))
+    }
+  }
+
+  "renewJourney" must {
+    "update the lastUpdated value in the document to the current time" in new Setup {
+      val currentDateTime: LocalDateTime = LocalDateTime.now()
+
+      insert(journeyData.copy(lastUpdated = LocalDateTime.of(2000, 1, 1, 12, 0, 0)))
+
+      await(repository.renewJourney(journeyData.identifiers){})
+
+      fetchAll.head.lastUpdated isAfter currentDateTime mustBe true
     }
   }
 }
