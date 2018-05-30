@@ -40,14 +40,14 @@ trait SignInOutController extends I18nSupport with AuthorisedFunctions with Auth
 
   val postSignIn: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/post-sign-in"))
       }
   }
 
   def signOut: Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
+      userAuthorised() {
         Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/questionnaire").withNewSession)
       }
   }

@@ -14,13 +14,21 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import filters.CSRFExceptionsFilter
-import javax.inject.Inject
-import play.api.http.DefaultHttpFilters
-import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
-import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
+import java.time.{Instant, LocalDateTime}
+import java.util.TimeZone
 
-class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, whitelistFilter: AkamaiWhitelistFilter)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, whitelistFilter) ++ defaultFilters.filters:_*)
+import play.api.libs.json._
+
+trait TimeFormat {
+  val timezone: TimeZone = TimeZone.getTimeZone("UTC")
+
+  implicit val dateTimeRead: Reads[LocalDateTime] = (__ \ "$date").read[Long] map { ts =>
+    Instant.ofEpochMilli(ts).atZone(timezone.toZoneId).toLocalDateTime
+  }
+
+  implicit val dateTimeWrite: Writes[LocalDateTime] = new Writes[LocalDateTime] {
+    def writes(dateTime: LocalDateTime): JsValue = Json.obj("$date" -> dateTime.toInstant(timezone.toZoneId.getRules.getOffset(dateTime)).toEpochMilli())
+  }
+}

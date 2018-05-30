@@ -18,43 +18,38 @@ package controllers
 
 import auth.AuthFunction
 import config.AppConfig
-import models.{Journey, SicCode, SicCodeChoice}
+import models.setup.Identifiers
+import models.{Journey, SicCodeChoice}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Request, Result}
-import services.{JourneyService, SicSearchService}
+import services.SicSearchService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait ICLController extends AuthFunction with I18nSupport {
+trait ICLController extends BasicController with AuthFunction with I18nSupport with JourneyManager {
 
-  val journeyService: JourneyService
   val sicSearchService: SicSearchService
+
   implicit val appConfig: AppConfig
 
-  def withSessionId(f: => String => Future[Result])(implicit req: Request[_]): Future[Result] = {
-    hc(req).sessionId match {
-      case Some(sessionId) => f(sessionId.value)
-      case None => Future.successful(throw new RuntimeException("No session id found in request"))
-    }
-  }
-
-  def withJourney(f: => Journey => Future[Result])(implicit req: Request[_]): Future[Result] = {
+  def withJourney(journeyId: String)(f: => Journey => Future[Result])(implicit req: Request[_]): Future[Result] = {
     withSessionId { sessionId =>
-      journeyService.retrieveJourney(sessionId) flatMap {
-        case Some((journey, dataSet)) => f(Journey(sessionId, journey, dataSet))
-        case None => Future.successful(Redirect(controllers.test.routes.TestSetupController.show()))//TODO should default the journey instead?
+      hasJourney(Identifiers(journeyId, sessionId)) {
+        sicSearchService.retrieveJourney(sessionId) flatMap {
+          case Some((journey, dataSet)) => f(Journey(sessionId, journey, dataSet))
+          case None => Future.successful(Redirect(controllers.test.routes.TestSetupController.show(journeyId))) //TODO should default the journey instead?
+        }
       }
     }
   }
 
-  private[controllers] def withCurrentUsersChoices(sessionId: String)(f: List[SicCodeChoice] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
-    sicSearchService.retrieveChoices(sessionId) flatMap {
+  private[controllers] def withCurrentUsersChoices(identifiers: Identifiers)(f: List[SicCodeChoice] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
+    sicSearchService.retrieveChoices(identifiers.sessionId) flatMap {
       case Some(choices) => choices match {
-        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
+        case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show(identifiers.journeyId)))
         case listOfChoices => f(listOfChoices)
       }
-      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show()))
+      case None => Future.successful(Redirect(controllers.routes.ChooseActivityController.show(identifiers.journeyId)))
     }
   }
-
 }

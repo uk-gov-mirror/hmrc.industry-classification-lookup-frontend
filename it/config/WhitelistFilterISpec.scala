@@ -16,12 +16,29 @@
 
 package config
 
+import java.time.LocalDateTime
+
+import helpers.Base64Helper._
 import helpers.ClientSpec
+import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import helpers.Base64Helper._
+import reactivemongo.api.commands.WriteResult
+import repositories.{JourneyDataMongoRepository, JourneyDataRepo}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class WhitelistFilterISpec extends ClientSpec {
+
+  trait Setup {
+    val repo: JourneyDataMongoRepository = fakeApplication.injector.instanceOf[JourneyDataRepo].store
+
+    await(repo.drop)
+    await(repo.ensureIndexes)
+
+    def insertIntoDb(journeyData: JourneyData): Future[WriteResult] = repo.insert(journeyData)
+  }
 
   val extraConfig: Map[String, Any] = Map(
     "play.http.filters" -> "config.ProductionFilters",
@@ -29,7 +46,9 @@ class WhitelistFilterISpec extends ClientSpec {
     "whitelist" -> "whitelistIP".toBase64
   )
 
-  val searchUri = "/sic-search/search-standard-industry-classification-codes"
+  val searchUri = "/sic-search/testJourneyId/search-standard-industry-classification-codes"
+
+  val journeyData = JourneyData(Identifiers("testJourneyId", "test-session-id"), "redirectUrl", None, JourneySetup(), LocalDateTime.now())
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(testAppConfig ++ extraConfig)
@@ -53,16 +72,18 @@ class WhitelistFilterISpec extends ClientSpec {
 
     "allow requests through the whitelist" when {
 
-      "the request is sent from a whitelisted ip address" in {
+      "the request is sent from a whitelisted ip address" in new Setup {
         val client = buildClient(searchUri)
           .withTrueClientIPHeader("whitelistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
 
+        await(insertIntoDb(journeyData))
+
         val response = await(client.get())
         response.status mustBe 303
-        response.redirectLocation mustBe Some("/setup-journey")
+        response.redirectLocation mustBe Some("/testJourneyId/setup-journey")
       }
 
       "the request is not sent from a white-listed IP but the requested Url is a white-listed Url" in {

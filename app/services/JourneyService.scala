@@ -18,22 +18,38 @@ package services
 
 import javax.inject.Inject
 
-import models.{Journey, SicStore}
-import repositories.{SicStoreMongoRepository, SicStoreRepo}
+import models.setup.{Identifiers, JourneyData, JourneySetup}
+import play.api.libs.json.{JsValue, Json}
+import repositories.{JourneyDataMongoRepository, JourneyDataRepo, JourneyDataRepository}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class JourneyServiceImpl @Inject()(sicStoreRepo: SicStoreRepo) extends JourneyService {
-  val sicStore: SicStoreMongoRepository = sicStoreRepo.repo
+class JourneyServiceImpl @Inject()(journeyDataRepo: JourneyDataRepo) extends JourneyService {
+  override val journeyDataRepository: JourneyDataMongoRepository = journeyDataRepo.store
 }
 
 trait JourneyService {
+  val journeyDataRepository: JourneyDataRepository
 
-  protected val sicStore: SicStoreMongoRepository
+  def initialiseJourney(journeyData: JourneyData): Future[JsValue] = {
+    journeyDataRepository.initialiseJourney(journeyData) map { _ =>
+      Json.obj(
+        "journeyStartUri" -> s"/sic-search/${journeyData.identifiers.journeyId}/search-standard-industry-classification-codes",
+        "fetchResultsUri" -> s"/internal/${journeyData.identifiers.journeyId}/fetch-results"
+      )
+    }
+  }
 
-  def upsertJourney(journey: Journey)(implicit ec: ExecutionContext): Future[SicStore] = sicStore.upsertJourney(journey)
+  def getJourney(identifiers: Identifiers): Future[JourneyData] = {
+    journeyDataRepository.retrieveJourneyData(identifiers)
+  }
 
-  def retrieveJourney(sessionId: String)(implicit ec: ExecutionContext): Future[Option[(String, String)]] = {
-    sicStore.retrieveSicStore(sessionId).map(_.map(x => (x.journey, x.dataSet)))
+  def getRedirectUrl(identifiers: Identifiers): Future[String] = {
+    journeyDataRepository.retrieveJourneyData(identifiers) map (_.redirectUrl)
+  }
+
+  def getSetupDetails(identifiers: Identifiers): Future[JourneySetup] = {
+    journeyDataRepository.retrieveJourneyData(identifiers) map (_.journeySetupDetails)
   }
 }

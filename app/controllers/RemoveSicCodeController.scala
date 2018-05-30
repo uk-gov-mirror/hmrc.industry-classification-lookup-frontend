@@ -16,11 +16,13 @@
 
 package controllers
 
+import javax.inject.Inject
+
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import forms.RemoveSicCodeForm
-import javax.inject.Inject
 import models.SicCodeChoice
+import models.setup.Identifiers
 import play.api.data.Form
 import play.api.i18n.MessagesApi
 import play.api.mvc._
@@ -42,35 +44,37 @@ trait RemoveSicCodeController extends ICLController {
   val sicSearchService: SicSearchService
   def confirmationForm(description: String): Form[String] = RemoveSicCodeForm.form(description)
 
-  private def withSicCodeChoice(codes: List[SicCodeChoice], sicCode: String)(f: SicCodeChoice => Future[Result]): Future[Result] =
+  private def withSicCodeChoice(journeyId: String, codes: List[SicCodeChoice], sicCode: String)(f: SicCodeChoice => Future[Result]): Future[Result] =
     codes.find(_.code == sicCode).fold(
-      Future.successful(Redirect(controllers.routes.ChooseActivityController.show(Some(true))))
+      Future.successful(Redirect(controllers.routes.ChooseActivityController.show(journeyId, Some(true))))
     )(f)
 
-  def show(sicCode: String): Action[AnyContent] = Action.async {
+  def show(journeyId: String, sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      withJourney { journey =>
-        withCurrentUsersChoices(journey.sessionId) { codes =>
-          withSicCodeChoice(codes, sicCode){ code =>
-            Future.successful(Ok(views.html.pages.removeActivityConfirmation(confirmationForm(code.desc), code)))
+      userAuthorised() {
+        withJourney(journeyId) { journey =>
+          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { codes =>
+            withSicCodeChoice(journeyId, codes, sicCode){ code =>
+              Future.successful(Ok(views.html.pages.removeActivityConfirmation(journeyId, confirmationForm(code.desc), code)))
+            }
           }
         }
       }
   }
 
-  def submit(sicCode: String): Action[AnyContent] = Action.async {
+  def submit(journeyId: String, sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
-      authorised {
-        withJourney { journey =>
-          withCurrentUsersChoices(journey.sessionId) { codes =>
-            withSicCodeChoice(codes, sicCode) { code =>
+      userAuthorised() {
+        withJourney(journeyId) { journey =>
+          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { codes =>
+            withSicCodeChoice(journeyId, codes, sicCode) { code =>
               confirmationForm(code.desc).bindFromRequest().fold(
-                errors => Future.successful(BadRequest(views.html.pages.removeActivityConfirmation(errors, code))),
+                errors => Future.successful(BadRequest(views.html.pages.removeActivityConfirmation(journeyId, errors, code))),
                 {
                   case "yes" => sicSearchService.removeChoice(journey.sessionId, sicCode) map { _ =>
-                    Redirect(controllers.routes.ConfirmationController.show())
+                    Redirect(controllers.routes.ConfirmationController.show(journeyId))
                   }
-                  case "no" => Future.successful(Redirect(controllers.routes.ConfirmationController.show()))
+                  case "no" => Future.successful(Redirect(controllers.routes.ConfirmationController.show(journeyId)))
                 }
               )
             }

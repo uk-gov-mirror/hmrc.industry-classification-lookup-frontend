@@ -3,12 +3,12 @@ GET        /assets/*file                                                     con
 
 GET        /sign-out                                                         controllers.SignInOutController.signOut
 
-GET        /search-standard-industry-classification-codes                    controllers.ChooseActivityController.show(doSearch: Option[Boolean] ?= None)
-POST       /search-standard-industry-classification-codes                    controllers.ChooseActivityController.submit(doSearch: Option[String] ?= None)
-GET        /filter-business-activities/:code                                 controllers.ChooseActivityController.filter(code)
+GET        /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.show(jId, doSearch: Option[Boolean] ?= None)
+POST       /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.submit(jId, doSearch: Option[String] ?= None)
+GET        /:jId/filter-business-activities/:code                            controllers.ChooseActivityController.filter(jId, code)
 
-GET        /check-confirm-standard-industry-classification-codes             controllers.ConfirmationController.show
-POST       /check-confirm-standard-industry-classification-codes             controllers.ConfirmationController.submit
+GET        /:jId/check-confirm-standard-industry-classification-codes        controllers.ConfirmationController.show(jId)
+POST       /:jId/check-confirm-standard-industry-classification-codes        controllers.ConfirmationController.submit(jId)
 
-GET        /remove-standard-industry-classification-code/:sicCode            controllers.RemoveSicCodeController.show(sicCode)
-POST       /remove-standard-industry-classification-code/:sicCode            controllers.RemoveSicCodeController.submit(sicCode)
+GET        /:jId/remove-standard-industry-classification-code/:sicCode       controllers.RemoveSicCodeController.show(jId, sicCode)
+POST       /:jId/remove-standard-industry-classification-code/:sicCode       controllers.RemoveSicCodeController.submit(jId, sicCode)

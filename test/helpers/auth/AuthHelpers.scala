@@ -18,6 +18,7 @@ package helpers.auth
 
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
+import play.api.libs.json.JsValue
 import play.api.mvc._
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core._
@@ -49,6 +50,16 @@ trait AuthHelpers {
 
   def submitWithAuthorisedUser(action: Action[AnyContent], request: FakeRequest[AnyContentAsFormUrlEncoded])(test: Future[Result] => Any) {
     mockAuthorisedUser(Future.successful({}))
+    test(action(request))
+  }
+
+  def postWithAuthorisedUser(action: Action[JsValue], request: FakeRequest[JsValue])(test: Future[Result] => Any) {
+    mockAuthorisedUser(Future.successful({}))
+    test(action(request))
+  }
+
+  def postWithUnauthorisedUser(action: Action[JsValue], request: FakeRequest[JsValue])(test: Future[Result] => Any) {
+    mockAuthorisedUser(Future.failed(MissingBearerToken("")))
     test(action(request))
   }
 

@@ -35,8 +35,10 @@ class ChooseActivityViewSpec extends UnitTestSpec with UnitTestFakeApp with I18n
 
   val searchResults = SearchResults(query, 1, List(testSicCode), List(Sector("A", "Fake Sector", 1)))
 
+  val journeyId = "testJourneyId"
+
   "The choose activity screen" should {
-    lazy val view = ChooseActivityPage(SicSearchForm.form.fill(SicSearch(query)), ChooseMultipleActivitiesForm.form, Some(searchResults))
+    lazy val view = ChooseActivityPage(journeyId, SicSearchForm.form.fill(SicSearch(query)), ChooseMultipleActivitiesForm.form, Some(searchResults))
     lazy val document = Jsoup.parse(view.body)
 
     "have the correct title" in {

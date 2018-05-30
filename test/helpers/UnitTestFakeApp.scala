@@ -26,11 +26,13 @@ trait UnitTestFakeApp extends GuiceOneAppPerTest {
   implicit lazy val testMessagesApi: MessagesApi = app.injector.instanceOf(classOf[MessagesApi])
 
   implicit val testAppConfig: AppConfig = new AppConfig {
-    override val reportAProblemNonJSUrl   = ""
-    override val reportAProblemPartialUrl = ""
-    override val whitelist                = Seq()
-    override val whitelistExcluded        = Seq()
-    override val analyticsToken           = ""
-    override val analyticsHost            = ""
+    override val reportAProblemNonJSUrl    = ""
+    override val reportAProblemPartialUrl  = ""
+    override val whitelist                 = Seq()
+    override val whitelistExcluded         = Seq()
+    override val analyticsToken            = ""
+    override val analyticsHost             = ""
+    override val csrfBypassValue: String   = ""
+    override val uriWhiteList: Set[String] = Set()
   }
 }
