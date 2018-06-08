@@ -18,8 +18,8 @@ package controllers
 
 import auth.AuthFunction
 import config.AppConfig
-import models.setup.Identifiers
-import models.{Journey, SicCodeChoice}
+import models.SicCodeChoice
+import models.setup.{Identifiers, JourneyData}
 import play.api.i18n.I18nSupport
 import play.api.mvc.{Request, Result}
 import services.SicSearchService
@@ -32,16 +32,16 @@ trait ICLController extends BasicController with AuthFunction with I18nSupport w
 
   implicit val appConfig: AppConfig
 
-  def withJourney(journeyId: String)(f: => Journey => Future[Result])(implicit req: Request[_]): Future[Result] = {
+  def withJourney(journeyId: String)(f: => JourneyData => Future[Result])(implicit req: Request[_]): Future[Result] = {
     withSessionId { sessionId =>
-      hasJourney(Identifiers(journeyId, sessionId)) {
-        sicSearchService.retrieveJourney(sessionId) flatMap {
-          case Some((journey, dataSet)) => f(Journey(sessionId, journey, dataSet))
-          case None => Future.successful(Redirect(controllers.test.routes.TestSetupController.show(journeyId))) //TODO should default the journey instead?
-        }
+      hasJourney(Identifiers(journeyId, sessionId)) { journeyData =>
+        f(journeyData)
+      }.recoverWith {
+        case e => Future.successful(Redirect(controllers.test.routes.TestSetupController.show(journeyId)))
+    }
       }
     }
-  }
+
 
   private[controllers] def withCurrentUsersChoices(identifiers: Identifiers)(f: List[SicCodeChoice] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
     sicSearchService.retrieveChoices(identifiers.sessionId) flatMap {

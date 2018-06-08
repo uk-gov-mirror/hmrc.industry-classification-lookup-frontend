@@ -17,12 +17,11 @@
 package controllers.test
 
 import java.time.LocalDateTime
-import javax.inject.Inject
 
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import controllers.{ICLController, JourneyManager}
-import models.Journey
+import javax.inject.Inject
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.data.Form
 import play.api.data.Forms._
@@ -46,20 +45,20 @@ trait TestSetupController extends ICLController with JourneyManager {
 
   val journeyService: JourneyService
 
-  val form: Form[(String, String)] = Form(tuple(
-    "journey" -> nonEmptyText,
-    "dataSet" -> nonEmptyText
-  ))
+  val journeySetupForm = Form(
+    mapping(
+      "dataSet" -> nonEmptyText.verifying(dSet => JourneyData.dataSets.contains(dSet)),
+      "journey" -> nonEmptyText.verifying(journey => JourneyData.journeyNames.contains(journey)),
+      "amountOfResults" -> number(1)
+    )(JourneySetup.apply)(JourneySetup.unapply)
+  )
 
   def show(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
       userAuthorised() {
         withSessionId { sessionId =>
-          hasJourney(Identifiers(journeyId, sessionId)) {
-            sicSearchService.retrieveJourney(sessionId) map {
-              case Some(journey) => Ok(views.html.test.SetupJourneyView(journeyId, form.fill(journey)))
-              case None => Ok(views.html.test.SetupJourneyView(journeyId, form))
-            }
+          hasJourney(Identifiers(journeyId, sessionId)) { journeyData =>
+          Future.successful(Ok(views.html.test.SetupJourneyView(journeyId, journeySetupForm.fill(journeyData.journeySetupDetails))))
           }
         }
       }
@@ -69,15 +68,12 @@ trait TestSetupController extends ICLController with JourneyManager {
     implicit request =>
       userAuthorised() {
         withSessionId { sessionId =>
-          hasJourney(Identifiers(journeyId, sessionId)) {
-            form.bindFromRequest.fold(
-              errors => Future.successful(BadRequest(views.html.test.SetupJourneyView(journeyId, errors))),
-              valid => {
-                val (journeyName, dataSet) = valid
-                val journey = Journey(sessionId, journeyName, dataSet)
-                sicSearchService.upsertJourney(journey) map { _ =>
-                  Redirect(controllers.routes.ChooseActivityController.show(journeyId))
-                }
+          hasJourney(Identifiers(journeyId, sessionId)) { journeyData =>
+            journeySetupForm.bindFromRequest.fold(
+              errors =>
+                Future.successful(BadRequest(views.html.test.SetupJourneyView(journeyId, errors))),
+              validJourney => {
+                journeyService.updateJourneyWithJourneySetup(journeyData.identifiers, validJourney).map( _ => Redirect(controllers.routes.ChooseActivityController.show(journeyId)))
               }
             )
           }
@@ -97,9 +93,7 @@ trait TestSetupController extends ICLController with JourneyManager {
             journeySetupDetails = JourneySetup(),
             lastUpdated = LocalDateTime.now()
           )
-          journeyService.initialiseJourney(journeyData) map { _ =>
-            Redirect(controllers.test.routes.TestSetupController.show(journeyId))
-          }
+          journeyService.initialiseJourney(journeyData).map( _ => Redirect(controllers.test.routes.TestSetupController.show(journeyId)))
         }
       }
   }
@@ -108,7 +102,7 @@ trait TestSetupController extends ICLController with JourneyManager {
     implicit request =>
       userAuthorised() {
         withSessionId { sessionId =>
-          hasJourney(Identifiers(journeyId, sessionId)) {
+          hasJourney(Identifiers(journeyId, sessionId)) { _ =>
             sicSearchService.retrieveChoices(sessionId) map { choices =>
               Ok("End of Journey" + Json.prettyPrint(Json.toJson(choices)))
             }
@@ -117,4 +111,3 @@ trait TestSetupController extends ICLController with JourneyManager {
       }
   }
 }
-

@@ -16,6 +16,7 @@
 
 package helpers.mocks
 
+import models.setup.JourneyData
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.{reset, when}
 import org.mockito.stubbing.OngoingStubbing
@@ -40,9 +41,9 @@ trait MockJourneyDataRepo extends MockitoSugar with BeforeAndAfterEach {
 
   def mockWR(success: Boolean) = DefaultWriteResult(success, 1, Seq.empty, None, None, None)
 
-  def mockInitialiseJourney(success: Boolean): OngoingStubbing[Future[WriteResult]] = {
-    when(mockJourneyDataRepo.initialiseJourney(ArgumentMatchers.any()))
-      .thenReturn(Future(mockWR(success)))
+  def mockInitialiseJourney(journeyData: JourneyData): OngoingStubbing[Future[JourneyData]] = {
+    when(mockJourneyDataRepo.upsertJourney(ArgumentMatchers.any()))
+      .thenReturn(Future.successful(journeyData))
   }
 
 }

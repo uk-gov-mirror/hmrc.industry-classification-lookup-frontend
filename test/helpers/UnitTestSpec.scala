@@ -90,11 +90,6 @@ trait UnitTestSpec
     assertions(func)
   }
 
-  def mockWithJourney(sessionId: String, journey: Option[(String, String)]): OngoingStubbing[Future[Option[(String, String)]]] = {
-    when(mockSicSearchService.retrieveJourney(any())(any()))
-      .thenReturn(Future.successful(journey))
-  }
-
   implicit class FakeRequestImps[T <: AnyContent](fakeRequest: FakeRequest[T]) {
     import uk.gov.hmrc.http.HeaderNames
 

@@ -60,3 +60,5 @@ page.test.setup-journey.radio.data-set.title    = Select the data set to use
 page.test.setup-journey.radio.hmrc-sic8         = HMRC Sic 8
 page.test.setup-journey.radio.gds               = GDS Register Sic 5
 page.test.setup-journey.radio.ons               = ONS Supplement Sic 5
+
+page.test.setup-journey.amount-of-results.title   = Enter the maximum amount of results you want to be displayed when searching

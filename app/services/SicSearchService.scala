@@ -16,10 +16,10 @@
 
 package services
 
-import javax.inject.Inject
-
 import connectors.ICLConnector
+import javax.inject.Inject
 import models._
+import models.setup.{JourneyData, JourneySetup}
 import play.api.Logger
 import repositories.{SicStoreMongoRepository, SicStoreRepo}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -30,18 +30,18 @@ import scala.concurrent.{ExecutionContext, Future}
 class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
                                      sicStoreRepo: SicStoreRepo) extends SicSearchService {
   val sicStoreRepository: SicStoreMongoRepository = sicStoreRepo.repo
-}
+ }
 
 trait SicSearchService {
 
   protected val iCLConnector: ICLConnector
   protected val sicStoreRepository: SicStoreMongoRepository
 
-  def search(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+  def search(journeyData: JourneyData, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     if(isLookup(query)){
-      lookupSicCodes(sessionId, List(SicCode(query,"")))
+      lookupSicCodes(journeyData, List(SicCode(query,"")))
     } else {
-      searchQuery(sessionId, query, journey, dataSet, sector)
+      searchQuery(journeyData, query, sector)
     }
   }
 
@@ -60,21 +60,24 @@ trait SicSearchService {
     sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
   }
 
-  def lookupSicCodes(sessionId: String, selectedCodes: List[SicCode])(implicit hc: HeaderCarrier): Future[Int] = {
-    for {
-      oSicCode      <- iCLConnector.lookup(getCommaSeparatedCodes(selectedCodes))
-      groups        = selectedCodes.groupBy(_.sicCode)
-      codes         = oSicCode map { sic =>
+  def lookupSicCodes(journeyData: JourneyData, selectedCodes: List[SicCode])(implicit hc: HeaderCarrier): Future[Int] = {
+     def fiteredListOfSicCodeChoice(sicCodesUnfiltered: List[SicCode], groups: Map[String, List[SicCode]] ): List[SicCodeChoice] = {
+      sicCodesUnfiltered map { sic =>
         SicCodeChoice(sic, groups.get(sic.sicCode).fold(List.empty[String])(nSicCodes =>
           nSicCodes.filterNot(sicCode => sicCode == sic || sicCode.description.isEmpty).map(_.description))
         )
       }
-      res           <-
-        if (oSicCode.nonEmpty) {
-          insertChoices(sessionId, codes) map (_ => 1)
-        } else {
-          sicStoreRepository.updateSearchResults(sessionId, SearchResults(selectedCodes.head.sicCode, 0, Nil, Nil)) map (_ => 0)
-        }
+    }
+
+    for {
+      oSicCode            <- iCLConnector.lookup(getCommaSeparatedCodes(selectedCodes))
+      groups              =  selectedCodes.groupBy(_.sicCode)
+      filteredCodes       =  fiteredListOfSicCodeChoice(oSicCode, groups)
+      res             <- if (oSicCode.nonEmpty) {
+        insertChoices(journeyData.identifiers.sessionId, filteredCodes) map (_ => 1)
+      } else {
+        sicStoreRepository.upsertSearchResults(journeyData.identifiers.sessionId, SearchResults(selectedCodes.head.sicCode, 0, Nil, Nil)) map (_ => 0)
+      }
     } yield res
   }
 
@@ -82,26 +85,20 @@ trait SicSearchService {
     sicCodes.groupBy(_.sicCode).keys.mkString(",")
   }
 
-  private[services] def searchQuery(sessionId: String, query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
+  private[services] def searchQuery(journeyData: JourneyData, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     (for {
-      oSearchResults  <- iCLConnector.search(query, journey, dataSet, sector)
+      oSearchResults  <- iCLConnector.search(query, journeyData.journeySetupDetails, sector)
       sectorObject    = sector.flatMap(sicCode => oSearchResults.sectors.find(_.code == sicCode))
       searchResults   = sectorObject.fold(oSearchResults)(s => oSearchResults.copy(currentSector = Some(s)))
-      _               <- sicStoreRepository.updateSearchResults(sessionId, searchResults) flatMap { res =>
-        if (searchResults.numFound == 1) lookupSicCodes(sessionId, searchResults.results) else Future.successful(res)
+      _               <- sicStoreRepository.upsertSearchResults(journeyData.identifiers.sessionId, searchResults) flatMap { res =>
+        if (searchResults.numFound == 1) lookupSicCodes(journeyData, searchResults.results) else Future.successful(res)
       }
     } yield searchResults.numFound) recover {
-      case _ =>
-        Logger.error("[SicSearchService] [searchQuery] Exception encountered when attempting to fetch results from ICL")
+      case e =>
+        Logger.error(s"[SicSearchService] [searchQuery] Exception encountered when attempting to fetch results from ICL ${e.getMessage}")
         0
     }
   }
 
   private[services] def isLookup(query: String): Boolean = query.trim.matches("^(\\d){5}$")
-
-  def upsertJourney(journey: Journey)(implicit ec: ExecutionContext): Future[SicStore] = sicStoreRepository.upsertJourney(journey)
-
-  def retrieveJourney(sessionId: String)(implicit ec: ExecutionContext): Future[Option[(String, String)]] = {
-    sicStoreRepository.retrieveSicStore(sessionId).map(_.map(x => (x.journey, x.dataSet)))
-  }
 }

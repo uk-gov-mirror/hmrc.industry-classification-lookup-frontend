@@ -64,22 +64,55 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
     lastUpdated = now
   )
 
-  "initialiseJourney" should {
+  "upsertJourney" should {
+    val data = JourneyData(
+      identifiers = Identifiers(
+        journeyId = "testJourneyId",
+        sessionId = "testSessionId"
+      ),
+      redirectUrl = "test/url",
+      customMessages = None,
+      journeySetupDetails = JourneySetup(),
+      lastUpdated = now
+    )
     "successfully insert JourneyData into collection" in new Setup {
-      val data = JourneyData(
-        identifiers = Identifiers(
-          journeyId = "testJourneyId",
-          sessionId = "testSessionId"
-        ),
-        redirectUrl = "test/url",
-        customMessages = None,
-        journeySetupDetails = JourneySetup(),
-        lastUpdated = now
-      )
-
-      await(repository.initialiseJourney(data)) mustBe DefaultWriteResult(true, 1, Seq.empty, None, None, None)
+      await(repository.upsertJourney(data)) mustBe data
       count mustBe 1
       fetchAll mustBe List(data)
+    }
+    "update a record if one exists with different data" in new Setup {
+      val updatedModel = data.copy(redirectUrl = "updated")
+      await(repository.upsertJourney(data)) mustBe data
+      count mustBe 1
+      await(repository.retrieveJourneyData(data.identifiers)) mustBe data
+      await(repository.upsertJourney(updatedModel)) mustBe updatedModel
+      count mustBe 1
+      await(repository.retrieveJourneyData(data.identifiers)) mustBe updatedModel
+
+    }
+    "update a record if one exists with the same data" in new Setup {
+      await(repository.upsertJourney(data)) mustBe data
+      count mustBe 1
+      await(repository.retrieveJourneyData(data.identifiers)) mustBe data
+      await(repository.upsertJourney(data)) mustBe data
+      count mustBe 1
+      await(repository.retrieveJourneyData(data.identifiers)) mustBe data
+    }
+  }
+  "updateJourneySetup" should {
+    "updateJourneySetup model within JourneyData Model successfully" in new Setup {
+      val updatedJourneySetup = JourneySetup("foo","bar",10)
+      await(repository.upsertJourney(journeyData)) mustBe journeyData
+      count mustBe 1
+      await(repository.updateJourneySetup(journeyData.identifiers, updatedJourneySetup)) mustBe updatedJourneySetup
+      count mustBe 1
+      await(repository.retrieveJourneyData(journeyData.identifiers)) mustBe journeyData.copy(journeySetupDetails = updatedJourneySetup)
+    }
+    "fail to update journeySetup and throw exception if no document exists" in new Setup {
+      val validJourneySetup = JourneySetup("foo","bar",10)
+      count mustBe 0
+      intercept[Exception](await(repository.updateJourneySetup(journeyData.identifiers, validJourneySetup)))
+      count mustBe 0
     }
   }
 

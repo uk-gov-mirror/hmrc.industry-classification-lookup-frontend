@@ -21,50 +21,29 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, _}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-//case class SicStore(
-//  sessionId: String,
-//  journey: String,
-//  dataSet: String,
-//  searchResults: Option[SearchResults] = None,
-//  choices: Option[List[SicCode]] = None,
-//  lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
-//)
+case class SicStore(sessionId: String,
+                    searchResults: Option[SearchResults] = None,
+                    choices: Option[List[SicCodeChoice]] = None,
+                    lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC))
 
-case class SicStore(
-                     sessionId: String,
-                     journey: String,
-                     dataSet: String,
-                     searchResults: Option[SearchResults] = None,
-                     choices: Option[List[SicCodeChoice]] = None,
-                     lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC)
-                   )
+case class SicCode(sicCode: String,
+                   description: String)
 
-case class SicCode(
-  sicCode: String,
-  description: String
-)
+case class SearchResults(query: String,
+                         numFound: Int,
+                         results: List[SicCode],
+                         sectors: List[Sector],
+                         currentSector: Option[Sector] = None)
 
-case class SearchResults(
-  query: String,
-  numFound: Int,
-  results: List[SicCode],
-  sectors: List[Sector],
-  currentSector: Option[Sector] = None
-)
-
-case class Sector(
-  code: String,
-  name: String,
-  count: Int
-)
+case class Sector(code: String,
+                  name: String,
+                  count: Int)
 
 object SicStore {
   implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
 
   implicit val format: Format[SicStore] = (
     (__ \ "sessionId").format[String] and
-    (__ \ "journey").format[String] and
-    (__ \ "dataSet").format[String] and
     (__ \ "search").formatNullable[SearchResults](SearchResults.format) and
     (__ \ "choices").formatNullable[List[SicCodeChoice]] and
     (__ \ "lastUpdated").format[DateTime]

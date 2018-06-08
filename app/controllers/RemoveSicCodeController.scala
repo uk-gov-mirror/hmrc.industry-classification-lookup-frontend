@@ -53,7 +53,7 @@ trait RemoveSicCodeController extends ICLController {
     implicit request =>
       userAuthorised() {
         withJourney(journeyId) { journey =>
-          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { codes =>
+          withCurrentUsersChoices(journey.identifiers) { codes =>
             withSicCodeChoice(journeyId, codes, sicCode){ code =>
               Future.successful(Ok(views.html.pages.removeActivityConfirmation(journeyId, confirmationForm(code.desc), code)))
             }
@@ -65,13 +65,13 @@ trait RemoveSicCodeController extends ICLController {
   def submit(journeyId: String, sicCode: String): Action[AnyContent] = Action.async {
     implicit request =>
       userAuthorised() {
-        withJourney(journeyId) { journey =>
-          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { codes =>
+        withJourney(journeyId) { journeyData =>
+          withCurrentUsersChoices(journeyData.identifiers) { codes =>
             withSicCodeChoice(journeyId, codes, sicCode) { code =>
               confirmationForm(code.desc).bindFromRequest().fold(
                 errors => Future.successful(BadRequest(views.html.pages.removeActivityConfirmation(journeyId, errors, code))),
                 {
-                  case "yes" => sicSearchService.removeChoice(journey.sessionId, sicCode) map { _ =>
+                  case "yes" => sicSearchService.removeChoice(journeyData.identifiers.sessionId, sicCode) map { _ =>
                     Redirect(controllers.routes.ConfirmationController.show(journeyId))
                   }
                   case "no" => Future.successful(Redirect(controllers.routes.ConfirmationController.show(journeyId)))

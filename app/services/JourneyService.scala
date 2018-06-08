@@ -33,12 +33,15 @@ trait JourneyService {
   val journeyDataRepository: JourneyDataRepository
 
   def initialiseJourney(journeyData: JourneyData): Future[JsValue] = {
-    journeyDataRepository.initialiseJourney(journeyData) map { _ =>
+    journeyDataRepository.upsertJourney(journeyData) map { _ =>
       Json.obj(
         "journeyStartUri" -> s"/sic-search/${journeyData.identifiers.journeyId}/search-standard-industry-classification-codes",
         "fetchResultsUri" -> s"/internal/${journeyData.identifiers.journeyId}/fetch-results"
       )
     }
+  }
+  def updateJourneyWithJourneySetup(identifiers: Identifiers, journeySetupDetails: JourneySetup):Future[JourneySetup] = {
+    journeyDataRepository.updateJourneySetup(identifiers, journeySetupDetails)
   }
 
   def getJourney(identifiers: Identifiers): Future[JourneyData] = {
@@ -47,9 +50,5 @@ trait JourneyService {
 
   def getRedirectUrl(identifiers: Identifiers): Future[String] = {
     journeyDataRepository.retrieveJourneyData(identifiers) map (_.redirectUrl)
-  }
-
-  def getSetupDetails(identifiers: Identifiers): Future[JourneySetup] = {
-    journeyDataRepository.retrieveJourneyData(identifiers) map (_.journeySetupDetails)
   }
 }

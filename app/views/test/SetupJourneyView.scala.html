@@ -16,9 +16,10 @@
 
 @import config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.form
-@import helpers.templates.inputRadioGroup
+@import helpers.templates.{inputRadioGroup, input}
+@import models.setup.{JourneySetup, JourneyData}
 
-@(journeyId: String, journeyForm: Form[(String, String)])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, journeyForm: Form[JourneySetup])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.test.setup-journey.title"), bodyClasses = None) {
 
@@ -32,10 +33,10 @@
         @inputRadioGroup(
             field = journeyForm("journey"),
             Seq(
-                Journey.QUERY_BUILDER   -> messages("page.test.setup-journey.radio.query-builder"),
-                Journey.QUERY_PARSER    -> messages("page.test.setup-journey.radio.query-parser"),
-                Journey.QUERY_BOOSTER   -> messages("page.test.setup-journey.radio.query-booster"),
-                Journey.FUZZY_QUERY     -> messages("page.test.setup-journey.radio.fuzzy-query")
+                JourneyData.QUERY_BUILDER   -> messages("page.test.setup-journey.radio.query-builder"),
+                JourneyData.QUERY_PARSER    -> messages("page.test.setup-journey.radio.query-parser"),
+                JourneyData.QUERY_BOOSTER   -> messages("page.test.setup-journey.radio.query-booster"),
+                JourneyData.FUZZY_QUERY     -> messages("page.test.setup-journey.radio.fuzzy-query")
             ),
             '_legendClass -> "hidden",
             '_labelClass -> "block-label"
@@ -46,11 +47,16 @@
         @inputRadioGroup(
             field = journeyForm("dataSet"),
             Seq(
-                Journey.GDS        -> messages("page.test.setup-journey.radio.gds"),
-                Journey.ONS        -> messages("page.test.setup-journey.radio.ons")
+                JourneyData.GDS        -> messages("page.test.setup-journey.radio.gds"),
+                JourneyData.ONS        -> messages("page.test.setup-journey.radio.ons")
             ),
             '_legendClass -> "hidden",
             '_labelClass -> "block-label"
+        )
+        <br>
+        <p>@messages("page.test.setup-journey.amount-of-results.title")</p>
+        @input(
+            field = journeyForm("amountOfResults")
         )
         <br>
 
