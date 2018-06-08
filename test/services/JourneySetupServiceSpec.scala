@@ -21,7 +21,7 @@ import java.time.LocalDateTime
 import helpers.UnitTestSpec
 import helpers.mocks.MockJourneyDataRepo
 import models.setup.{Identifiers, JourneyData, JourneySetup}
-import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
 import play.api.libs.json.Json
 
@@ -30,11 +30,11 @@ import scala.concurrent.Future
 class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
 
   val now = LocalDateTime.now
-
+  class Setup {
   val testService = new JourneyService {
     override val journeyDataRepository = mockJourneyDataRepo
   }
-
+}
   val identifier = Identifiers(
     journeyId = "testJourneyId",
     sessionId = "testSessionId"
@@ -51,8 +51,8 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
   )
 
   "initialiseJourney" should {
-    "return Json containing the start and fetch uri's" in {
-      mockInitialiseJourney(success = true)
+    "return Json containing the start and fetch uri's" in new Setup {
+      mockInitialiseJourney(testJourneyData)
 
       assertAndAwait(testService.initialiseJourney(testJourneyData)) {
         _ mustBe Json.obj(
@@ -64,8 +64,8 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
   }
 
   "getRedirectUrl" should {
-    "return a redirect url" in {
-      when(mockJourneyDataRepo.retrieveJourneyData(ArgumentMatchers.any()))
+    "return a redirect url" in new Setup {
+      when(mockJourneyDataRepo.retrieveJourneyData(any()))
         .thenReturn(Future.successful(journeyData))
 
       assertAndAwait(testService.getRedirectUrl(identifier)) {
@@ -73,15 +73,25 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
       }
     }
   }
-
-  "getSetupDetails" should {
-    "return a JourneySetup model" in {
-      when(mockJourneyDataRepo.retrieveJourneyData(ArgumentMatchers.any()))
-        .thenReturn(Future.successful(journeyData))
-
-      assertAndAwait(testService.getSetupDetails(identifier)) {
-        _ mustBe JourneySetup()
-      }
+  "updateJourneyWithJourneySetup" should {
+    val journeySetup = JourneySetup("foo","bar",5)
+    "return updated Journey Setup" in new Setup {
+      when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.successful(journeySetup))
+      await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)) mustBe journeySetup
+    }
+    "return an Exception" in new Setup {
+      when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
+      intercept[Exception](await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)))
+    }
+  }
+  "getJourney" should {
+    "get journey data successfully" in new Setup {
+      when(mockJourneyDataRepo.retrieveJourneyData(any())).thenReturn(Future.successful(journeyData))
+      await(testService.getJourney(journeyData.identifiers)) mustBe journeyData
+    }
+    "return an Exception" in new Setup {
+      when(mockJourneyDataRepo.retrieveJourneyData(any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
+      intercept[Exception](await(testService.getJourney(journeyData.identifiers)))
     }
   }
 }

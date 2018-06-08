@@ -165,15 +165,16 @@ class ApiControllerSpec extends UnitTestSpec {
       }
     }
 
-    "return 404" when {
+    "return exception" when {
       "there is not a journey setup for the requested journeyId" in new Setup {
         val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
         when(mockJourneyService.getJourney(any())) thenReturn Future.failed(new RuntimeException)
 
-        val result: Future[Result] = controller.fetchResults(journeyId)(fakeRequest)
-        status(result) mustBe NOT_FOUND
+        intercept[Exception](await(controller.fetchResults(journeyId)(fakeRequest)))
       }
+    }
+      "return 404" when {
 
       "there is no sic code choices in the sic store" in new Setup {
         val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()

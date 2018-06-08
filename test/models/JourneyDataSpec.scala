@@ -18,7 +18,7 @@ package models
 
 import java.util.UUID
 
-import models.setup.JourneyData
+import models.setup.{JourneyData, JourneySetup}
 import models.setup.messages.{CustomMessages, Summary}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
@@ -101,6 +101,20 @@ class JourneyDataSpec extends PlaySpec {
         result.journeySetupDetails.journeyType must not be "testType"
 
       }
+    }
+  }
+  "journeySetup mongoWrites" should {
+    "produce valid json" in {
+      val journeySetup = JourneySetup("foo","bar",5)
+      val expectedJson = Json.parse(
+        """
+          |{
+          | "journeySetupDetails.dataSet" : "foo",
+          | "journeySetupDetails.journeyType" : "bar",
+          | "journeySetupDetails.amountOfResults" : 5
+          |}
+        """.stripMargin)
+      Json.toJson(journeySetup)(JourneySetup.mongoWrites)
     }
   }
 }

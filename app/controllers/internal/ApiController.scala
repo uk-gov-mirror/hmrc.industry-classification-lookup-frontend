@@ -45,7 +45,7 @@ trait ApiController extends BasicController with JourneyManager {
 
   def fetchResults(journeyId: String): Action[AnyContent] = Action.async { implicit request =>
     withSessionId { sessionId =>
-      hasJourney(Identifiers(journeyId, sessionId)) {
+      hasJourney(Identifiers(journeyId, sessionId)) { _ =>
         sicSearchService.retrieveChoices(sessionId) map {
           case Some(choices) => Ok(Json.obj("sicCodes" -> Json.toJson(choices)))
           case None => NotFound

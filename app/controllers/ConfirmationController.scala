@@ -42,8 +42,8 @@ trait ConfirmationController extends ICLController {
   def show(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
       userAuthorised() {
-        withJourney(journeyId) { journey =>
-          withCurrentUsersChoices(Identifiers(journeyId, journey.sessionId)) { choices =>
+        withJourney(journeyId) { journeyData =>
+          withCurrentUsersChoices(journeyData.identifiers) { choices =>
             Future.successful(Ok(views.html.pages.confirmation(journeyId, choices)))
           }
         }
@@ -53,11 +53,10 @@ trait ConfirmationController extends ICLController {
   def submit(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
       userAuthorised() {
-        withJourney(journeyId) { journey =>
-          val identifiers = Identifiers(journeyId, journey.sessionId)
-          withCurrentUsersChoices(identifiers) { choices =>
+        withJourney(journeyId) { journeyData =>
+          withCurrentUsersChoices(journeyData.identifiers) { choices =>
             if (choices.size <= 4) {
-              journeyService.getRedirectUrl(identifiers) map { url =>
+              journeyService.getRedirectUrl(journeyData.identifiers) map { url =>
                 Redirect(url)
               }
             } else {

@@ -24,8 +24,6 @@ import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 class SicStoreSpec extends UnitTestSpec {
 
   val query = "testQuery"
-  val journey: String = Journey.QUERY_BUILDER
-  val dataSet: String = Journey.ONS
   val dateTime: DateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
   val now: JsValue = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
 
@@ -33,8 +31,6 @@ class SicStoreSpec extends UnitTestSpec {
     s"""
       |{
       |  "sessionId" : "12345",
-      |  "journey" : "$journey",
-      |  "dataSet" : "$dataSet",
       |  "search" : {
       |    "query":"$query",
       |    "numFound":1,
@@ -60,8 +56,6 @@ class SicStoreSpec extends UnitTestSpec {
     s"""
       |{
       |  "sessionId" : "12345",
-      |  "journey" : "$journey",
-      |  "dataSet" : "$dataSet",
       |  "search" : {
       |     "query":"$query",
       |     "numFound":1,
@@ -79,8 +73,6 @@ class SicStoreSpec extends UnitTestSpec {
 
   val sicStoreWithChoices = SicStore(
     "12345",
-    journey,
-    dataSet,
     Some(SearchResults(
       query,
       1,
@@ -98,8 +90,6 @@ class SicStoreSpec extends UnitTestSpec {
 
   val sicStoreNoChoices = SicStore(
     "12345",
-    journey,
-    dataSet,
     Some(SearchResults(
       query,
       1,

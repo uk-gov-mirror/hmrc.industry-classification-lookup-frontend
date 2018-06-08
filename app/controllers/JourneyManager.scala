@@ -16,7 +16,8 @@
 
 package controllers
 
-import models.setup.Identifiers
+import models.setup.{Identifiers, JourneyData}
+import play.api.Logger
 import play.api.mvc.{Request, Result}
 import services.JourneyService
 
@@ -26,11 +27,13 @@ trait JourneyManager {
 
   val journeyService: JourneyService
 
-  def hasJourney(identifiers: Identifiers)(f: => Future[Result])(implicit req: Request[_]): Future[Result] = {
-    journeyService.getJourney(identifiers) flatMap { _ =>
-      f
-    } recover {
-      case _ => NotFound
+  def hasJourney(identifiers: Identifiers)(f: => JourneyData => Future[Result])(implicit req: Request[_]): Future[Result] = {
+    journeyService.getJourney(identifiers) flatMap { journeyData =>
+      f(journeyData)
+    } recoverWith {
+      case err =>
+        Logger.error(s"[hasJourney] - msg: ${err.getMessage}")
+        throw err
     }
   }
 }

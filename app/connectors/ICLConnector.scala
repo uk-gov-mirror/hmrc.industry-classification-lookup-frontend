@@ -17,14 +17,15 @@
 package connectors
 
 import javax.inject.Inject
-import models.{SearchResults, SicCode, SicCodeChoice}
+import models.setup.JourneySetup
+import models.{SearchResults, SicCode}
 import play.api.Logger
+import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.{Json, Reads}
 import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
-import play.api.http.Status.{NO_CONTENT, OK}
 
 import scala.concurrent.Future
 
@@ -50,10 +51,12 @@ trait ICLConnector {
     }
   }
 
-  def search(query: String, journey: String, dataSet: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
+  def search(query: String, journeySetup: JourneySetup, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
     val sectorFilter = sector.fold("")(s => s"&sector=$s")
-    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?query=$query&pageResults=500$sectorFilter&queryType=$journey&indexName=$dataSet") recover {
+    val constructUrlParameters = s"query=$query&pageResults=${journeySetup.amountOfResults}$sectorFilter&queryType=${journeySetup.journeyType}&indexName=${journeySetup.dataSet}"
+
+    http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?$constructUrlParameters") recover {
       case e: HttpException =>
         Logger.error(s"[Search] Searching using query : $query returned a ${e.responseCode}")
         SearchResults(

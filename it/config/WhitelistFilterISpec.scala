@@ -82,8 +82,7 @@ class WhitelistFilterISpec extends ClientSpec {
         await(insertIntoDb(journeyData))
 
         val response = await(client.get())
-        response.status mustBe 303
-        response.redirectLocation mustBe Some("/testJourneyId/setup-journey")
+        response.status mustBe 200
       }
 
       "the request is not sent from a white-listed IP but the requested Url is a white-listed Url" in {

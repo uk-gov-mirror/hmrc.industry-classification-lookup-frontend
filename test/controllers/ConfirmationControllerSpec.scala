@@ -58,26 +58,11 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
   val sicCodeChoice = SicCodeChoice(sicCode, List("fake item"))
-  val journey: String = Journey.QUERY_BUILDER
-  val dataSet: String = Journey.ONS
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
-
-
-  val sicStore = SicStore(
-    sessionId,
-    journey,
-    dataSet,
-    Some(searchResults),
-    Some(List(sicCodeChoice))
-  )
-
-  val sicStoreNoChoices = SicStore(sessionId, journey, dataSet, Some(searchResults), None)
-  val sicStoreEmptyChoiceList = SicStore(sessionId, journey, dataSet, Some(searchResults), Some(List()))
 
   "show" should {
 
     "return a 200 when a SicStore is returned from mongo" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
@@ -91,7 +76,6 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 303 when previous choices are not found in mongo" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
@@ -107,7 +91,6 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   "submit" should {
     "redirect out of the service to the redirect url setup via the api" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
@@ -123,8 +106,6 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 400 when more than 4 choices have been made" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
-
       when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 

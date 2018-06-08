@@ -37,6 +37,8 @@ class ApiControllerISpec extends ClientSpec {
     "play.filters.csrf.header.bypassHeaders.Csrf-Token" -> "nocheck",
     "auditing.consumer.baseUri.host" -> s"$wiremockHost",
     "auditing.consumer.baseUri.port" -> s"$wiremockPort",
+    "microservice.services.industry-classification-lookup.port" -> s"$wiremockPort",
+    "microservice.services.industry-classification-lookup.host" -> s"$wiremockHost",
     "microservice.services.cachable.session-cache.host" -> s"$wiremockHost",
     "microservice.services.cachable.session-cache.port" -> s"$wiremockPort",
     "microservice.services.cachable.session-cache.domain" -> "keystore",
@@ -76,38 +78,75 @@ class ApiControllerISpec extends ClientSpec {
 
   "/internal/initialise-journey" should {
     "return an OK" when {
-      "the json has been validated and the journey has been setup" in {
+      "the json has been validated and the journey has been setup" in new Setup {
         setupUnauthorised()
+        await(journeyRepo.count) mustBe 0
+        await(sicStoreRepo.count) mustBe 0
 
         assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> getSessionCookie()).post(setupJson)) { res =>
           res.status mustBe OK
           assert(res.json.\("journeyStartUri").as[String].contains("/search-standard-industry-classification-codes"))
           assert(res.json.\("fetchResultsUri").as[String].contains("/fetch-results"))
+          await(journeyRepo.count) mustBe 1
+          await(sicStoreRepo.count) mustBe 0
         }
       }
     }
 
     "return a Bad Request" when {
-      "there was a problem validating the input json" in {
+      "there was a problem validating the input json" in new Setup {
         setupUnauthorised()
+        await(journeyRepo.count) mustBe 0
 
         assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> getSessionCookie()).post(Json.parse("""{"abc" : "xyz"}"""))) {
-          _.status mustBe BAD_REQUEST
+          res => res.status mustBe BAD_REQUEST
+          await(journeyRepo.count) mustBe 0
         }
       }
 
-      "no session id could be found in request" in {
+      "no session id could be found in request" in new Setup {
         setupUnauthorised()
-
+        await(journeyRepo.count) mustBe 0
         assertFutureResponse(buildClient(initialiseJourneyUrl).post(setupJson)) { res =>
           res.status mustBe BAD_REQUEST
+          await(journeyRepo.count) mustBe 0
         }
       }
     }
   }
+  "After initialising journey and user hits search /search-standard-industry-classification-codes" should {
+    "return a 200 and user can post on page to search for results which also creates an entry in sicStore repo no exceptions occur" in new Setup {
+      val sessionIdFullFlow = getSessionCookie(sessionID = "stubbed-123")
+      setupSimpleAuthMocks()
+      await(journeyRepo.count) mustBe 0
+      await(sicStoreRepo.count) mustBe 0
+
+      assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> sessionIdFullFlow).post(setupJson)) { res =>
+        res.status mustBe OK
+        await(journeyRepo.count) mustBe 1
+        await(sicStoreRepo.count) mustBe 0
+
+      }
+      val identifiers = await(journeyRepo.find()).head.identifiers
+
+      val journeyDataFromInitialisation = await(journeyRepo.retrieveJourneyData(identifiers))
+
+      assertFutureResponse(buildClient(s"/sic-search/${identifiers.journeyId}/search-standard-industry-classification-codes").withHeaders(HeaderNames.COOKIE -> sessionIdFullFlow).get()) { res =>
+        res.status mustBe OK
+        await(journeyRepo.count) mustBe 1
+        await(sicStoreRepo.count) mustBe 0
+      }
+      stubGETICLSearchResults
+      assertFutureResponse(buildClient(s"/sic-search/${identifiers.journeyId}/search-standard-industry-classification-codes?doSearch=true").withHeaders(HeaderNames.COOKIE -> sessionIdFullFlow,"Csrf-Token" -> "nocheck").post(Map("sicSearch" -> Seq("dairy")))) { res =>
+        res.status mustBe 303
+        await(journeyRepo.count) mustBe 1
+        await(sicStoreRepo.count) mustBe 1
+      }
+
+    }
+  }
 
   "/internal/journeyID/fetch-results" must {
-
     "return an OK" when {
       "the journey exists and there are selected sic codes" in new Setup {
         setupUnauthorised()
@@ -116,7 +155,7 @@ class ApiControllerISpec extends ClientSpec {
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
         val sicCodeChoices = List(SicCodeChoice(SicCode("12345", "test description"), Nil))
-        val sicStore: SicStore = SicStore(sessionIdValue, "testJourney", "testDataSet", None, Some(sicCodeChoices))
+        val sicStore: SicStore = SicStore(sessionIdValue, None, Some(sicCodeChoices))
         insertSicStore(sicStore)
 
         val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(), LocalDateTime.now())
@@ -138,7 +177,7 @@ class ApiControllerISpec extends ClientSpec {
         }
       }
     }
-    "return a Not Found" when {
+    "return a 500" when {
       "there is no journey setup for the session" in new Setup {
         setupUnauthorised()
 
@@ -146,7 +185,7 @@ class ApiControllerISpec extends ClientSpec {
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
         assertFutureResponse(buildClient(fetchResultsUrl).withHeaders(HeaderNames.COOKIE -> sessionId).get()) { res =>
-          res.status mustBe NOT_FOUND
+          res.status mustBe INTERNAL_SERVER_ERROR
         }
       }
       "there is a journey setup but no sic codes have been selected" in new Setup {

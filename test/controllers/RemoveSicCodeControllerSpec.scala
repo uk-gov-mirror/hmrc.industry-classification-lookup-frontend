@@ -22,13 +22,13 @@ import config.AppConfig
 import helpers.{UnitTestFakeApp, UnitTestSpec}
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
-import org.mockito.ArgumentMatchers.any
 import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import org.mockito.Mockito._
 
 import scala.concurrent.Future
 
@@ -58,13 +58,10 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sicCodeDescription = "some description"
   val sicCode = SicCode(sicCodeCode, sicCodeDescription)
   val sicCodeChoice = SicCodeChoice(sicCode, List("fake item"))
-  val journey: String = Journey.QUERY_BUILDER
-  val dataSet: String = Journey.ONS
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
 
   "show" should {
     "return a 200 when the page is rendered" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.removeChoice(any(), any())(any()))
         .thenReturn(Future.successful(true))
@@ -81,7 +78,6 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "redirect to search page when the supplied sic code doesn't exist" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
@@ -98,7 +94,6 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   "submit" should {
     "return a 400 if no field is selected" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
@@ -112,7 +107,6 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       }
     }
     "remove choice and redirect to the confirmation page if yes is selected" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
@@ -130,7 +124,6 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       }
     }
     "redirect to the confirmation page if no is selected" in new Setup {
-      mockWithJourney(sessionId, Some((journey, dataSet)))
 
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
