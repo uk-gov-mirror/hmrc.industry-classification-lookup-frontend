@@ -27,6 +27,7 @@ import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent, Request, Result}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.config.ServicesConfig
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -68,20 +69,28 @@ trait ChooseActivityController extends ICLController {
       }
   }
 
-  def filter(journeyId: String, sectorCode: String): Action[AnyContent] = Action.async {
-    implicit request =>
-      userAuthorised() {
-        withJourney(journeyId) { journeyData =>
-          withSearchResults(journeyData.identifiers) { searchResults =>
-            sicSearchService.search(
-              journeyData,
-              searchResults.query,
-              Some(sectorCode)).map { _ =>
-              Redirect(routes.ChooseActivityController.show(journeyId, Some(true)))
-            }
-          }
+  private def filterResults(journeyId: String, sectorCode: Option[String])(implicit hc: HeaderCarrier, request: Request[AnyContent]): Future[Result] = {
+    userAuthorised() {
+      withJourney(journeyId) { journeyData =>
+        withSearchResults(journeyData.identifiers) { searchResults =>
+          sicSearchService.search(
+            journeyData,
+            searchResults.query,
+            sectorCode
+          ) map { _ => Redirect(routes.ChooseActivityController.show(journeyId, Some(true))) }
         }
       }
+    }
+  }
+
+  def filter(journeyId: String, sectorCode: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      filterResults(journeyId, Some(sectorCode))
+  }
+
+  def clearFilter(journeyId: String): Action[AnyContent] = Action.async {
+    implicit request =>
+      filterResults(journeyId, None)
   }
 
   private[controllers] def performSearch(journeyId: String, journeyData: JourneyData)(implicit request: Request[_]): Future[Result] = {

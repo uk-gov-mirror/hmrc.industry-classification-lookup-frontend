@@ -82,6 +82,13 @@
                                         @Html(messages("page.icl.chooseactivity.insector", sector.name))
                                     }
                                 </td>
+                                @searchResults.currentSector.map { filterApplied =>
+                                    <td>
+                                        <a id="remove-filter" href="@controllers.routes.ChooseActivityController.clearFilter(journeyId)">
+                                            @messages("page.icl.chooseactivity.removeFilter")
+                                        </a>
+                                    </td>
+                                }
                             </tr>
                         </table>
                     </div>
