@@ -9,7 +9,8 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-ui"               % "7.17.0",
     "uk.gov.hmrc" %% "auth-client"           % "2.6.0",
     "uk.gov.hmrc" %% "play-whitelist-filter" % "2.0.0",
-    "uk.gov.hmrc" %% "play-reactivemongo"    % "6.2.0"
+    "uk.gov.hmrc" %% "play-reactivemongo"    % "6.2.0",
+    "uk.gov.hmrc" %% "play-conditional-form-mapping" % "0.2.0"
   )
 
   def test(scope: String = "test,it") = Seq(

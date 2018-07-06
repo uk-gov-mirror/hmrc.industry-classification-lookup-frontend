@@ -119,7 +119,7 @@ class ApiControllerSpec extends UnitTestSpec {
 
     val journeyId = "testJourneyId"
     val sessionId = "testSessionId"
-    val journeyData = JourneyData(Identifiers(journeyId, sessionId), "redirectUrl", None, JourneySetup(), LocalDateTime.now())
+    val journeyData = JourneyData(Identifiers(journeyId, sessionId), "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
 
     "return 200 with json" when {
       "the journey exists and there have been sic codes selected" in new Setup {

@@ -57,7 +57,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
 
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
 
   val SECTOR_A = "A"
   val query = "testQuery"

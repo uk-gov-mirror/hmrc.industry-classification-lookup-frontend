@@ -55,6 +55,7 @@ page.test.setup-journey.radio.alg.title         = Select the Lucene algorithm to
 page.test.setup-journey.radio.query-builder     = Query builder
 page.test.setup-journey.radio.query-parser      = Query parser
 page.test.setup-journey.radio.query-booster     = Query boost first term
+page.test.setup-journey.radio.query-booster-no  = No query boost
 page.test.setup-journey.radio.fuzzy-query       = Fuzzy query (on zero results)
 
 page.test.setup-journey.radio.data-set.title    = Select the data set to use

@@ -62,7 +62,7 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
   val sicStoreNoChoices = SicStore(sessionId, Some(searchResults), None, dateTime)
   val sicStore1Choice = SicStore(sessionId, Some(searchResults), Some(List(sicCodeGroup)), dateTime)
   val sicStore2Choices = SicStore(sessionId, Some(searchResults2), Some(List(sicCodeGroup, sicCodeGroup2)), dateTime)
-  val journeySetup     = JourneySetup(dataSet,journey,50)
+  val journeySetup     = JourneySetup(dataSet,true,None,50)
   "retrieveSicStore" should {
 
     "return a sic store when it is present" in new Setup {
