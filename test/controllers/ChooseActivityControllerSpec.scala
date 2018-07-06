@@ -294,4 +294,22 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
       }
     }
   }
+
+  "clearFilter" should {
+    "refresh the Business Activity Lookup page" in new Setup {
+      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(searchResults)))
+
+      when(mockSicSearchService.search(any(), eqTo(query), any())(any()))
+        .thenReturn(Future.successful(1))
+
+      when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
+
+      requestWithAuthorisedUser(controller.clearFilter(journeyId), requestWithSession) {
+        result =>
+          status(result) mustBe SEE_OTHER
+          redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(journeyId, Some(true)).url)
+      }
+    }
+  }
 }

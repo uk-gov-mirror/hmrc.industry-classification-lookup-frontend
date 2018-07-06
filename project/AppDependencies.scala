@@ -3,10 +3,10 @@ import play.core.PlayVersion
 
 private object AppDependencies {
   val compile = Seq(
-    "uk.gov.hmrc" %% "frontend-bootstrap"    % "8.20.0",
-    "uk.gov.hmrc" %% "bootstrap-play-25"     % "1.5.0",
-    "uk.gov.hmrc" %% "govuk-template"        % "5.20.0",
-    "uk.gov.hmrc" %% "play-ui"               % "7.14.0",
+    "uk.gov.hmrc" %% "frontend-bootstrap"    % "8.24.0",
+    "uk.gov.hmrc" %% "bootstrap-play-25"     % "1.7.0",
+    "uk.gov.hmrc" %% "govuk-template"        % "5.22.0",
+    "uk.gov.hmrc" %% "play-ui"               % "7.17.0",
     "uk.gov.hmrc" %% "auth-client"           % "2.6.0",
     "uk.gov.hmrc" %% "play-whitelist-filter" % "2.0.0",
     "uk.gov.hmrc" %% "play-reactivemongo"    % "6.2.0"

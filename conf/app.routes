@@ -6,6 +6,7 @@ GET        /sign-out                                                         con
 GET        /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.show(jId, doSearch: Option[Boolean] ?= None)
 POST       /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.submit(jId, doSearch: Option[String] ?= None)
 GET        /:jId/filter-business-activities/:code                            controllers.ChooseActivityController.filter(jId, code)
+GET        /:jId/remove-filter                                               controllers.ChooseActivityController.clearFilter(jId)
 
 GET        /:jId/check-confirm-standard-industry-classification-codes        controllers.ConfirmationController.show(jId)
 POST       /:jId/check-confirm-standard-industry-classification-codes        controllers.ConfirmationController.submit(jId)

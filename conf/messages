@@ -29,6 +29,7 @@ page.icl.chooseactivity.heading                 = Standard Industry Classificati
 page.icl.chooseactivity.subheading              = Search for a thing that the company does
 page.icl.chooseactivity.enteredkeyword          = You searched for
 page.icl.chooseactivity.resultsfound            = results
+page.icl.chooseactivity.removeFilter            = Remove filter
 page.icl.chooseactivity.insector                = in <b class="bold">{0}</b>
 page.icl.chooseactivity.searchagain             = Please try searching again using different words
 page.icl.chooseactivity.changehidden            = Change sic code used to search
