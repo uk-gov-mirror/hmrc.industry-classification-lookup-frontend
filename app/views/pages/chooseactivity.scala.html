@@ -40,7 +40,7 @@
     <h2 class="heading-medium" id="page-sub-heading">@messages("page.icl.chooseactivity.subheading")</h2>
 
 
-    @searchBar(sicSearchForm, controllers.routes.ChooseActivityController.submit(journeyId, Some("invalid-search")))
+    @searchBar(messages("page.icl.chooseactivity.subheading"), sicSearchForm, controllers.routes.ChooseActivityController.submit(journeyId, Some("invalid-search")))
 
 
     @oSearchResults.map { searchResults =>
