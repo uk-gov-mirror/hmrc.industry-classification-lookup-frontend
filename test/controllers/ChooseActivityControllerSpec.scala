@@ -305,7 +305,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
       when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
-      requestWithAuthorisedUser(controller.filter(journeyId, SECTOR_A), requestWithSession) {
+      requestWithAuthorisedUser(controller.clearFilter(journeyId), requestWithSession) {
         result =>
           status(result) mustBe SEE_OTHER
           redirectLocation(result) mustBe Some(routes.ChooseActivityController.show(journeyId, Some(true)).url)
