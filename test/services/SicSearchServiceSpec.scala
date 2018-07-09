@@ -42,12 +42,12 @@ class SicSearchServiceSpec extends UnitTestSpec {
   val sessionId = "session-id-12345"
   val query = "testQuery"
   val journey: String = JourneyData.QUERY_BUILDER
-  val dataSet: String = JourneyData.HMRC_SIC_8
+  val dataSet: String = JourneyData.ONS
   val identifier = Identifiers(
     journeyId = "testJourneyId",
     sessionId = sessionId
   )
-  val sicCodeCode = "12345678"
+  val sicCodeCode = "12345"
   val sicCode = SicCode(sicCodeCode, "some sic code description")
   val oneSearchResult = SearchResults(query, 1, List(sicCode), List(Sector("A", "Fake Sector", 1)))
   val threeSearchResults = SearchResults(query, 3, List(sicCode, sicCode, sicCode), List(Sector("A", "Fake Sector A", 2), Sector("B", "Fake Sector B", 1)))
@@ -296,7 +296,7 @@ class SicSearchServiceSpec extends UnitTestSpec {
       }
 
       "a 8 digit String is supplied along with a space and then some text" in new Setup {
-        val query = "12345678 sometext"
+        val query = "12345 sometext"
         service.isLookup(query) mustBe false
       }
     }

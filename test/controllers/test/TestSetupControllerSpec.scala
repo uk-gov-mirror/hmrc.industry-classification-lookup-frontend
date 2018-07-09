@@ -58,12 +58,12 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
 
   val journeyName: String = JourneyData.QUERY_BUILDER
-  val dataSet: String     = JourneyData.HMRC_SIC_8
+  val dataSet: String     = JourneyData.ONS
   val journeySetup = JourneySetup("foo", queryParser = false, queryBooster = None, 1)
 
   val sicStore = SicStore(
     sessionId,
-    Some(SearchResults("test-query", 1, List(SicCode("19283746", "Search Sic Code Result Description")), List()))
+    Some(SearchResults("test-query", 1, List(SicCode("19283", "Search Sic Code Result Description")), List()))
   )
 
   "show" should {

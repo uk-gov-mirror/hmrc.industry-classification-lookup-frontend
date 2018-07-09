@@ -47,12 +47,12 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
 
   val sessionId = "session-id-12345"
   val journey: String = JourneyData.QUERY_BUILDER
-  val dataSet: String = JourneyData.HMRC_SIC_8
+  val dataSet: String = JourneyData.ONS
 
   val sicCodeCode = "12345"
   val sicCode = SicCode(sicCodeCode, "Test sic code description")
   val sicCodeGroup = SicCodeChoice(sicCode, Nil)
-  val sicCode2 = SicCode("87654321", "Another test sic code description")
+  val sicCode2 = SicCode("87654", "Another test sic code description")
   val sicCodeGroup2 = SicCodeChoice(sicCode2, Nil)
 
   val searchResults = SearchResults("testQuery", 1, List(sicCode), List(Sector("A", "Example", 1)))
