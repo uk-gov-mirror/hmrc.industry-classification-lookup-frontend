@@ -58,10 +58,9 @@ object JourneyData extends TimeFormat {
   val QUERY_BOOSTER = "query-boost-first-term"
   val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER, QUERY_BOOSTER)
   //Data sets
-  val HMRC_SIC_8 = "hmrc-sic8"
   val GDS        = "gds-register-sic5"
   val ONS        = "ons-supplement-sic5"
-  val dataSets = Seq(HMRC_SIC_8, GDS, ONS)
+  val dataSets = Seq(GDS, ONS)
 
 
 
