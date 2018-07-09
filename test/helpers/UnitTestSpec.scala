@@ -64,7 +64,8 @@ trait UnitTestSpec
       mockSicStoreRepo,
       mockAuditConnector,
       mockAuthConnector,
-      mockWSHttp
+      mockWSHttp,
+      mockServicesConfig
     )
   }
 

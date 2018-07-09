@@ -19,7 +19,8 @@ package controllers.test
 import java.time.LocalDateTime
 
 import config.AppConfig
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.UnitTestSpec
+import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.any
@@ -30,36 +31,33 @@ import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.SessionKeys
 
 import scala.concurrent.Future
 
-class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class TestSetupControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   class Setup {
     val controller: TestSetupController = new TestSetupController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig      = testAppConfig
-      override val messagesApi: MessagesApi           = testMessagesApi
+      override implicit val appConfig: AppConfig      = mockAppConfig
+      override val messagesApi: MessagesApi           = MockMessages
       override val authConnector: AuthConnector       = mockAuthConnector
       override val journeyService: JourneyService     = mockJourneyService
       override val sicSearchService: SicSearchService = mockSicSearchService
     }
 
-    val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSession(
-      SessionKeys.sessionId -> sessionId
-    )
+    val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
   }
 
   val journeyId = "testJourneyId"
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val journeyName: String = JourneyData.QUERY_BUILDER
   val dataSet: String     = JourneyData.ONS
-  val journeySetup = JourneySetup("foo", queryParser = false, queryBooster = None, 1)
+  val journeySetup = JourneySetup("foo", queryParser = None, queryBooster = None, 1)
 
   val sicStore = SicStore(
     sessionId,
@@ -120,13 +118,12 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   }
 
   "testSetup" must {
-    val sicStore = SicStore("11")
     "redirect to the test setup show page" in new Setup {
-      when(mockJourneyService.initialiseJourney(any())) thenReturn Future.successful(Json.parse("""{}"""))
+      when(mockJourneyService.initialiseJourney(any())(any())) thenReturn Future.successful(Json.parse("""{}"""))
 
       AuthHelpers.showWithAuthorisedUser(controller.testSetup, requestWithSessionId) { result =>
         status(result) mustBe SEE_OTHER
-        redirectLocation(result) mustBe Some("/testJourneyId/setup-journey")
+        redirectLocation(result) mustBe Some("/session-12345/setup-journey")
       }
     }
 

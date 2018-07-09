@@ -44,14 +44,25 @@ class ApiControllerSpec extends UnitTestSpec {
     val validRequestedJson: JsValue = Json.parse(
       """{
         | "redirectUrl": "test/url",
-        | "customMessages": {
-        |   "summary": {
-        |     "heading": "value1",
-        |     "lead": "value2"
+        | "journeySetupDetails": {
+        |   "amountOfResults": 50,
+        |   "customMessages": {
+        |     "summary": {
+        |       "heading": "value1",
+        |       "lead": "value2"
+        |     }
         |   }
         | }
         |}""".stripMargin)
-    val validRequestedJsonWithoutCustomMessages = Json.parse("""{"redirectUrl":"test/url"}""")
+    val validRequestedJsonWithoutCustomMessages = Json.parse(
+      """{
+        | "redirectUrl":"test/url",
+        |  "journeySetupDetails": {
+        |    "amountOfResults": 50
+        |  }
+        |}""".stripMargin
+    )
+
     val requestWithSessionId: FakeRequest[JsValue] = FakeRequest().withSessionId("test-session-id").withBody(validRequestedJson)
 
     "return 200 with json" when {
@@ -62,7 +73,7 @@ class ApiControllerSpec extends UnitTestSpec {
       )
 
       "journey is initialised with custom messages" in new Setup {
-        when(mockJourneyService.initialiseJourney(any())) thenReturn Future.successful(expectedJsonResponse)
+        when(mockJourneyService.initialiseJourney(any())(any())) thenReturn Future.successful(expectedJsonResponse)
 
         val result: Future[Result] = controller.journeyInitialisation()(requestWithSessionId)
 
@@ -75,7 +86,7 @@ class ApiControllerSpec extends UnitTestSpec {
           .withSessionId("test-session-id")
           .withBody(validRequestedJsonWithoutCustomMessages)
 
-        when(mockJourneyService.initialiseJourney(any())) thenReturn Future.successful(expectedJsonResponse)
+        when(mockJourneyService.initialiseJourney(any())(any())) thenReturn Future.successful(expectedJsonResponse)
 
         val result: Future[Result] = controller.journeyInitialisation()(fakeRequest)
         status(result) mustBe OK
@@ -119,7 +130,7 @@ class ApiControllerSpec extends UnitTestSpec {
 
     val journeyId = "testJourneyId"
     val sessionId = "testSessionId"
-    val journeyData = JourneyData(Identifiers(journeyId, sessionId), "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
+    val journeyData = JourneyData(Identifiers(journeyId, sessionId), "redirectUrl", JourneySetup(), LocalDateTime.now())
 
     "return 200 with json" when {
       "the journey exists and there have been sic codes selected" in new Setup {

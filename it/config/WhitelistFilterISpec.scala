@@ -48,7 +48,7 @@ class WhitelistFilterISpec extends ClientSpec {
 
   val searchUri = "/sic-search/testJourneyId/search-standard-industry-classification-codes"
 
-  val journeyData = JourneyData(Identifiers("testJourneyId", "test-session-id"), "redirectUrl", None, JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
+  val journeyData = JourneyData(Identifiers("testJourneyId", "test-session-id"), "redirectUrl", JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(testAppConfig ++ extraConfig)

@@ -17,10 +17,10 @@
 package controllers
 
 import javax.inject.Inject
-
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import models.setup.Identifiers
+import models.setup.messages.Summary
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}
@@ -44,7 +44,8 @@ trait ConfirmationController extends ICLController {
       userAuthorised() {
         withJourney(journeyId) { journeyData =>
           withCurrentUsersChoices(journeyData.identifiers) { choices =>
-            Future.successful(Ok(views.html.pages.confirmation(journeyId, choices)))
+            val summary = journeyData.journeySetupDetails.customMessages.flatMap(_.summary).getOrElse(Summary(None,None,None))
+            Future.successful(Ok(views.html.pages.confirmation(journeyId, choices, summaryContent = summary)))
           }
         }
       }

@@ -47,14 +47,23 @@ trait TestSetupController extends ICLController with JourneyManager {
 
   val journeyService: JourneyService
 
-  val journeySetupForm = Form(
-    mapping(
-      "dataSet" -> nonEmptyText.verifying(dSet => JourneyData.dataSets.contains(dSet)),
-      "queryParser" -> boolean,
-      "booster" -> mandatoryIf(isEqual("queryParser", "false"), boolean),
-      "amountOfResults" -> number(1)
-    )(JourneySetup.apply)(JourneySetup.unapply)
-  )
+  val journeySetupForm = {
+    def journeySetupApply(dataSet: String = JourneyData.ONS,
+                          queryParser: Option[Boolean] = None,
+                          queryBooster: Option[Boolean] = None,
+                          amountOfResults: Int = 50): JourneySetup = new JourneySetup(dataSet, queryParser, queryBooster, amountOfResults, None)
+
+    def journeySetupUnapply(arg: JourneySetup): Option[(String, Option[Boolean], Option[Boolean], Int)] = Some(arg.dataSet, arg.queryParser, arg.queryBooster, arg.amountOfResults)
+
+    Form(
+      mapping(
+        "dataSet" -> nonEmptyText.verifying(dSet => JourneyData.dataSets.contains(dSet)),
+        "queryParser" -> optional(boolean),
+        "booster" -> mandatoryIf(isEqual("queryParser", "false"), boolean),
+        "amountOfResults" -> number(1)
+      )(journeySetupApply)(journeySetupUnapply)
+    )
+  }
 
   def show(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>
@@ -88,12 +97,11 @@ trait TestSetupController extends ICLController with JourneyManager {
     implicit request =>
       userAuthorised(api = true) {
         withSessionId { sessionId =>
-          val journeyId: String = "testJourneyId"
+          val journeyId: String = sessionId
           val journeyData: JourneyData = JourneyData(
             identifiers = Identifiers(journeyId, sessionId),
             redirectUrl = s"/sic-search/test-only/$journeyId/end-of-journey",
-            customMessages = None,
-            journeySetupDetails = JourneySetup(queryBooster = None),
+            journeySetupDetails = JourneySetup(),
             lastUpdated = LocalDateTime.now()
           )
           journeyService.initialiseJourney(journeyData).map( _ => Redirect(controllers.test.routes.TestSetupController.show(journeyId)))
@@ -106,7 +114,7 @@ trait TestSetupController extends ICLController with JourneyManager {
       userAuthorised() {
         withSessionId { sessionId =>
           hasJourney(Identifiers(journeyId, sessionId)) { _ =>
-            sicSearchService.retrieveChoices(sessionId) map { choices =>
+            sicSearchService.retrieveChoices(journeyId) map { choices =>
               Ok("End of Journey" + Json.prettyPrint(Json.toJson(choices)))
             }
           }

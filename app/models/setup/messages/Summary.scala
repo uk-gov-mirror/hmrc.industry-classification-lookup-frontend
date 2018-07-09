@@ -19,7 +19,8 @@ package models.setup.messages
 import play.api.libs.json.{Format, Json}
 
 case class Summary(heading: Option[String],
-                   lead: Option[String])
+                   lead: Option[String],
+                   hint: Option[String])
 
 object Summary {
   implicit val format: Format[Summary] = Json.format[Summary]

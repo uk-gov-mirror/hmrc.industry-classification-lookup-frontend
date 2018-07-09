@@ -2,6 +2,7 @@
 GET        /assets/*file                                                     controllers.Assets.at(path="/public", file)
 
 GET        /sign-out                                                         controllers.SignInOutController.signOut
+GET        /:jId/start-journey                                               controllers.StartController.startJourney(jId)
 
 GET        /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.show(jId, doSearch: Option[Boolean] ?= None)
 POST       /:jId/search-standard-industry-classification-codes               controllers.ChooseActivityController.submit(jId, doSearch: Option[String] ?= None)

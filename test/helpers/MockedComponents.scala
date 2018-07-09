@@ -23,6 +23,7 @@ import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
+import uk.gov.hmrc.play.config.ServicesConfig
 
 trait MockedComponents {
   self: MockitoSugar =>
@@ -37,6 +38,7 @@ trait MockedComponents {
   //Service mocks
   val mockJourneyService   = mock[JourneyService]
   val mockSicSearchService = mock[SicSearchService]
+  val mockServicesConfig   = mock[ServicesConfig]
 
   //Repo mocks
   val mockSicStoreRepo     = mock[SicStoreMongoRepository]

@@ -15,12 +15,13 @@
  *@
 
 @import config.AppConfig
+@import models.setup.messages.Summary
 @import helpers.templates._
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
 
-@(journeyId: String, listOfChoices: List[SicCodeChoice], errorArgs: Option[Seq[String]] = None)(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, listOfChoices: List[SicCodeChoice], errorArgs: Option[Seq[String]] = None, summaryContent: Summary = Summary(None, None, None))(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
-@views.html.main_template(title = messages("page.icl.confirmation.title"), bodyClasses = None) {
+@views.html.main_template(title = summaryContent.heading.getOrElse(messages("page.icl.confirmation.title")), bodyClasses = None) {
 
   <a id="back" class="link-back" href="javascript:history.back()">@Messages("app.common.back")</a>
 
@@ -34,7 +35,12 @@
     )
   }
 
-  <h1 class="form-title heading-large" id="page-title">@messages("page.icl.confirmation.heading")</h1>
+  <h1 class="form-title heading-large" id="page-title">@summaryContent.heading.getOrElse(messages("page.icl.confirmation.heading"))</h1>
+
+  @summaryContent.lead.map { leadText =>
+    <p id="page-lead-text">@leadText</p>
+  }
+
 
   <div id="selected-sic-codes-table" class="form-group @if(errorArgs.nonEmpty){ form-group-error }">
       @errorArgs.map { args =>
@@ -49,7 +55,7 @@
                         @includesHelper(sicCodeChoice.indexes)
                     </td>
                     <td class="change">
-                        <a href="@controllers.routes.RemoveSicCodeController.show(journeyId, sicCodeChoice.code)" id="change-applicant">
+                        <a href="@controllers.routes.RemoveSicCodeController.show(journeyId, sicCodeChoice.code)" id="remove-code-@sicCodeChoice.code">
                             @messages("app.common.remove")
                             <!--TODO Talk to Russell-->
                             <!--<span class="visuallyhidden">@messages("app.common.remove")</span>-->
@@ -61,6 +67,12 @@
         </tbody>
     </table>
   </div>
+
+  @summaryContent.hint.map { hintText =>
+    <div class="panel panel-border-narrow">
+      <p id="page-hint-text">@hintText</p>
+    </div>
+  }
 
     <div class="form-group">
         <a href="@controllers.routes.ChooseActivityController.show(journeyId)" id="add-more-sic-codes-link">@messages("page.icl.confirmation.addMoreSicCodes")</a>

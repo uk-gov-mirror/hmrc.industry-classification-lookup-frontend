@@ -44,7 +44,7 @@ trait ICLController extends BasicController with AuthFunction with I18nSupport w
 
 
   private[controllers] def withCurrentUsersChoices(identifiers: Identifiers)(f: List[SicCodeChoice] => Future[Result])(implicit ec: ExecutionContext): Future[Result] = {
-    sicSearchService.retrieveChoices(identifiers.sessionId) flatMap {
+    sicSearchService.retrieveChoices(identifiers.journeyId) flatMap {
       case Some(choices) => choices match {
         case Nil => Future.successful(Redirect(controllers.routes.ChooseActivityController.show(identifiers.journeyId)))
         case listOfChoices => f(listOfChoices)

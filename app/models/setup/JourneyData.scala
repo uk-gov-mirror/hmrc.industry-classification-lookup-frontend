@@ -26,7 +26,6 @@ import play.api.libs.json._
 
 case class JourneyData(identifiers: Identifiers,
                        redirectUrl: String,
-                       customMessages: Option[CustomMessages],
                        journeySetupDetails: JourneySetup,
                        lastUpdated: LocalDateTime)
 
@@ -37,17 +36,37 @@ object Identifiers {
 }
 
 case class JourneySetup(dataSet: String = JourneyData.ONS,
-                        queryParser: Boolean = false,
-                        queryBooster: Option[Boolean],
-                        amountOfResults: Int = 50)
+                        queryParser: Option[Boolean] = None,
+                        queryBooster: Option[Boolean] = None,
+                        amountOfResults: Int = JourneySetup.DEFAULT_AMOUNT_OF_RESULTS,
+                        customMessages: Option[CustomMessages] = None,
+                        sicCodes: Seq[String] = Seq.empty[String])
 object JourneySetup {
+  val DEFAULT_AMOUNT_OF_RESULTS = 50
+
+  private def journeyDetailsSetupApply(queryBooster: Option[Boolean], amountOfResults: Int, customMessages: Option[CustomMessages], sicCodes: Seq[String]): JourneySetup =
+    JourneySetup(JourneyData.ONS, None, queryBooster, amountOfResults, customMessages, sicCodes)
+
+  val initialRequestReads: Reads[JourneySetup] = (
+    (__ \ "queryBooster").readNullable[Boolean] and
+    ((__ \ "amountOfResults").read[Int] or Reads.pure(DEFAULT_AMOUNT_OF_RESULTS)) and
+    (__ \ "customMessages").readNullable[CustomMessages] and
+    ((__ \ "sicCodes").read[Seq[String]] or Reads.pure(Seq.empty[String]))
+  )(JourneySetup.journeyDetailsSetupApply _)
+
   val mongoWrites: Writes[JourneySetup] = new Writes[JourneySetup] {
-    override def writes(o: JourneySetup): JsValue = Json.obj(
-      "journeySetupDetails.dataSet" -> o.dataSet,
-      "journeySetupDetails.queryParser" -> o.queryParser,
-      "journeySetupDetails.queryBooster" -> o.queryBooster,
-      "journeySetupDetails.amountOfResults" -> o.amountOfResults
-    )
+    override def writes(o: JourneySetup): JsValue = {
+      val jsonJourneySetupDetails = Json.obj(
+        "dataSet" -> o.dataSet,
+        "amountOfResults" -> o.amountOfResults,
+        "sicCodes" -> o.sicCodes
+      ) ++
+      o.queryParser.fold(Json.obj())(v => Json.obj("queryParser" -> v)) ++
+      o.queryBooster.fold(Json.obj())(v => Json.obj("queryBooster" -> v)) ++
+      o.customMessages.fold(Json.obj())(v => Json.obj("customMessages" -> v))
+
+      Json.obj("journeySetupDetails" -> jsonJourneySetupDetails)
+    }
   }
 }
 
@@ -69,7 +88,6 @@ object JourneyData extends TimeFormat {
   implicit val format: OFormat[JourneyData] = (
     (__ \ "identifiers").format[Identifiers] and
     (__ \ "redirectUrl").format[String] and
-    (__ \ "customMessages").formatNullable[CustomMessages] and
     (__ \ "journeySetupDetails").format[JourneySetup] and
     (__ \ "lastUpdated").format[LocalDateTime](dateTimeRead)(dateTimeWrite)
   )(JourneyData.apply, unlift(JourneyData.unapply))
@@ -77,8 +95,7 @@ object JourneyData extends TimeFormat {
   def initialRequestReads(sessionId: String): Reads[JourneyData] = (
     (__ \ "identifiers").read(Identifiers(UUID.randomUUID().toString, sessionId)) and
     (__ \ "redirectUrl").read[String] and
-    (__ \ "customMessages").readNullable[CustomMessages] and
-    (__ \ "journeySetupDetails").read(JourneySetup(queryBooster = None)) and
+    ((__ \ "journeySetupDetails").read[JourneySetup](JourneySetup.initialRequestReads) or Reads.pure(JourneySetup())) and
     (__ \ "lastUpdated").read(LocalDateTime.now)
   )(JourneyData.apply _)
 }

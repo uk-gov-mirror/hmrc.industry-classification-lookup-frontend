@@ -56,7 +56,7 @@ trait ICLConnector {
     val sectorFilter = sector.fold("")(s => s"&sector=$s")
     val constructUrlParameters = s"query=$query" +
       s"&pageResults=${journeySetup.amountOfResults}$sectorFilter" +
-      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryParser=${journeySetup.queryParser.getOrElse(false)}" +
       s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
       s"&indexName=${journeySetup.dataSet}"
 

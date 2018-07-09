@@ -45,23 +45,23 @@ trait SicSearchService {
     }
   }
 
-  def retrieveSearchResults(sessionId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
-    sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.searchResults))
+  def retrieveSearchResults(journeyId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
+    sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap(_.searchResults))
   }
 
-  def retrieveChoices(sessionId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCodeChoice]]] = {
-    sicStoreRepository.retrieveSicStore(sessionId).map(_.flatMap(_.choices))
+  def retrieveChoices(journeyId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCodeChoice]]] = {
+    sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap(_.choices))
   }
 
-  def insertChoices(sessionId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean] =
-    sicStoreRepository.insertChoices(sessionId, sicCodes)
+  def insertChoices(journeyId: String, sicCodes: List[SicCodeChoice])(implicit ec: ExecutionContext): Future[Boolean] =
+    sicStoreRepository.insertChoices(journeyId, sicCodes)
 
-  def removeChoice(sessionId: String, sicCodeToRemove: String)(implicit ec: ExecutionContext): Future[Boolean] = {
-    sicStoreRepository.removeChoice(sessionId, sicCodeToRemove)
+  def removeChoice(journeyId: String, sicCodeToRemove: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    sicStoreRepository.removeChoice(journeyId, sicCodeToRemove)
   }
 
   def lookupSicCodes(journeyData: JourneyData, selectedCodes: List[SicCode])(implicit hc: HeaderCarrier): Future[Int] = {
-     def fiteredListOfSicCodeChoice(sicCodesUnfiltered: List[SicCode], groups: Map[String, List[SicCode]] ): List[SicCodeChoice] = {
+    def fiteredListOfSicCodeChoice(sicCodesUnfiltered: List[SicCode], groups: Map[String, List[SicCode]]): List[SicCodeChoice] = {
       sicCodesUnfiltered map { sic =>
         SicCodeChoice(sic, groups.get(sic.sicCode).fold(List.empty[String])(nSicCodes =>
           nSicCodes.filterNot(sicCode => sicCode == sic || sicCode.description.isEmpty).map(_.description))
@@ -69,16 +69,20 @@ trait SicSearchService {
       }
     }
 
-    for {
-      oSicCode            <- iCLConnector.lookup(getCommaSeparatedCodes(selectedCodes))
-      groups              =  selectedCodes.groupBy(_.sicCode)
-      filteredCodes       =  fiteredListOfSicCodeChoice(oSicCode, groups)
-      res             <- if (oSicCode.nonEmpty) {
-        insertChoices(journeyData.identifiers.sessionId, filteredCodes) map (_ => 1)
-      } else {
-        sicStoreRepository.upsertSearchResults(journeyData.identifiers.sessionId, SearchResults(selectedCodes.head.sicCode, 0, Nil, Nil)) map (_ => 0)
-      }
-    } yield res
+    if (selectedCodes.isEmpty) {
+      Future.successful(0)
+    } else {
+      for {
+        oSicCode <- iCLConnector.lookup(getCommaSeparatedCodes(selectedCodes))
+        groups = selectedCodes.groupBy(_.sicCode)
+        filteredCodes = fiteredListOfSicCodeChoice(oSicCode, groups)
+        res <- if (oSicCode.nonEmpty) {
+          insertChoices(journeyData.identifiers.journeyId, filteredCodes) map (_ => 1)
+        } else {
+          Future.successful(0)
+        }
+      } yield res
+    }
   }
 
   private[services] def getCommaSeparatedCodes(sicCodes: List[SicCode]): String = {
@@ -90,7 +94,7 @@ trait SicSearchService {
       oSearchResults  <- iCLConnector.search(query, journeyData.journeySetupDetails, sector)
       sectorObject    = sector.flatMap(sicCode => oSearchResults.sectors.find(_.code == sicCode))
       searchResults   = sectorObject.fold(oSearchResults)(s => oSearchResults.copy(currentSector = Some(s)))
-      _               <- sicStoreRepository.upsertSearchResults(journeyData.identifiers.sessionId, searchResults) flatMap { res =>
+      _               <- sicStoreRepository.upsertSearchResults(journeyData.identifiers.journeyId, searchResults) flatMap { res =>
         if (searchResults.numFound == 1) lookupSicCodes(journeyData, searchResults.results) else Future.successful(res)
       }
     } yield searchResults.numFound) recover {

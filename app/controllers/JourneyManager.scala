@@ -32,7 +32,7 @@ trait JourneyManager {
       f(journeyData)
     } recoverWith {
       case err =>
-        Logger.error(s"[hasJourney] - msg: ${err.getMessage}")
+        Logger.error(s"[hasJourney] - msg: ${err} ${err.getMessage}", err)
         throw err
     }
   }

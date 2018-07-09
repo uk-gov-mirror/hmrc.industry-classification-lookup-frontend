@@ -17,29 +17,37 @@
 package services
 
 import javax.inject.Inject
-
+import models.SicCode
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.libs.json.{JsValue, Json}
-import repositories.{JourneyDataMongoRepository, JourneyDataRepo, JourneyDataRepository}
+import repositories._
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class JourneyServiceImpl @Inject()(journeyDataRepo: JourneyDataRepo) extends JourneyService {
+class JourneyServiceImpl @Inject()(journeyDataRepo: JourneyDataRepo,
+                                   val sicSearchService: SicSearchService) extends JourneyService {
   override val journeyDataRepository: JourneyDataMongoRepository = journeyDataRepo.store
 }
 
 trait JourneyService {
   val journeyDataRepository: JourneyDataRepository
+  val sicSearchService: SicSearchService
 
-  def initialiseJourney(journeyData: JourneyData): Future[JsValue] = {
-    journeyDataRepository.upsertJourney(journeyData) map { _ =>
-      Json.obj(
-        "journeyStartUri" -> s"/sic-search/${journeyData.identifiers.journeyId}/search-standard-industry-classification-codes",
-        "fetchResultsUri" -> s"/internal/${journeyData.identifiers.journeyId}/fetch-results"
-      )
-    }
+  def initialiseJourney(journeyData: JourneyData)(implicit hc: HeaderCarrier): Future[JsValue] = {
+    for {
+      res <- journeyDataRepository.upsertJourney(journeyData) map { _ =>
+        Json.obj(
+          "journeyStartUri" -> s"/sic-search/${journeyData.identifiers.journeyId}/start-journey",
+          "fetchResultsUri" -> s"/internal/${journeyData.identifiers.journeyId}/fetch-results"
+        )
+      }
+      sicCodes = journeyData.journeySetupDetails.sicCodes map (SicCode(_, ""))
+      _ <- sicSearchService.lookupSicCodes(journeyData, sicCodes.toList)
+    } yield res
   }
+
   def updateJourneyWithJourneySetup(identifiers: Identifiers, journeySetupDetails: JourneySetup):Future[JourneySetup] = {
     journeyDataRepository.updateJourneySetup(identifiers, journeySetupDetails)
   }

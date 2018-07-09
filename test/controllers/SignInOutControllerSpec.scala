@@ -16,23 +16,24 @@
 
 package controllers
 
-import helpers.{UnitTestFakeApp, UnitTestSpec}
-import play.api.i18n.{I18nSupport, MessagesApi}
+import helpers.UnitTestSpec
+import helpers.mocks.MockMessages
+import play.api.i18n.MessagesApi
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthConnector
 
-class SignInOutControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
 
   val cRUrl = "http://localhost:12345/"
   val cRUri = "test-uri"
 
   class Setup {
-    val controller: SignInOutController = new SignInOutController with I18nSupport {
+    val controller: SignInOutController = new SignInOutController {
       override val loginURL = "/test/login"
 
       override val compRegFEURL: String = cRUrl
       override val compRegFEURI: String = cRUri
-      override val messagesApi: MessagesApi = testMessagesApi
+      override val messagesApi: MessagesApi = MockMessages
       override val authConnector: AuthConnector = mockAuthConnector
     }
   }
