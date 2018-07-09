@@ -55,11 +55,11 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val journeyId = "testJourneyId"
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
 
   val journeyName: String = JourneyData.QUERY_BUILDER
   val dataSet: String     = JourneyData.HMRC_SIC_8
-  val journeySetup = JourneySetup("foo", "bar", 1)
+  val journeySetup = JourneySetup("foo", queryParser = false, queryBooster = None, 1)
 
   val sicStore = SicStore(
     sessionId,
@@ -104,7 +104,7 @@ class TestSetupControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     s"return a 303 and redirect to ${controllers.routes.ChooseActivityController.show(journeyId)} when a journey is initialised" in new Setup {
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody(
-        "journey" -> journeyName,
+        "queryParser" -> "false",
         "dataSet" -> dataSet,
         "amountOfResults" -> "5"
       )

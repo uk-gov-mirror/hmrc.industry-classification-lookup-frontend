@@ -158,7 +158,7 @@ class ApiControllerISpec extends ClientSpec {
         val sicStore: SicStore = SicStore(sessionIdValue, None, Some(sicCodeChoices))
         insertSicStore(sicStore)
 
-        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(), LocalDateTime.now())
+        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
         insertJourney(journey)
 
         assertFutureResponse(buildClient(fetchResultsUrl).withHeaders(HeaderNames.COOKIE -> sessionId).get()) { res =>
@@ -194,7 +194,7 @@ class ApiControllerISpec extends ClientSpec {
         val sessionIdValue = "test-session-id"
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
-        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(), LocalDateTime.now())
+        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
         insertJourney(journey)
 
         assertFutureResponse(buildClient(fetchResultsUrl).withHeaders(HeaderNames.COOKIE -> sessionId).get()) { res =>

@@ -40,13 +40,13 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
     sessionId = "testSessionId"
   )
 
-  val journeyData = JourneyData(identifier, "/test/uri", None, JourneySetup(), now)
+  val journeyData = JourneyData(identifier, "/test/uri", None, JourneySetup(queryBooster = None), now)
 
   val testJourneyData = JourneyData(
     identifiers          = identifier,
     redirectUrl         = "/test/uri",
     customMessages      = None,
-    journeySetupDetails = JourneySetup(),
+    journeySetupDetails = JourneySetup(queryBooster = None),
     lastUpdated         = now
   )
 
@@ -74,7 +74,7 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
     }
   }
   "updateJourneyWithJourneySetup" should {
-    val journeySetup = JourneySetup("foo","bar",5)
+    val journeySetup = JourneySetup("foo",queryParser = false,None,5)
     "return updated Journey Setup" in new Setup {
       when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.successful(journeySetup))
       await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)) mustBe journeySetup

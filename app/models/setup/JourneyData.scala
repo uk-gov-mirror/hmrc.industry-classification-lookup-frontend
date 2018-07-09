@@ -37,13 +37,15 @@ object Identifiers {
 }
 
 case class JourneySetup(dataSet: String = JourneyData.ONS,
-                        journeyType: String = JourneyData.QUERY_BOOSTER,
+                        queryParser: Boolean = false,
+                        queryBooster: Option[Boolean],
                         amountOfResults: Int = 50)
 object JourneySetup {
   val mongoWrites: Writes[JourneySetup] = new Writes[JourneySetup] {
     override def writes(o: JourneySetup): JsValue = Json.obj(
       "journeySetupDetails.dataSet" -> o.dataSet,
-      "journeySetupDetails.journeyType" -> o.journeyType,
+      "journeySetupDetails.queryParser" -> o.queryParser,
+      "journeySetupDetails.queryBooster" -> o.queryBooster,
       "journeySetupDetails.amountOfResults" -> o.amountOfResults
     )
   }
@@ -54,8 +56,7 @@ object JourneyData extends TimeFormat {
   val QUERY_BUILDER = "query-builder"
   val QUERY_PARSER  = "query-parser"
   val QUERY_BOOSTER = "query-boost-first-term"
-  val FUZZY_QUERY   = "fuzzy-query"
-  val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER, QUERY_BOOSTER, FUZZY_QUERY)
+  val journeyNames = Seq(QUERY_PARSER, QUERY_BUILDER, QUERY_BOOSTER)
   //Data sets
   val HMRC_SIC_8 = "hmrc-sic8"
   val GDS        = "gds-register-sic5"
@@ -78,7 +79,7 @@ object JourneyData extends TimeFormat {
     (__ \ "identifiers").read(Identifiers(UUID.randomUUID().toString, sessionId)) and
     (__ \ "redirectUrl").read[String] and
     (__ \ "customMessages").readNullable[CustomMessages] and
-    (__ \ "journeySetupDetails").read(JourneySetup()) and
+    (__ \ "journeySetupDetails").read(JourneySetup(queryBooster = None)) and
     (__ \ "lastUpdated").read(LocalDateTime.now)
   )(JourneyData.apply _)
 }

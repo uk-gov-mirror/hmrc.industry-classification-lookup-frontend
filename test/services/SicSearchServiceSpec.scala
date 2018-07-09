@@ -60,7 +60,7 @@ class SicSearchServiceSpec extends UnitTestSpec {
     identifiers          = identifier,
     redirectUrl         = "/test/uri",
     customMessages      = None,
-    journeySetupDetails = JourneySetup(),
+    journeySetupDetails = JourneySetup(queryBooster = None),
     lastUpdated         = LocalDateTime.now
   )
 

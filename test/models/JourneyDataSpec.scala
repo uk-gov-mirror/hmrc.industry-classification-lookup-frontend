@@ -97,15 +97,15 @@ class JourneyDataSpec extends PlaySpec {
         result.journeySetupDetails.dataSet mustBe "ons-supplement-sic5"
         result.journeySetupDetails.dataSet must not be "testSet"
 
-        result.journeySetupDetails.journeyType mustBe "query-boost-first-term"
-        result.journeySetupDetails.journeyType must not be "testType"
+        result.journeySetupDetails.queryParser mustBe false
+        result.journeySetupDetails.queryParser must not be "testType"
 
       }
     }
   }
   "journeySetup mongoWrites" should {
     "produce valid json" in {
-      val journeySetup = JourneySetup("foo","bar",5)
+      val journeySetup = JourneySetup("foo",queryParser = false,None,5)
       val expectedJson = Json.parse(
         """
           |{

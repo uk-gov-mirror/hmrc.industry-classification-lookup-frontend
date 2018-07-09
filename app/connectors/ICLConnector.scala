@@ -54,7 +54,11 @@ trait ICLConnector {
   def search(query: String, journeySetup: JourneySetup, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[SearchResults] = {
     implicit val reads: Reads[SearchResults] = SearchResults.readsWithQuery(query)
     val sectorFilter = sector.fold("")(s => s"&sector=$s")
-    val constructUrlParameters = s"query=$query&pageResults=${journeySetup.amountOfResults}$sectorFilter&queryType=${journeySetup.journeyType}&indexName=${journeySetup.dataSet}"
+    val constructUrlParameters = s"query=$query" +
+      s"&pageResults=${journeySetup.amountOfResults}$sectorFilter" +
+      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
+      s"&indexName=${journeySetup.dataSet}"
 
     http.GET[SearchResults](s"$ICLUrl/industry-classification-lookup/search?$constructUrlParameters") recover {
       case e: HttpException =>

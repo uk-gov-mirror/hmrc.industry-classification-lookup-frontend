@@ -81,9 +81,18 @@ class ICLConnectorSpec extends UnitTestSpec {
     val zeroResults = SearchResults(query, 0, List(), List())
     val searchResults = SearchResults(query, 1, List(SicCode("12345", "some description")), List(Sector("A", "Example of a business sector", 1)))
     val sector = "B"
-    val journeySetup = JourneySetup(dataSet = "foo",journeyType = "bar", amountOfResults = 5)
-    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=${journeySetup.amountOfResults}&queryType=${journeySetup.journeyType}&indexName=${journeySetup.dataSet}"
-    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query&pageResults=${journeySetup.amountOfResults}&sector=$sector&queryType=${journeySetup.journeyType}&indexName=${journeySetup.dataSet}"
+    val journeySetup = JourneySetup(dataSet = "foo", queryBooster = None, amountOfResults = 5)
+    val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query" +
+      s"&pageResults=${journeySetup.amountOfResults}" +
+      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
+      s"&indexName=${journeySetup.dataSet}"
+    val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query" +
+      s"&pageResults=${journeySetup.amountOfResults}" +
+      s"&sector=$sector" +
+      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
+      s"&indexName=${journeySetup.dataSet}"
 
     "return a SearchResults case class when one is returned from ICL" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.successful(searchResults))

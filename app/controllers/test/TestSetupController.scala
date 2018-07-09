@@ -22,6 +22,7 @@ import auth.SicSearchExternalURLs
 import config.AppConfig
 import controllers.{ICLController, JourneyManager}
 import javax.inject.Inject
+
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.data.Form
 import play.api.data.Forms._
@@ -31,6 +32,7 @@ import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.voa.play.form.ConditionalMappings.{isEqual, mandatoryIf}
 
 import scala.concurrent.Future
 
@@ -48,7 +50,8 @@ trait TestSetupController extends ICLController with JourneyManager {
   val journeySetupForm = Form(
     mapping(
       "dataSet" -> nonEmptyText.verifying(dSet => JourneyData.dataSets.contains(dSet)),
-      "journey" -> nonEmptyText.verifying(journey => JourneyData.journeyNames.contains(journey)),
+      "queryParser" -> boolean,
+      "booster" -> mandatoryIf(isEqual("queryParser", "false"), boolean),
       "amountOfResults" -> number(1)
     )(JourneySetup.apply)(JourneySetup.unapply)
   )
@@ -90,7 +93,7 @@ trait TestSetupController extends ICLController with JourneyManager {
             identifiers = Identifiers(journeyId, sessionId),
             redirectUrl = s"/sic-search/test-only/$journeyId/end-of-journey",
             customMessages = None,
-            journeySetupDetails = JourneySetup(),
+            journeySetupDetails = JourneySetup(queryBooster = None),
             lastUpdated = LocalDateTime.now()
           )
           journeyService.initialiseJourney(journeyData).map( _ => Redirect(controllers.test.routes.TestSetupController.show(journeyId)))

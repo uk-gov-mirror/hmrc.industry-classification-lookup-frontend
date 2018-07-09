@@ -16,10 +16,24 @@
 
 @import config.AppConfig
 @import uk.gov.hmrc.play.views.html.helpers.form
-@import helpers.templates.{inputRadioGroup, input}
+@import helpers.templates.{inputRadioGroup, inputRadioHidden, inputCheckboxGroup, input}
 @import models.setup.{JourneySetup, JourneyData}
 
 @(journeyId: String, journeyForm: Form[JourneySetup])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+
+@hiddenYesContent = {
+<div class="additional-option-block panel panel-border-narrow">
+    @inputRadioGroup(
+        field = journeyForm("booster"),
+        Seq(
+            "false"   -> messages("page.test.setup-journey.radio.query-booster-no"),
+            "true"    -> messages("page.test.setup-journey.radio.query-booster")
+        ),
+        '_legendClass -> "hidden",
+        '_labelClass -> "block-label"
+    )
+</div>
+}
 
 @views.html.main_template(title = messages("page.test.setup-journey.title"), bodyClasses = None) {
 
@@ -30,16 +44,17 @@
 
     @form(action = controllers.test.routes.TestSetupController.submit(journeyId)) {
         <p>@messages("page.test.setup-journey.radio.alg.title")</p>
-        @inputRadioGroup(
-            field = journeyForm("journey"),
-            Seq(
-                JourneyData.QUERY_BUILDER   -> messages("page.test.setup-journey.radio.query-builder"),
-                JourneyData.QUERY_PARSER    -> messages("page.test.setup-journey.radio.query-parser"),
-                JourneyData.QUERY_BOOSTER   -> messages("page.test.setup-journey.radio.query-booster"),
-                JourneyData.FUZZY_QUERY     -> messages("page.test.setup-journey.radio.fuzzy-query")
+        @inputRadioHidden(
+            field = journeyForm("queryParser"),
+            radioOptions = Seq(
+                "false"   -> messages("page.test.setup-journey.radio.query-builder"),
+                "true"    -> messages("page.test.setup-journey.radio.query-parser")
             ),
-            '_legendClass -> "hidden",
-            '_labelClass -> "block-label"
+            radioAdditionalInfo = Map(
+                "false" -> hiddenYesContent
+            ),
+            '_labelClass -> "block-label",
+            '_legendClass -> "visually-hidden"
         )
         <br>
 
