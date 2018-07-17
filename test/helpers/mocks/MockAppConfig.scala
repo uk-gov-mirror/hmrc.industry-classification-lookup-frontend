@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package helpers
+package helpers.mocks
 
 import config.AppConfig
-import org.scalatestplus.play.guice.GuiceOneAppPerTest
-import play.api.i18n.MessagesApi
+import helpers.UnitTestSpec
+import uk.gov.hmrc.play.config.{AssetsConfig, OptimizelyConfig}
 
-trait UnitTestFakeApp extends GuiceOneAppPerTest {
+trait MockAppConfig {
   self: UnitTestSpec =>
 
-  implicit lazy val testMessagesApi: MessagesApi = app.injector.instanceOf(classOf[MessagesApi])
-
-  implicit val testAppConfig: AppConfig = new AppConfig {
+  implicit val mockAppConfig: AppConfig = new AppConfig {
     override val reportAProblemNonJSUrl    = ""
     override val reportAProblemPartialUrl  = ""
     override val whitelist                 = Seq()
@@ -34,5 +32,13 @@ trait UnitTestFakeApp extends GuiceOneAppPerTest {
     override val analyticsHost             = ""
     override val csrfBypassValue: String   = ""
     override val uriWhiteList: Set[String] = Set()
+    override val assetsConfig: AssetsConfig = new AssetsConfig {
+      override lazy val assetsUrl: String = ""
+      override lazy val assetsVersion: String = ""
+    }
+    override val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig {
+      override def optimizelyBaseUrl: String = ""
+      override def optimizelyProjectId: Option[String] = None
+    }
   }
 }

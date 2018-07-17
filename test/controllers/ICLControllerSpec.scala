@@ -17,7 +17,8 @@
 package controllers
 
 import config.AppConfig
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.UnitTestSpec
+import helpers.mocks.{MockAppConfig, MockMessages}
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
@@ -26,16 +27,16 @@ import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
-class ICLControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class ICLControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   trait Setup {
     val controller: ICLController = new ICLController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig        = app.injector.instanceOf[AppConfig]
+      override implicit val appConfig: AppConfig        = mockAppConfig
       override val journeyService: JourneyService       = mockJourneyService
       override val authConnector: AuthConnector         = mockAuthConnector
-      override val messagesApi: MessagesApi             = testMessagesApi
+      override val messagesApi: MessagesApi             = MockMessages
       override val sicSearchService: SicSearchService   = mockSicSearchService
     }
   }

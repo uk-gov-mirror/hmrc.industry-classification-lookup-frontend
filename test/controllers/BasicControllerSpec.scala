@@ -16,7 +16,8 @@
 
 package controllers
 
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.UnitTestSpec
+import helpers.mocks.MockAppConfig
 import play.api.libs.json.{JsValue, Json, OFormat}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
@@ -28,7 +29,7 @@ object Tester {
   implicit val format = Json.format[Tester]
 }
 
-class BasicControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class BasicControllerSpec extends UnitTestSpec with MockAppConfig {
   val controller = new BasicController {}
 
   def okFunction(sessionId: String) = Future(Ok(sessionId))

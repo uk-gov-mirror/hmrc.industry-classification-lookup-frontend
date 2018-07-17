@@ -118,7 +118,7 @@ trait ChooseActivityController extends ICLController {
   }
 
   private[controllers] def withSearchResults(identifiers: Identifiers)(f: => SearchResults => Future[Result])(implicit request: Request[_]): Future[Result] = {
-    sicSearchService.retrieveSearchResults(identifiers.sessionId) flatMap {
+    sicSearchService.retrieveSearchResults(identifiers.journeyId) flatMap {
       case Some(searchResults) => f(searchResults)
       case None => Future.successful(Ok(views.html.pages.chooseactivity(identifiers.journeyId, SicSearchForm.form, chooseActivityForm, None)))
     }

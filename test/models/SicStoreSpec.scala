@@ -30,7 +30,7 @@ class SicStoreSpec extends UnitTestSpec {
   val sicStoreWithChoicesJson : JsValue = Json.parse(
     s"""
       |{
-      |  "sessionId" : "12345",
+      |  "journeyId" : "12345",
       |  "search" : {
       |    "query":"$query",
       |    "numFound":1,
@@ -55,7 +55,7 @@ class SicStoreSpec extends UnitTestSpec {
   val sicStoreNoChoicesJson : JsValue = Json.parse(
     s"""
       |{
-      |  "sessionId" : "12345",
+      |  "journeyId" : "12345",
       |  "search" : {
       |     "query":"$query",
       |     "numFound":1,

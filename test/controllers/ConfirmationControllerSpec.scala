@@ -19,7 +19,8 @@ package controllers
 import java.time.LocalDateTime
 
 import config.AppConfig
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.mocks.{MockAppConfig, MockMessages}
+import helpers.UnitTestSpec
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -33,16 +34,16 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   class Setup {
     val controller: ConfirmationController = new ConfirmationController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig      = app.injector.instanceOf[AppConfig]
+      override implicit val appConfig: AppConfig      = mockAppConfig
       override val sicSearchService: SicSearchService = mockSicSearchService
       override val authConnector: AuthConnector       = mockAuthConnector
-      override val messagesApi: MessagesApi           = testMessagesApi
+      override val messagesApi: MessagesApi           = MockMessages
       override val journeyService: JourneyService     = mockJourneyService
     }
   }
@@ -50,7 +51,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val journeyId = "testJourneyId"
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
 
@@ -92,7 +93,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "submit" should {
     "redirect out of the service to the redirect url setup via the api" in new Setup {
 
-      when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveChoices(eqTo(journeyId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
@@ -106,7 +107,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     "return a 400 when more than 4 choices have been made" in new Setup {
-      when(mockSicSearchService.retrieveChoices(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveChoices(eqTo(journeyId))(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice, sicCodeChoice))))
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)

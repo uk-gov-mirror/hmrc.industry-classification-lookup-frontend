@@ -25,7 +25,7 @@ import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
 import uk.gov.hmrc.http.SessionKeys
 
 trait CookieBaker {
-  val SessionId         = s"stubbed-${UUID.randomUUID}"
+  val sessionId         = s"stubbed-${UUID.randomUUID}"
 
   val cookieKey = "gvBoGdgzqG1AarzF1LY0zQ=="
   def cookieValue(sessionData: Map[String,String]) = {
@@ -72,7 +72,7 @@ trait CookieBaker {
     ) ++ additionalData
   }
 
-  def getSessionCookie(additionalData: Map[String, String] = Map(), timeStampRollback: Long = 0, sessionID: String = SessionId) = {
+  def getSessionCookie(additionalData: Map[String, String] = Map(), timeStampRollback: Long = 0, sessionID: String = sessionId) = {
     cookieValue(cookieData(additionalData, timeStampRollback, sessionID))
   }
 }

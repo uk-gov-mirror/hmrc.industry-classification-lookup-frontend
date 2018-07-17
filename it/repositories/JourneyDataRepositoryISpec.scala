@@ -48,19 +48,21 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
 
   val now = LocalDateTime.now
 
+  val customMsgs = CustomMessages(
+    summary = Some(Summary(
+      heading = Some("testMessage1"),
+      lead = Some("testMessage2"),
+      hint = Some("testHint")
+    ))
+  )
+
   val journeyData = JourneyData(
     identifiers = Identifiers(
       journeyId = "testJourneyId",
       sessionId = "testSessionId"
     ),
     redirectUrl = "test/url",
-    customMessages = Some(CustomMessages(
-      summary = Some(Summary(
-        heading = Some("testMessage1"),
-        lead = Some("testMessage2")
-      ))
-    )),
-    journeySetupDetails = JourneySetup(queryBooster = Some(true)),
+    journeySetupDetails = JourneySetup(queryBooster = Some(true), customMessages = Some(customMsgs)),
     lastUpdated = now
   )
 
@@ -71,8 +73,7 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
         sessionId = "testSessionId"
       ),
       redirectUrl = "test/url",
-      customMessages = None,
-      journeySetupDetails = JourneySetup(queryBooster = Some(true)),
+      journeySetupDetails = JourneySetup(queryBooster = Some(true), customMessages = None),
       lastUpdated = now
     )
     "successfully insert JourneyData into collection" in new Setup {
@@ -101,7 +102,7 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
   }
   "updateJourneySetup" should {
     "updateJourneySetup model within JourneyData Model successfully" in new Setup {
-      val updatedJourneySetup = JourneySetup("foo",true,None,10)
+      val updatedJourneySetup = JourneySetup("foo",Some(true),None,10)
       await(repository.upsertJourney(journeyData)) mustBe journeyData
       count mustBe 1
       await(repository.updateJourneySetup(journeyData.identifiers, updatedJourneySetup)) mustBe updatedJourneySetup
@@ -109,7 +110,7 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
       await(repository.retrieveJourneyData(journeyData.identifiers)) mustBe journeyData.copy(journeySetupDetails = updatedJourneySetup)
     }
     "fail to update journeySetup and throw exception if no document exists" in new Setup {
-      val validJourneySetup = JourneySetup("foo",true,None,10)
+      val validJourneySetup = JourneySetup("foo",Some(true),None,10)
       count mustBe 0
       intercept[Exception](await(repository.updateJourneySetup(journeyData.identifiers, validJourneySetup)))
       count mustBe 0
@@ -119,7 +120,7 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
   "retrieveJourneyData" should {
     "successfully return a JourneyData" in new Setup {
       insert(journeyData)
-      await(repository.retrieveJourneyData(journeyData.identifiers)).journeySetupDetails mustBe JourneySetup(queryBooster = Some(true))
+      await(repository.retrieveJourneyData(journeyData.identifiers)).journeySetupDetails mustBe JourneySetup(queryBooster = Some(true), customMessages = Some(customMsgs))
     }
 
     "throw a RuntimeException when the journey does not exist in the repo" in new Setup {

@@ -40,6 +40,7 @@ class Module extends AbstractModule {
   }
 
   private def bindControllers() {
+    bind(classOf[StartController]).to(classOf[StartControllerImpl]).asEagerSingleton()
     bind(classOf[ChooseActivityController]).to(classOf[ChooseActivityControllerImpl]).asEagerSingleton()
     bind(classOf[ConfirmationController]).to(classOf[ConfirmationControllerImpl]).asEagerSingleton()
     bind(classOf[SignInOutController]).to(classOf[SignInOutControllerImpl]).asEagerSingleton()

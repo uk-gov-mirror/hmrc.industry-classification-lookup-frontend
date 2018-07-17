@@ -21,6 +21,7 @@ import java.util.Base64
 
 import javax.inject.Inject
 import play.api.Configuration
+import uk.gov.hmrc.play.config.{AssetsConfig, OptimizelyConfig}
 
 class FrontendAppConfig @Inject()(configuration: Configuration) extends AppConfig {
 
@@ -46,6 +47,17 @@ class FrontendAppConfig @Inject()(configuration: Configuration) extends AppConfi
 
   lazy val csrfBypassValue   = loadStringConfigBase64("Csrf-Bypass-value")
   lazy val uriWhiteList      = configuration.getStringSeq("csrfexceptions.whitelist").getOrElse(Seq.empty).toSet
+
+  override lazy val assetsConfig: AssetsConfig = new AssetsConfig {
+    override lazy val assetsUrl: String = loadConfig("assets.url")
+    override lazy val assetsVersion: String = loadConfig("assets.version")
+    override lazy val assetsPrefix: String = assetsUrl + assetsVersion
+  }
+
+  override lazy val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig {
+    override def optimizelyBaseUrl: String = configuration.getString("optimizely.url").getOrElse("")
+    override def optimizelyProjectId: Option[String] = configuration.getString("optimizely.projectId")
+  }
 }
 
 trait AppConfig {
@@ -59,4 +71,7 @@ trait AppConfig {
 
   val csrfBypassValue: String
   val uriWhiteList: Set[String]
+
+  val assetsConfig: AssetsConfig
+  val optimizelyConfig: OptimizelyConfig
 }

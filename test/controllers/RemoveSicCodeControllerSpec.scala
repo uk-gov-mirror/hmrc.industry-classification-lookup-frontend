@@ -19,7 +19,8 @@ package controllers
 import java.time.LocalDateTime
 
 import config.AppConfig
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.mocks.{MockAppConfig, MockMessages}
+import helpers.UnitTestSpec
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.any
@@ -32,16 +33,16 @@ import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
-class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class RemoveSicCodeControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   class Setup {
     val controller: RemoveSicCodeController = new RemoveSicCodeController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig      = app.injector.instanceOf[AppConfig]
+      override implicit val appConfig: AppConfig      = mockAppConfig
       override val sicSearchService: SicSearchService = mockSicSearchService
       override val authConnector: AuthConnector       = mockAuthConnector
-      override val messagesApi: MessagesApi           = testMessagesApi
+      override val messagesApi: MessagesApi           = MockMessages
       override val journeyService: JourneyService     = mockJourneyService
     }
   }
@@ -49,7 +50,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val journeyId = "testJourneyId"
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
   def formRequestWithSessionId(answer: String): FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("removeCode" -> answer)

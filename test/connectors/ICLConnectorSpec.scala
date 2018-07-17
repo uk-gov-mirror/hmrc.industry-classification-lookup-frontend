@@ -84,13 +84,13 @@ class ICLConnectorSpec extends UnitTestSpec {
     val journeySetup = JourneySetup(dataSet = "foo", queryBooster = None, amountOfResults = 5)
     val searchUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query" +
       s"&pageResults=${journeySetup.amountOfResults}" +
-      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryParser=${journeySetup.queryParser.getOrElse(false)}" +
       s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
       s"&indexName=${journeySetup.dataSet}"
     val searchSectorUrl = s"$iCLUrl/industry-classification-lookup/search?query=$query" +
       s"&pageResults=${journeySetup.amountOfResults}" +
       s"&sector=$sector" +
-      s"&queryParser=${journeySetup.queryParser}" +
+      s"&queryParser=${journeySetup.queryParser.getOrElse(false)}" +
       s"&queryBoostFirstTerm=${journeySetup.queryBooster.getOrElse(false)}" +
       s"&indexName=${journeySetup.dataSet}"
 

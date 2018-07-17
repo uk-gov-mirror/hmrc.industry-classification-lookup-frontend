@@ -21,7 +21,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, _}
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
-case class SicStore(sessionId: String,
+case class SicStore(journeyId: String,
                     searchResults: Option[SearchResults] = None,
                     choices: Option[List[SicCodeChoice]] = None,
                     lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC))
@@ -43,7 +43,7 @@ object SicStore {
   implicit val dateFormat = ReactiveMongoFormats.dateTimeFormats
 
   implicit val format: Format[SicStore] = (
-    (__ \ "sessionId").format[String] and
+    (__ \ "journeyId").format[String] and
     (__ \ "search").formatNullable[SearchResults](SearchResults.format) and
     (__ \ "choices").formatNullable[List[SicCodeChoice]] and
     (__ \ "lastUpdated").format[DateTime]

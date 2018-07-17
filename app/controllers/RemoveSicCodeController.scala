@@ -71,7 +71,7 @@ trait RemoveSicCodeController extends ICLController {
               confirmationForm(code.desc).bindFromRequest().fold(
                 errors => Future.successful(BadRequest(views.html.pages.removeActivityConfirmation(journeyId, errors, code))),
                 {
-                  case "yes" => sicSearchService.removeChoice(journeyData.identifiers.sessionId, sicCode) map { _ =>
+                  case "yes" => sicSearchService.removeChoice(journeyData.identifiers.journeyId, sicCode) map { _ =>
                     Redirect(controllers.routes.ConfirmationController.show(journeyId))
                   }
                   case "no" => Future.successful(Redirect(controllers.routes.ConfirmationController.show(journeyId)))

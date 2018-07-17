@@ -24,6 +24,7 @@ import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.when
 import play.api.libs.json.Json
+import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future
 
@@ -31,32 +32,33 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
 
   val now = LocalDateTime.now
   class Setup {
-  val testService = new JourneyService {
-    override val journeyDataRepository = mockJourneyDataRepo
+    val testService = new JourneyService {
+      override val journeyDataRepository = mockJourneyDataRepo
+      override val sicSearchService = mockSicSearchService
+    }
   }
-}
   val identifier = Identifiers(
     journeyId = "testJourneyId",
     sessionId = "testSessionId"
   )
 
-  val journeyData = JourneyData(identifier, "/test/uri", None, JourneySetup(queryBooster = None), now)
+  val journeyData = JourneyData(identifier, "/test/uri", JourneySetup(), now)
 
   val testJourneyData = JourneyData(
     identifiers          = identifier,
     redirectUrl         = "/test/uri",
-    customMessages      = None,
-    journeySetupDetails = JourneySetup(queryBooster = None),
+    journeySetupDetails = JourneySetup(),
     lastUpdated         = now
   )
 
   "initialiseJourney" should {
     "return Json containing the start and fetch uri's" in new Setup {
       mockInitialiseJourney(testJourneyData)
+      when(mockSicSearchService.lookupSicCodes(any(), any())(any())).thenReturn(Future.successful(0))
 
       assertAndAwait(testService.initialiseJourney(testJourneyData)) {
         _ mustBe Json.obj(
-          "journeyStartUri" -> s"/sic-search/testJourneyId/search-standard-industry-classification-codes",
+          "journeyStartUri" -> s"/sic-search/testJourneyId/start-journey",
           "fetchResultsUri" -> s"/internal/testJourneyId/fetch-results"
         )
       }
@@ -74,7 +76,7 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
     }
   }
   "updateJourneyWithJourneySetup" should {
-    val journeySetup = JourneySetup("foo",queryParser = false,None,5)
+    val journeySetup = JourneySetup("foo",queryParser = None, None, 5)
     "return updated Journey Setup" in new Setup {
       when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.successful(journeySetup))
       await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)) mustBe journeySetup

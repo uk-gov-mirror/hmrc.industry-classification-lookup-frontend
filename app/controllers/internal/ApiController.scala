@@ -17,13 +17,13 @@
 package controllers.internal
 
 import javax.inject.Inject
-
 import controllers.{BasicController, JourneyManager}
 import models.setup.{Identifiers, JourneyData}
 import play.api.libs.json._
 import play.api.mvc.Results._
 import play.api.mvc.{Action, AnyContent, BodyParsers}
 import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.play.HeaderCarrierConverter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -38,6 +38,7 @@ trait ApiController extends BasicController with JourneyManager {
   def journeyInitialisation(): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
     withSessionId { sessionId =>
       withJsBody[JourneyData](JourneyData.initialRequestReads(sessionId)) { journeyData =>
+        implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
         journeyService.initialiseJourney(journeyData).map(Ok(_))
       }
     }
@@ -46,7 +47,7 @@ trait ApiController extends BasicController with JourneyManager {
   def fetchResults(journeyId: String): Action[AnyContent] = Action.async { implicit request =>
     withSessionId { sessionId =>
       hasJourney(Identifiers(journeyId, sessionId)) { _ =>
-        sicSearchService.retrieveChoices(sessionId) map {
+        sicSearchService.retrieveChoices(journeyId) map {
           case Some(choices) => Ok(Json.obj("sicCodes" -> Json.toJson(choices)))
           case None => NotFound
         }

@@ -20,22 +20,25 @@ import java.time.LocalDateTime
 
 import config.AppConfig
 import helpers.auth.AuthHelpers
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.mocks.{MockAppConfig, MockMessages}
+import helpers.UnitTestSpec
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.jsoup.Jsoup
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
+import play.api.i18n.{I18nSupport, Lang, Messages, MessagesApi}
+import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, RequestHeader, Result}
 import play.api.test.FakeRequest
+import play.mvc.Http
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
-class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
+class ChooseActivityControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
+
 
   class Setup extends CodeMocks with AuthHelpers {
     override val authConnector = mockAuthConnector
@@ -43,10 +46,10 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     val controller: ChooseActivityController = new ChooseActivityController with I18nSupport {
       override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig        = testAppConfig
+      override implicit val appConfig: AppConfig        = mockAppConfig
       override val sicSearchService: SicSearchService   = mockSicSearchService
       override val authConnector: AuthConnector         = mockAuthConnector
-      implicit val messagesApi: MessagesApi             = testMessagesApi
+      implicit val messagesApi: MessagesApi             = MockMessages
       override val journeyService: JourneyService       = mockJourneyService
     }
 
@@ -57,7 +60,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   val sessionId = "session-12345"
   val identifiers = Identifiers(journeyId, sessionId)
 
-  val journeyData = JourneyData(identifiers, "redirectUrl", None, JourneySetup(queryBooster = None), LocalDateTime.now())
+  val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val SECTOR_A = "A"
   val query = "testQuery"
@@ -263,7 +266,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
   "filter" should {
     s"return a 303 and redirect to ${routes.ChooseActivityController.show(journeyId)} when search results are found" in new Setup {
 
-      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveSearchResults(eqTo(journeyId))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
       when(mockSicSearchService.search(any(), eqTo(query), any())(any()))
@@ -279,7 +282,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
     }
 
     s"return a 303 and redirect to ${routes.ChooseActivityController.show(journeyId)} when no search results are found" in new Setup {
-      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveSearchResults(eqTo(journeyId))(any()))
         .thenReturn(Future.successful(Some(noSearchResults)))
 
       when(mockSicSearchService.search(any(), eqTo(query), any())(any()))
@@ -297,7 +300,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with UnitTestFakeApp {
 
   "clearFilter" should {
     "refresh the Business Activity Lookup page" in new Setup {
-      when(mockSicSearchService.retrieveSearchResults(eqTo(sessionId))(any()))
+      when(mockSicSearchService.retrieveSearchResults(eqTo(journeyId))(any()))
         .thenReturn(Future.successful(Some(searchResults)))
 
       when(mockSicSearchService.search(any(), eqTo(query), any())(any()))

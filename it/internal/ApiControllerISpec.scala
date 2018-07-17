@@ -19,6 +19,7 @@ package internal
 import java.time.LocalDateTime
 
 import helpers.ClientSpec
+import models.setup.messages.{CustomMessages, Summary}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import models.{SicCode, SicCodeChoice, SicStore}
 import play.api.http.HeaderNames
@@ -78,17 +79,83 @@ class ApiControllerISpec extends ClientSpec {
 
   "/internal/initialise-journey" should {
     "return an OK" when {
-      "the json has been validated and the journey has been setup" in new Setup {
+      val regexJourneyStartUri = raw"/sic-search/(.+)/start-journey".r
+      val regexFetchResultsUri = raw"/internal/(.+)/fetch-results".r
+
+      "the json has been validated and the journey has been setup (without journey setup details)" in new Setup {
         setupUnauthorised()
         await(journeyRepo.count) mustBe 0
         await(sicStoreRepo.count) mustBe 0
 
+        stubGet("/industry-classification-lookup/lookup/", 200, Some("{}"))
+
         assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> getSessionCookie()).post(setupJson)) { res =>
           res.status mustBe OK
-          assert(res.json.\("journeyStartUri").as[String].contains("/search-standard-industry-classification-codes"))
-          assert(res.json.\("fetchResultsUri").as[String].contains("/fetch-results"))
+          val fetchResUri = res.json.\("fetchResultsUri").as[String]
+          val journeyStartUri = res.json.\("journeyStartUri").as[String]
+          assert(journeyStartUri.matches(regexJourneyStartUri.toString))
+          assert(fetchResUri.matches(regexFetchResultsUri.toString))
+
+          val journeyIdGenerated = regexFetchResultsUri.findFirstMatchIn(fetchResUri).get.group(1)
+
           await(journeyRepo.count) mustBe 1
+          val data = await(journeyRepo.retrieveJourneyData(Identifiers(journeyIdGenerated, sessionId)))
+          data.redirectUrl mustBe "/test/uri"
+          data.journeySetupDetails.queryParser mustBe None
+          data.journeySetupDetails.queryBooster mustBe None
+          data.journeySetupDetails.amountOfResults mustBe 50
+          data.journeySetupDetails.customMessages mustBe None
+          data.journeySetupDetails.sicCodes mustBe Seq.empty[String]
           await(sicStoreRepo.count) mustBe 0
+        }
+      }
+
+      "the json has been validated and the journey has been setup with sic store data (with journey setup details)" in new Setup {
+        val setupJsonWithDetails = Json.parse(
+          """
+            |{
+            |   "redirectUrl" : "/test/uri",
+            |   "journeySetupDetails": {
+            |     "queryBooster": true,
+            |     "amountOfResults": 200,
+            |     "customMessages": {
+            |       "summary": {
+            |         "heading": "Some heading",
+            |         "lead": "Some lead",
+            |         "hint": "Some hint"
+            |       }
+            |     },
+            |     "sicCodes": ["12345", "67890"]
+            |   }
+            |}
+          """.stripMargin
+        )
+
+        setupUnauthorised()
+        val responseBody = Json.toJson(List(SicCode("12345", "desc one"), SicCode("67890", "desc 2"))).toString()
+
+        stubGet("/industry-classification-lookup/lookup/67890,12345", 200, Some(responseBody))
+        await(journeyRepo.count) mustBe 0
+        await(sicStoreRepo.count) mustBe 0
+
+        assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> getSessionCookie()).post(setupJsonWithDetails)) { res =>
+          res.status mustBe OK
+          val fetchResUri = res.json.\("fetchResultsUri").as[String]
+          val journeyStartUri = res.json.\("journeyStartUri").as[String]
+          assert(journeyStartUri.matches(regexJourneyStartUri.toString))
+          assert(fetchResUri.matches(regexFetchResultsUri.toString))
+
+          val journeyIdGenerated = regexFetchResultsUri.findFirstMatchIn(fetchResUri).get.group(1)
+
+          await(journeyRepo.count) mustBe 1
+          val data = await(journeyRepo.retrieveJourneyData(Identifiers(journeyIdGenerated, sessionId)))
+          data.redirectUrl mustBe "/test/uri"
+          data.journeySetupDetails.queryParser mustBe None
+          data.journeySetupDetails.queryBooster mustBe Some(true)
+          data.journeySetupDetails.amountOfResults mustBe 200
+          data.journeySetupDetails.customMessages mustBe Some(CustomMessages(Some(Summary(heading = Some("Some heading"), lead = Some("Some lead"), hint = Some("Some hint")))))
+          data.journeySetupDetails.sicCodes mustBe Seq("12345", "67890")
+          await(sicStoreRepo.count) mustBe 1
         }
       }
     }
@@ -107,6 +174,8 @@ class ApiControllerISpec extends ClientSpec {
       "no session id could be found in request" in new Setup {
         setupUnauthorised()
         await(journeyRepo.count) mustBe 0
+
+
         assertFutureResponse(buildClient(initialiseJourneyUrl).post(setupJson)) { res =>
           res.status mustBe BAD_REQUEST
           await(journeyRepo.count) mustBe 0
@@ -120,6 +189,8 @@ class ApiControllerISpec extends ClientSpec {
       setupSimpleAuthMocks()
       await(journeyRepo.count) mustBe 0
       await(sicStoreRepo.count) mustBe 0
+
+      stubGet("/industry-classification-lookup/lookup/", 200, Some("{}"))
 
       assertFutureResponse(buildClient(initialiseJourneyUrl).withHeaders(HeaderNames.COOKIE -> sessionIdFullFlow).post(setupJson)) { res =>
         res.status mustBe OK
@@ -155,10 +226,10 @@ class ApiControllerISpec extends ClientSpec {
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
         val sicCodeChoices = List(SicCodeChoice(SicCode("12345", "test description"), Nil))
-        val sicStore: SicStore = SicStore(sessionIdValue, None, Some(sicCodeChoices))
+        val sicStore: SicStore = SicStore(journeyId, None, Some(sicCodeChoices))
         insertSicStore(sicStore)
 
-        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
+        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
         insertJourney(journey)
 
         assertFutureResponse(buildClient(fetchResultsUrl).withHeaders(HeaderNames.COOKIE -> sessionId).get()) { res =>
@@ -194,7 +265,7 @@ class ApiControllerISpec extends ClientSpec {
         val sessionIdValue = "test-session-id"
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
-        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", None, JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
+        val journey: JourneyData = JourneyData(Identifiers(journeyId, sessionIdValue), "redirect-url", JourneySetup(queryBooster = Some(true)), LocalDateTime.now())
         insertJourney(journey)
 
         assertFutureResponse(buildClient(fetchResultsUrl).withHeaders(HeaderNames.COOKIE -> sessionId).get()) { res =>

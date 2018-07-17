@@ -18,16 +18,17 @@ package views.pages
 
 import forms.chooseactivity.ChooseMultipleActivitiesForm
 import forms.sicsearch.SicSearchForm
-import helpers.{UnitTestFakeApp, UnitTestSpec}
+import helpers.UnitTestSpec
+import helpers.mocks.{MockAppConfig, MockMessages}
 import models.{SearchResults, Sector, SicCode, SicSearch}
 import org.jsoup.Jsoup
-import play.api.i18n.I18nSupport
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.test.FakeRequest
 import views.html.pages.{chooseactivity => ChooseActivityPage}
 
-class ChooseActivityViewSpec extends UnitTestSpec with UnitTestFakeApp with I18nSupport {
+class ChooseActivityViewSpec extends UnitTestSpec with MockAppConfig with MockMessages with I18nSupport {
   implicit val request: FakeRequest[_] = FakeRequest()
-  override def messagesApi = testMessagesApi
+  override def messagesApi: MessagesApi = MockMessages
 
   val query = "test query"
 
