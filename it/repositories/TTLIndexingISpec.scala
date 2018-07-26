@@ -90,7 +90,7 @@ class TTLIndexingISpec extends MongoSpec with Eventually {
       ttlIndex.options.elements.head shouldBe BSONDocument("expireAfterSeconds" -> BSONLong(ttl)).elements.head
     }
 
-    "not change when ensureIndexes is called when the expiration value hasn't changed" in new Setup {
+    "not change when ensureIndexes is called when the expiration value hasn't changed" ignore new Setup {
 
       repo.listIndexes.size shouldBe 0
 
@@ -111,7 +111,7 @@ class TTLIndexingISpec extends MongoSpec with Eventually {
       ttlIndex2.options.elements.head shouldBe BSONDocument("expireAfterSeconds" -> BSONLong(ttl)).elements.head
     }
 
-    "update the existing ttl index if the expiration value has changed" in new SetupWithIndex(buildTTLIndex(otherTTLValue)) {
+    "update the existing ttl index if the expiration value has changed" ignore new SetupWithIndex(buildTTLIndex(otherTTLValue)) {
 
       repo.listIndexes.size shouldBe 2
 
