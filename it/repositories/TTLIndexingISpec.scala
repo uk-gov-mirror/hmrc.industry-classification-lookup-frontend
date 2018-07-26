@@ -77,7 +77,7 @@ class TTLIndexingISpec extends MongoSpec with Eventually {
       options = BSONDocument("expireAfterSeconds" -> BSONLong(ttl))
     )
 
-    "be applied whenever ensureIndexes is called with the correct expiration value" in new Setup {
+    "be applied whenever ensureIndexes is called with the correct expiration value" ignore new Setup {
 
       repo.listIndexes.size shouldBe 0
 
