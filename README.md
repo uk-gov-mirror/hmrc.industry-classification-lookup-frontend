@@ -8,7 +8,7 @@ This code is open source software licensed under the [Apache 2.0 License]("http:
 
 ### Initialsing a Journey
 
-To start, the calling service must make a **POST** to `/internal/initialise-journey`.
+To start, the calling service must make a **POST** to `/internal/initialise-journey`
 
 The **POST** will contain a **json** body as config for setting up the journey. The **json** consists of:
 * a `redirect url` which is used by this service to redirect the user back to the calling service once they have confirmed their sic codes
