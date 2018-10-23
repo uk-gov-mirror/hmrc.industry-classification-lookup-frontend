@@ -3,18 +3,18 @@ import play.core.PlayVersion
 
 private object AppDependencies {
   val compile = Seq(
-    "uk.gov.hmrc" %% "frontend-bootstrap"    % "10.3.0",
-    "uk.gov.hmrc" %% "bootstrap-play-25"     % "3.2.0",
+    "uk.gov.hmrc" %% "frontend-bootstrap"    % "10.7.0",
+    "uk.gov.hmrc" %% "bootstrap-play-25"     % "3.13.0",
     "uk.gov.hmrc" %% "govuk-template"        % "5.22.0",
     "uk.gov.hmrc" %% "play-ui"               % "7.22.0",
-    "uk.gov.hmrc" %% "auth-client"           % "2.6.0",
+    "uk.gov.hmrc" %% "auth-client"           % "2.16.0-play-25",
     "uk.gov.hmrc" %% "play-whitelist-filter" % "2.0.0",
     "uk.gov.hmrc" %% "play-reactivemongo"    % "6.2.0",
     "uk.gov.hmrc" %% "play-conditional-form-mapping" % "0.2.0"
   )
 
   def test(scope: String = "test,it") = Seq(
-    "uk.gov.hmrc"             %% "hmrctest"                     % "3.0.0"             % scope,
+    "uk.gov.hmrc"             %% "hmrctest"                     % "3.2.0"             % scope,
     "org.scalatestplus.play"  %% "scalatestplus-play"           % "2.0.0"             % scope,
     "com.github.tomakehurst"  %  "wiremock"                     % "2.11.0"            % scope,
     "org.jsoup"               %  "jsoup"                        % "1.11.1"            % scope,

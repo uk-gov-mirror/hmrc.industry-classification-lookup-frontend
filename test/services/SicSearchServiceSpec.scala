@@ -236,6 +236,7 @@ class SicSearchServiceSpec extends UnitTestSpec {
         _ mustBe true
       }
     }
+
   }
 
   "removeChoice" should {
@@ -246,6 +247,22 @@ class SicSearchServiceSpec extends UnitTestSpec {
 
       awaitAndAssert(service.removeChoice(sessionId, sicCodeCode)) {
         _ mustBe true
+      }
+    }
+  }
+  "retrieveChoicesForApi" should {
+    "not replace n.e.c for not elsewhere classified and return a list of sic codes if found for the given session if" in new Setup {
+      val sicCode1 = SicCode("12345","This is foo bar n.e.c")
+      val sicCode2 = SicCode("45678", "foo bar")
+      val choices2Codes = List(SicCodeChoice(sicCode1, Nil),SicCodeChoice(sicCode2, Nil))
+      val choices2CodesTextNOTReplaced = List(SicCodeChoice(sicCode1, Nil),SicCodeChoice(sicCode2, Nil))
+      val sicStore2 = SicStore(sessionId, Some(SearchResults(query,2,List(sicCode1,sicCode2),List(Sector("A", "Fake Sector A", 1), Sector("B", "Fake Sector B", 1)))),Some(choices2Codes))
+
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(sicStore2)))
+
+      awaitAndAssert(service.retrieveChoicesForApi(sessionId)) {
+        _ mustBe Some(choices2CodesTextNOTReplaced)
       }
     }
   }
@@ -260,6 +277,20 @@ class SicSearchServiceSpec extends UnitTestSpec {
         _ mustBe Some(choices)
       }
     }
+    "returns a list of sic codes if they are found and replace n.e.c for not elsewhere classified"  in new Setup {
+      val sicCode1 = SicCode("12345","This is foo bar n.e.c")
+      val sicCode2 = SicCode("45678", "n.e")
+      val choices2Codes = List(SicCodeChoice(sicCode1, Nil),SicCodeChoice(sicCode2, Nil))
+      val choices2CodesTextReplaced = List(SicCodeChoice(sicCode1.copy(description = "This is foo bar not elsewhere classified"), Nil),SicCodeChoice(sicCode2, Nil))
+      val sicStore2 = SicStore(sessionId, Some(SearchResults(query,2,List(sicCode1,sicCode2),List(Sector("A", "Fake Sector A", 1), Sector("B", "Fake Sector B", 1)))),Some(choices2Codes))
+
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(sicStore2)))
+
+      awaitAndAssert(service.retrieveChoices(sessionId)) {
+        _ mustBe Some(choices2CodesTextReplaced)
+      }
+    }
   }
 
   "retrieveSearchResults" should {
@@ -272,10 +303,32 @@ class SicSearchServiceSpec extends UnitTestSpec {
         _ mustBe Some(oneSearchResult)
       }
     }
+    "returns a list of sic codes if they are found for the given session id and replace n.e.c for not elsewhere classified" in new Setup {
+      val sicCode1 = SicCode("12345", "This is foo bar n.e.c")
+      val sicCode2 = SicCode("45678", "n.e")
+      val choices2Codes = List(SicCodeChoice(sicCode1, Nil), SicCodeChoice(sicCode2, Nil))
+
+      val sicStore2 = SicStore(sessionId, Some(SearchResults(query, 2, List(sicCode1, sicCode2), List(Sector("A", "Fake Sector A", 1), Sector("B", "Fake Sector B", 1)))), Some(choices2Codes))
+      when(mockSicStoreRepo.retrieveSicStore(eqTo(sessionId))(any()))
+        .thenReturn(Future.successful(Some(sicStore2)))
+
+      awaitAndAssert(service.retrieveSearchResults(sessionId)) {
+        _.get mustBe SearchResults(query, 2, List(sicCode1.copy(description = "This is foo bar not elsewhere classified"), sicCode2), List(Sector("A", "Fake Sector A", 1), Sector("B", "Fake Sector B", 1)))
+      }
+    }
   }
-
+  "necReplacement" should {
+    "replace n.e.c with not elsewhere classified" in new Setup {
+      service.necReplacement("foo bar n.e.c") mustBe "foo bar not elsewhere classified"
+    }
+    "not replace n.e.e" in new Setup {
+      service.necReplacement("foo bar n.e.e") mustBe "foo bar n.e.e"
+    }
+    "handle blank string" in new Setup {
+      service.necReplacement("") mustBe ""
+    }
+  }
   "isLookup" should {
-
     "return true" when {
 
       "a 5 digit String is supplied" in new Setup {

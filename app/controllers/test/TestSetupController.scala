@@ -114,7 +114,7 @@ trait TestSetupController extends ICLController with JourneyManager {
       userAuthorised() {
         withSessionId { sessionId =>
           hasJourney(Identifiers(journeyId, sessionId)) { _ =>
-            sicSearchService.retrieveChoices(journeyId) map { choices =>
+            sicSearchService.retrieveChoicesForApi(journeyId) map { choices =>
               Ok("End of Journey" + Json.prettyPrint(Json.toJson(choices)))
             }
           }

@@ -137,9 +137,9 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
       fetchedDocument.lastUpdated isAfter sicStore1Choice.lastUpdated shouldBe true
     }
 
-    "insert a new sic code choice into a choices list with another choice already there" in new Setup {
+    "insert a new sic code choice into a choices list with another choice already there, with the name n.e.c which isnt replaced" in new Setup {
 
-      val sicCodeToAdd = SicCode("67891", "some description")
+      val sicCodeToAdd = SicCode("67891", "some description n.e.c")
 
       val searchResults = SearchResults("testQuery", 1, List(sicCodeToAdd), List(Sector("A", "Fake", 1)))
       val sicStoreWithExistingChoice = SicStore(journeyId, Some(searchResults), Some(List(sicCodeGroup)), dateTime)

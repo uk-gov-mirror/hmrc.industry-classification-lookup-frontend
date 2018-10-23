@@ -46,10 +46,22 @@ trait SicSearchService {
   }
 
   def retrieveSearchResults(journeyId: String)(implicit ec: ExecutionContext): Future[Option[SearchResults]] = {
-    sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap(_.searchResults))
+    sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap(
+      _.searchResults.map(sResults => sResults.copy(
+        results = sResults.results.map(sicCode =>
+          sicCode.copy(description = necReplacement(sicCode.description)))))))
   }
 
+  private[services] def necReplacement(desc: String): String = desc.replace("n.e.c", "not elsewhere classified")
+
   def retrieveChoices(journeyId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCodeChoice]]] = {
+    sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap{ sicStore =>
+      sicStore.choices.map(_.map(
+        sicChoice => sicChoice.copy(desc = necReplacement(sicChoice.desc))))
+    })
+  }
+
+  def retrieveChoicesForApi(journeyId: String)(implicit ec: ExecutionContext): Future[Option[List[SicCodeChoice]]] = {
     sicStoreRepository.retrieveSicStore(journeyId).map(_.flatMap(_.choices))
   }
 

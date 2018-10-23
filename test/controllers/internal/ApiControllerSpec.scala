@@ -160,7 +160,40 @@ class ApiControllerSpec extends UnitTestSpec {
           .withSessionId(sessionId)
 
         when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
-        when(mockSicSearchService.retrieveChoices(any())(any())) thenReturn Future.successful(Some(sicCodeChoices))
+        when(mockSicSearchService.retrieveChoicesForApi(any())(any())) thenReturn Future.successful(Some(sicCodeChoices))
+
+        val result: Future[Result] = controller.fetchResults(journeyId)(fakeRequest)
+        status(result) mustBe OK
+        contentAsJson(result) mustBe sicCodeChoicesJson
+      }
+      "the journey exists and there have been sic codes selected with n.e.c in the description which is NOT replaced" in new Setup {
+
+        val sicCode = SicCode("12345", "test description n.e.c")
+        val sicCodeChoice = SicCodeChoice(sicCode, List("123", "456", "789"))
+        val sicCodeChoices = List(sicCodeChoice)
+
+        val sicCodeChoicesJson: JsValue = Json.parse(
+          """
+            |{
+            |  "sicCodes":[
+            |     {
+            |       "code":"12345",
+            |       "desc":"test description n.e.c",
+            |       "indexes":[
+            |         "123",
+            |         "456",
+            |         "789"
+            |       ]
+            |     }
+            |  ]
+            |}
+          """.stripMargin)
+
+        val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+          .withSessionId(sessionId)
+
+        when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
+        when(mockSicSearchService.retrieveChoicesForApi(any())(any())) thenReturn Future.successful(Some(sicCodeChoices))
 
         val result: Future[Result] = controller.fetchResults(journeyId)(fakeRequest)
         status(result) mustBe OK
@@ -192,7 +225,7 @@ class ApiControllerSpec extends UnitTestSpec {
           .withSessionId(sessionId)
 
         when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
-        when(mockSicSearchService.retrieveChoices(any())(any())) thenReturn Future.successful(None)
+        when(mockSicSearchService.retrieveChoicesForApi(any())(any())) thenReturn Future.successful(None)
 
         val result: Future[Result] = controller.fetchResults(journeyId)(fakeRequest)
         status(result) mustBe NOT_FOUND

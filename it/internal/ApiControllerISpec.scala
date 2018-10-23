@@ -219,13 +219,13 @@ class ApiControllerISpec extends ClientSpec {
 
   "/internal/journeyID/fetch-results" must {
     "return an OK" when {
-      "the journey exists and there are selected sic codes" in new Setup {
+      "the journey exists and there are selected sic codes and does not replace n.e.c" in new Setup {
         setupUnauthorised()
 
         val sessionIdValue = "test-session-id"
         val sessionId: String = getSessionCookie(sessionID = "test-session-id")
 
-        val sicCodeChoices = List(SicCodeChoice(SicCode("12345", "test description"), Nil))
+        val sicCodeChoices = List(SicCodeChoice(SicCode("12345", "test description n.e.c"), Nil))
         val sicStore: SicStore = SicStore(journeyId, None, Some(sicCodeChoices))
         insertSicStore(sicStore)
 

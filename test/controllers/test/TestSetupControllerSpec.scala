@@ -141,7 +141,7 @@ class TestSetupControllerSpec extends UnitTestSpec with MockAppConfig with MockM
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      when(mockSicSearchService.retrieveChoices(any())(any()))
+      when(mockSicSearchService.retrieveChoicesForApi(any())(any()))
         .thenReturn(Future.successful(sicCodeChoices))
 
       AuthHelpers.showWithAuthorisedUser(controller.endOfJourney(journeyId), requestWithSessionId) { result =>
