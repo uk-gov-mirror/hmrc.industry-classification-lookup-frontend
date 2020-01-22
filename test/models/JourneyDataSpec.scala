@@ -18,8 +18,8 @@ package models
 
 import java.util.UUID
 
-import models.setup.{JourneyData, JourneySetup}
 import models.setup.messages.{CustomMessages, Summary}
+import models.setup.{JourneyData, JourneySetup}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
 

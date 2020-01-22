@@ -20,24 +20,21 @@ import akka.util.Timeout
 import helpers.auth.AuthHelpers
 import helpers.mocks.WSHTTPMock
 import org.mockito.Mockito.reset
-import org.mockito.stubbing.OngoingStubbing
-import org.mockito.Mockito.when
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
-import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 import play.api.http.{HeaderNames, HttpProtocol, MimeTypes, Status}
 import play.api.mvc.{AnyContent, Result}
 import play.api.test._
 import uk.gov.hmrc.http.{HeaderCarrier, SessionKeys}
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait UnitTestSpec
   extends PlaySpec
     with MockitoSugar
+    with OneAppPerSuite
     with BeforeAndAfterEach
     with BeforeAndAfterAll
     with HeaderNames

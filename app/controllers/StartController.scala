@@ -19,7 +19,6 @@ package controllers
 import auth.SicSearchExternalURLs
 import config.AppConfig
 import javax.inject.Inject
-import models.SicCode
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}
 import services.{JourneyService, SicSearchService}

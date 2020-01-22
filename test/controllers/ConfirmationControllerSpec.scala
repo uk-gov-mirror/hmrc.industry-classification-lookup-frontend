@@ -19,8 +19,8 @@ package controllers
 import java.time.LocalDateTime
 
 import config.AppConfig
-import helpers.mocks.{MockAppConfig, MockMessages}
 import helpers.UnitTestSpec
+import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}

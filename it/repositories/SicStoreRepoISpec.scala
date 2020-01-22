@@ -20,7 +20,7 @@ import models._
 import models.setup.{JourneyData, JourneySetup}
 import org.joda.time.DateTime
 import org.scalatest.concurrent.Eventually
-import play.api.libs.json.{JsValue, Json, Writes}
+import play.api.libs.json.{JsValue, Json}
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index
 import uk.gov.hmrc.mongo.MongoSpecSupport
