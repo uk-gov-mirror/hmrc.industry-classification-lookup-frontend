@@ -19,7 +19,7 @@ package services
 import connectors.ICLConnector
 import javax.inject.Inject
 import models._
-import models.setup.{JourneyData, JourneySetup}
+import models.setup.JourneyData
 import play.api.Logger
 import repositories.{SicStoreMongoRepository, SicStoreRepo}
 import uk.gov.hmrc.http.HeaderCarrier

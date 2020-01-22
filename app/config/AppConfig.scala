@@ -48,15 +48,15 @@ class FrontendAppConfig @Inject()(configuration: Configuration) extends AppConfi
   lazy val csrfBypassValue   = loadStringConfigBase64("Csrf-Bypass-value")
   lazy val uriWhiteList      = configuration.getStringSeq("csrfexceptions.whitelist").getOrElse(Seq.empty).toSet
 
-  override lazy val assetsConfig: AssetsConfig = new AssetsConfig {
-    override lazy val assetsUrl: String = loadConfig("assets.url")
-    override lazy val assetsVersion: String = loadConfig("assets.version")
-    override lazy val assetsPrefix: String = assetsUrl + assetsVersion
+  override lazy val assetsConfig: AssetsConfig = new AssetsConfig(configuration) {
+    val assetsUrl: String = loadConfig("assets.url")
+    val assetsVersion: String = loadConfig("assets.version")
+    override val assetsPrefix: String = assetsUrl + assetsVersion
   }
 
-  override lazy val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig {
-    override def optimizelyBaseUrl: String = configuration.getString("optimizely.url").getOrElse("")
-    override def optimizelyProjectId: Option[String] = configuration.getString("optimizely.projectId")
+  override lazy val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig(configuration) {
+    def optimizelyBaseUrl: String = configuration.getString("optimizely.url").getOrElse("")
+    def optimizelyProjectId: Option[String] = configuration.getString("optimizely.projectId")
   }
 }
 

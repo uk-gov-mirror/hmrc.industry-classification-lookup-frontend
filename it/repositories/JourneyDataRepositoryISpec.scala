@@ -16,7 +16,7 @@
 
 package repositories
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDateTime
 
 import models.setup.messages.{CustomMessages, Summary}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
@@ -24,7 +24,7 @@ import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsResultException, Json, OWrites}
 import play.modules.reactivemongo.ReactiveMongoComponent
-import reactivemongo.api.commands.{DefaultWriteResult, WriteResult}
+import reactivemongo.api.commands.WriteResult
 import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.mongo.Awaiting
 import uk.gov.hmrc.play.test.WithFakeApplication

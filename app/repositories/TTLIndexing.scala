@@ -19,7 +19,7 @@ package repositories
 import play.api.Logger
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong}
-import reactivemongo.core.commands.DeleteIndex
+
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,27 +31,25 @@ trait TTLIndexing[A, ID] {
 
   val ttl: Long
 
-  private val collectionName: String = self.collection.name
+  private val collectionName: String = collection.name
 
   private val LAST_UPDATED_INDEX = "lastUpdatedIndex"
   private val EXPIRE_AFTER_SECONDS = "expireAfterSeconds"
 
   def ensureTTLIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[Seq[Boolean]] = {
 
-    collection.indexesManager.list().flatMap {
-      indexes => {
-
+    collection.indexesManager.list.flatMap { indexes => {
         val ttlIndex: Option[Index] = indexes.find(_.eventualName == LAST_UPDATED_INDEX)
 
         ttlIndex match {
           case Some(index) if hasSameTTL(index) =>
-            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has not been changed")
+            Logger.info(s"[TTLIndex] document expiration value for collection : ${collection.name} has not been changed")
             doNothing
           case Some(index) =>
-            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has been changed. Updating ttl index to : $ttl")
-            deleteIndex(index) flatMap(_ => ensureLastUpdated)
+            Logger.info(s"[TTLIndex] document expiration value for collection : ${collection.name} has been changed. Updating ttl index to : $ttl")
+            deleteIndex(index) flatMap (_ => ensureLastUpdated)
           case _ =>
-            Logger.info(s"[TTLIndex] TTL Index for collection : $collectionName does not exist. Creating TTL index")
+            Logger.info(s"[TTLIndex] TTL Index for collection : ${collection.name} does not exist. Creating TTL index")
             ensureLastUpdated
         }
       }
@@ -62,7 +60,7 @@ trait TTLIndexing[A, ID] {
 
   private def hasSameTTL(index: Index): Boolean = index.options.getAs[BSONLong](EXPIRE_AFTER_SECONDS).exists(_.as[Long] == ttl)
 
-  private def deleteIndex(index: Index) = collection.db.command(DeleteIndex(collection.name, index.eventualName))
+  private def deleteIndex(index: Index) = Future(collection.delete)
 
   private def errorHandler: PartialFunction[Throwable, Future[Seq[Boolean]]] = {
     case ex =>
@@ -78,7 +76,7 @@ trait TTLIndexing[A, ID] {
         options = BSONDocument(EXPIRE_AFTER_SECONDS -> BSONLong(ttl))
       )
     ))).map { ensured =>
-      Logger.info(s"[TTLIndex] Ensuring ttl index on field : $LAST_UPDATED_INDEX in collection : $collectionName is set to $ttl")
+      Logger.info(s"[TTLIndex] Ensuring ttl index on field : $LAST_UPDATED_INDEX in collection : ${collection.name} is set to $ttl")
       ensured
     }
   }

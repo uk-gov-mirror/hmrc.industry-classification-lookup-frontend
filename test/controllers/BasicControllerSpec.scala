@@ -18,8 +18,8 @@ package controllers
 
 import helpers.UnitTestSpec
 import helpers.mocks.MockAppConfig
-import play.api.libs.json.{JsValue, Json, OFormat}
-import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.libs.json.Json
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 
 import scala.concurrent.Future

@@ -18,10 +18,14 @@ package helpers.mocks
 
 import config.AppConfig
 import helpers.UnitTestSpec
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.config.{AssetsConfig, OptimizelyConfig}
 
 trait MockAppConfig {
   self: UnitTestSpec =>
+
+  val env = Environment.simple()
+  val fakeConfig = Configuration.load(env)
 
   implicit val mockAppConfig: AppConfig = new AppConfig {
     override val reportAProblemNonJSUrl    = ""
@@ -32,13 +36,13 @@ trait MockAppConfig {
     override val analyticsHost             = ""
     override val csrfBypassValue: String   = ""
     override val uriWhiteList: Set[String] = Set()
-    override val assetsConfig: AssetsConfig = new AssetsConfig {
-      override lazy val assetsUrl: String = ""
-      override lazy val assetsVersion: String = ""
+    override val assetsConfig: AssetsConfig = new AssetsConfig(fakeConfig) {
+      val assetsUrl: String = ""
+      val assetsVersion: String = ""
     }
-    override val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig {
-      override def optimizelyBaseUrl: String = ""
-      override def optimizelyProjectId: Option[String] = None
+    override val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig(fakeConfig) {
+      def optimizelyBaseUrl: String = ""
+      def optimizelyProjectId: Option[String] = None
     }
   }
 }

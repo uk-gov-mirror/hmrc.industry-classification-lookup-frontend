@@ -22,7 +22,6 @@ import auth.SicSearchExternalURLs
 import config.AppConfig
 import forms.RemoveSicCodeForm
 import models.SicCodeChoice
-import models.setup.Identifiers
 import play.api.data.Form
 import play.api.i18n.MessagesApi
 import play.api.mvc._

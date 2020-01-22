@@ -19,7 +19,6 @@ package controllers
 import javax.inject.Inject
 import auth.SicSearchExternalURLs
 import config.AppConfig
-import models.setup.Identifiers
 import models.setup.messages.Summary
 import play.api.i18n.MessagesApi
 import play.api.mvc.{Action, AnyContent}

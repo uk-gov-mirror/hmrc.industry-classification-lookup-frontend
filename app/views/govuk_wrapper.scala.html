@@ -34,7 +34,7 @@
 @head = {
     @uiLayouts.head(
       linkElem = None,
-      headScripts = None)(appConfig.assetsConfig, appConfig.optimizelyConfig)
+      headScripts = None)
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="@routes.Assets.at("stylesheets/sicsearch.css")">
 }
@@ -61,7 +61,7 @@
       analyticsHost = appConfig.analyticsHost,
       ssoUrl = None,
       scriptElem = scriptElem,
-      gaCalls = None)(appConfig.assetsConfig)
+      gaCalls = None)
 }
 
 @footerTop = {}
