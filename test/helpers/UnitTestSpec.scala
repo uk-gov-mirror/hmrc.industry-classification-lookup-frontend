@@ -20,6 +20,7 @@ import akka.util.Timeout
 import helpers.auth.AuthHelpers
 import helpers.mocks.WSHTTPMock
 import org.mockito.Mockito.reset
+import org.scalatest.concurrent.{IntegrationPatience, PatienceConfiguration}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
@@ -48,7 +49,9 @@ trait UnitTestSpec
     with RouteInvokers
     with FutureAwaits
     with MockedComponents
-    with JsonFormValidation {
+    with JsonFormValidation
+    with PatienceConfiguration
+    with IntegrationPatience {
 
   override implicit def defaultAwaitTimeout: Timeout = 5.seconds
 

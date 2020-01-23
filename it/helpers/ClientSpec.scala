@@ -16,6 +16,7 @@
 
 package helpers
 
+import org.scalatest.concurrent.{IntegrationPatience, PatienceConfiguration}
 import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
@@ -29,7 +30,7 @@ import scala.concurrent.Future
 
 trait ClientSpec extends PlaySpec with GuiceOneServerPerSuite with Wiremock with TestAppConfig
   with FutureAwaits with DefaultAwaitTimeout with HeaderNames with ClientHelper
-  with BeforeAndAfterEach with BeforeAndAfterAll with LoginStub with ICLStub {
+  with BeforeAndAfterEach with BeforeAndAfterAll with LoginStub with ICLStub with PatienceConfiguration with IntegrationPatience {
 
   def buildClient(path: String)(implicit app: Application): WSRequest = {
     app.injector.instanceOf[WSClient]
