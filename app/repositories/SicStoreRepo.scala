@@ -62,13 +62,13 @@ class SicStoreMongoRepository(config: Configuration, mongo: () => DB)
 
   private[repositories] def now = DateTime.now(DateTimeZone.UTC)
 
-  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
-    super.ensureIndexes flatMap { l =>
-      ensureTTLIndexes map {
-        ttl => l ++ ttl
-      }
-    }
-  }
+//  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
+//    super.ensureIndexes flatMap { l =>
+//      ensureTTLIndexes map {
+//        ttl => l ++ ttl
+//      }
+//    }
+//  }
 
   override def retrieveSicStore(journeyId: String)(implicit ec: ExecutionContext): Future[Option[SicStore]] = {
     collection.find(journeyIdSelector(journeyId)).one[SicStore]

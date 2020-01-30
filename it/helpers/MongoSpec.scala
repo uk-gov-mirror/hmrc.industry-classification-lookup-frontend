@@ -16,11 +16,12 @@
 
 package helpers
 
+import org.scalatest.BeforeAndAfterAll
 import play.api.libs.json.{JsObject, JsValue, Json}
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index
 import repositories.TTLIndexing
-import uk.gov.hmrc.mongo.{MongoSpecSupport, ReactiveRepository}
+import uk.gov.hmrc.mongo.{MongoConnector, MongoSpecSupport, ReactiveRepository}
 import uk.gov.hmrc.play.test.{UnitSpec, WithFakeApplication}
 
 import scala.concurrent.ExecutionContext
