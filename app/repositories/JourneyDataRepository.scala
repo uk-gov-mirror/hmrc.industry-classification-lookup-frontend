@@ -44,24 +44,24 @@ class JourneyDataMongoRepository(config: Configuration, mongo: () => DB)
 
   override val ttl: Long = config.getLong("mongodb.timeToLiveInSeconds").get
 
-  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
-    super.ensureIndexes flatMap { l =>
-      ensureTTLIndexes map {
-        ttl => l ++ ttl
-      }
-    }
-  }
+//  override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
+//    super.ensureIndexes flatMap { l =>
+//      ensureTTLIndexes map {
+//        ttl => l ++ ttl
+//      }
+//    }
+//  }
 
-  override def indexes: Seq[Index] = Seq(
-    Index(
-      key = Seq(
-        "identifiers.journeyId" -> IndexType.Ascending,
-        "identifiers.sessionId" -> IndexType.Ascending
-      ),
-      name = Some("SessionIdAndJourneyId"),
-      unique = true
-    )
-  )
+//  override def indexes: Seq[Index] = Seq(
+//    Index(
+//      key = Seq(
+//        "identifiers.journeyId" -> IndexType.Ascending,
+//        "identifiers.sessionId" -> IndexType.Ascending
+//      ),
+//      name = Some("SessionIdAndJourneyId"),
+//      unique = true
+//    )
+//  )
 
   private def identifiersSelector(identifiers: Identifiers) = BSONDocument("identifiers.journeyId" -> identifiers.journeyId, "identifiers.sessionId" -> identifiers.sessionId)
 
