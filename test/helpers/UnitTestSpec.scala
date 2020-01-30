@@ -23,7 +23,7 @@ import org.mockito.Mockito.reset
 import org.scalatest.concurrent.{IntegrationPatience, PatienceConfiguration}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, BeforeAndAfterAll, BeforeAndAfterEach}
-import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
+import org.scalatestplus.play.PlaySpec
 import play.api.http.{HeaderNames, HttpProtocol, MimeTypes, Status}
 import play.api.mvc.{AnyContent, Result}
 import play.api.test._
@@ -35,7 +35,6 @@ import scala.concurrent.duration._
 trait UnitTestSpec
   extends PlaySpec
     with MockitoSugar
-    with OneAppPerSuite
     with BeforeAndAfterEach
     with BeforeAndAfterAll
     with HeaderNames
@@ -92,6 +91,7 @@ trait UnitTestSpec
   }
 
   implicit class FakeRequestImps[T <: AnyContent](fakeRequest: FakeRequest[T]) {
+
     import uk.gov.hmrc.http.HeaderNames
 
     def withSessionId(sessionId: String): FakeRequest[T] = {

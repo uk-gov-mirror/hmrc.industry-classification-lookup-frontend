@@ -25,6 +25,7 @@ import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
@@ -33,7 +34,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.Future
 
-class RemoveSicCodeControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
+class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages {
 
   class Setup {
     val controller: RemoveSicCodeController = new RemoveSicCodeController with I18nSupport {

@@ -22,11 +22,12 @@ import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models.{SearchResults, Sector, SicCode, SicSearch}
 import org.jsoup.Jsoup
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.test.FakeRequest
 import views.html.pages.{chooseactivity => ChooseActivityPage}
 
-class ChooseActivityViewSpec extends UnitTestSpec with MockAppConfig with MockMessages with I18nSupport {
+class ChooseActivityViewSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages with I18nSupport {
   implicit val request: FakeRequest[_] = FakeRequest()
   override def messagesApi: MessagesApi = MockMessages
 
