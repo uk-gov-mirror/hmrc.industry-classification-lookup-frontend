@@ -59,9 +59,6 @@ class ApiControllerISpec extends ClientSpec {
 
     await(sicStoreRepo.drop)
     await(journeyRepo.drop)
-    await(sicStoreRepo.ensureIndexes)
-    await(journeyRepo.ensureIndexes)
-
   }
 
   val journeyId: String = "test-journey-id"
