@@ -23,6 +23,7 @@ import models.setup.{Identifiers, JourneyData, JourneySetup}
 import models.{SicCode, SicCodeChoice}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
@@ -30,7 +31,7 @@ import services.{JourneyService, SicSearchService}
 
 import scala.concurrent.Future
 
-class ApiControllerSpec extends UnitTestSpec {
+class ApiControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite {
 
   trait Setup {
     val controller: ApiController = new ApiController {

@@ -31,25 +31,22 @@ trait TTLIndexing[A, ID] {
 
   val ttl: Long
 
-  private val collectionName: String = collection.name
-
   private val LAST_UPDATED_INDEX = "lastUpdatedIndex"
   private val EXPIRE_AFTER_SECONDS = "expireAfterSeconds"
 
   def ensureTTLIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[Seq[Boolean]] = {
-
     collection.indexesManager.list.flatMap { indexes => {
         val ttlIndex: Option[Index] = indexes.find(_.eventualName == LAST_UPDATED_INDEX)
 
         ttlIndex match {
           case Some(index) if hasSameTTL(index) =>
-            Logger.info(s"[TTLIndex] document expiration value for collection : ${collection.name} has not been changed")
+            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has not been changed")
             doNothing
           case Some(index) =>
-            Logger.info(s"[TTLIndex] document expiration value for collection : ${collection.name} has been changed. Updating ttl index to : $ttl")
+            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has been changed. Updating ttl index to : $ttl")
             deleteIndex(index) flatMap (_ => ensureLastUpdated)
           case _ =>
-            Logger.info(s"[TTLIndex] TTL Index for collection : ${collection.name} does not exist. Creating TTL index")
+            Logger.info(s"[TTLIndex] TTL Index for collection : $collectionName does not exist. Creating TTL index")
             ensureLastUpdated
         }
       }

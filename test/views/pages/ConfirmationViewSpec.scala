@@ -21,21 +21,24 @@ import helpers.mocks.{MockAppConfig, MockMessages}
 import models.SicCodeChoice
 import models.setup.messages.Summary
 import org.jsoup.Jsoup
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.test.FakeRequest
 import views.html.pages.{confirmation => ConfirmationPage}
 
-class ConfirmationViewSpec extends UnitTestSpec with MockAppConfig with MockMessages with I18nSupport{
+class ConfirmationViewSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages with I18nSupport {
   implicit val request: FakeRequest[_] = FakeRequest()
+
   override def messagesApi: MessagesApi = MockMessages
+
   val sicCodeChoices = List(
-    SicCodeChoice("12345","my fake description", List("this is the index")),
-    SicCodeChoice("67892","my fake second description", List("this is index", "with another one"))
+    SicCodeChoice("12345", "my fake description", List("this is the index")),
+    SicCodeChoice("67892", "my fake second description", List("this is index", "with another one"))
   )
 
-  val pageHeading       = "MyPageHeading"
+  val pageHeading = "MyPageHeading"
   val pageLeadParagraph = "MyPageLead"
-  val pageHintText      = "MyPageHint"
+  val pageHintText = "MyPageHint"
 
   "The choose activity screen" should {
     lazy val dynamicView = ConfirmationPage(
