@@ -35,7 +35,6 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
     val repository: SicStoreMongoRepository = fakeApplication.injector.instanceOf[SicStoreRepo].repo
 
     await(repository.drop)
-    await(repository.ensureIndexes)
 
     def count: Int = await(repository.count)
     def insert(sicStore: SicStore): WriteResult = await(repository.insert(sicStore))
@@ -224,16 +223,4 @@ class SicStoreRepoISpec extends UnitSpec with MongoSpecSupport with WithFakeAppl
     }
   }
 
-  "Indexes" should {
-    "should exist" in new Setup {
-      val indexList: List[Index] = await(repository.collection.indexesManager.list())
-
-      val containsIndexes: Boolean = eventually {
-        indexList.map(_.name).filter(_.isDefined).contains(Some("lastUpdatedIndex")) &&
-          indexList.map(_.name).filter(_.isDefined).contains(Some("_id_"))
-      }
-
-      containsIndexes shouldBe true
-    }
-  }
 }

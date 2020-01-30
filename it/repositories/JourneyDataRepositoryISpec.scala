@@ -37,7 +37,6 @@ class JourneyDataRepositoryISpec extends PlaySpec with WithFakeApplication with 
     val mongo: ReactiveMongoComponent = fakeApplication.injector.instanceOf[ReactiveMongoComponent]
 
     await(repository.drop)
-    await(repository.ensureIndexes)
 
     def count: Int = await(repository.count)
     def insert(journeyData: JourneyData): WriteResult = await(repository.insert(journeyData))
