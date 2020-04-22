@@ -16,6 +16,7 @@
 
 package helpers
 
+import org.scalatest.Assertion
 import org.scalatestplus.play.PlaySpec
 import play.api.data.validation.ValidationError
 import play.api.libs.json.{JsError, JsPath, JsResult, JsSuccess}
@@ -23,10 +24,10 @@ import play.api.libs.json.{JsError, JsPath, JsResult, JsSuccess}
 trait JsonFormValidation {
   this: PlaySpec =>
 
-  def mustBeSuccess[T](expected: T, result: JsResult[T]) = {
+  def mustBeSuccess[T](expected: T, result: JsResult[T]): Assertion = {
     result match {
-      case JsSuccess(value, path) => value mustBe expected
-      case JsError(errors) => fail(s"Test produced errors - ${errors}")
+      case JsSuccess(value, _) => value mustBe expected
+      case JsError(errors) => fail(s"Test produced errors - $errors")
     }
   }
 
@@ -40,35 +41,31 @@ trait JsonFormValidation {
 
   def shouldHaveErrors[T](result: JsResult[T], expectedErrors: Map[JsPath, Seq[ValidationError]]): Unit = {
     result match {
-      case JsSuccess(value, path) => fail(s"read should have failed and didn't - produced ${value}")
-      case JsError(errors) => {
+      case JsSuccess(value, _) => fail(s"read should have failed and didn't - produced $value")
+      case JsError(errors) =>
         errors.length mustBe expectedErrors.keySet.toSeq.length
 
-        for( error <- errors ) {
+        for (error <- errors) {
           error match {
-            case (path, valErrs) => {
+            case (path, valErrs) =>
               expectedErrors.keySet must contain(path)
               expectedErrors(path) mustBe valErrs
-            }
           }
         }
-      }
     }
   }
 
-  def shouldHaveErrors2[T](result: JsResult[T], errorPath: JsPath, expectedError: ValidationError) = {
+  def shouldHaveErrors2[T](result: JsResult[T], errorPath: JsPath, expectedError: ValidationError): Assertion = {
     result match {
-      case JsSuccess(value, path) => fail(s"read should have failed and didn't - produced ${value}")
-      case JsError(errors) => {
+      case JsSuccess(value, _) => fail(s"read should have failed and didn't - produced $value")
+      case JsError(errors) =>
         errors.length mustBe 1
         errors.head match {
-          case (path, error) => {
+          case (path, error) =>
             path mustBe errorPath
             error.length mustBe 1
             error.head mustBe expectedError
-          }
         }
-      }
     }
   }
 

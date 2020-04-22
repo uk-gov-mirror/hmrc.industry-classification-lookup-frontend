@@ -19,10 +19,10 @@ package forms
 import forms.sicsearch.SicSearchForm
 import helpers.UnitTestSpec
 import models.SicSearch
-import play.api.data.FormError
+import play.api.data.{Form, FormError}
 
 class SicSearchFormSpec extends UnitTestSpec {
-  val testForm = SicSearchForm.form
+  val testForm: Form[SicSearch] = SicSearchForm.form
 
   "Binding SicSearchFormSpec to a model" should {
     "Bind successfully with full data" in {

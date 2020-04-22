@@ -17,29 +17,23 @@
 package services
 
 import connectors.ICLConnector
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models._
 import models.setup.JourneyData
 import play.api.Logger
-import repositories.{SicStoreMongoRepository, SicStoreRepo}
+import repositories.SicStoreRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SicSearchServiceImpl @Inject()(val iCLConnector: ICLConnector,
-                                     sicStoreRepo: SicStoreRepo) extends SicSearchService {
-  val sicStoreRepository: SicStoreMongoRepository = sicStoreRepo.repo
- }
-
-trait SicSearchService {
-
-  protected val iCLConnector: ICLConnector
-  protected val sicStoreRepository: SicStoreMongoRepository
+@Singleton
+class SicSearchService @Inject()(val iCLConnector: ICLConnector,
+                                 sicStoreRepository: SicStoreRepository) {
 
   def search(journeyData: JourneyData, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
-    if(isLookup(query)){
-      lookupSicCodes(journeyData, List(SicCode(query,"")))
+    if (isLookup(query)) {
+      lookupSicCodes(journeyData, List(SicCode(query, "")))
     } else {
       searchQuery(journeyData, query, sector)
     }
@@ -91,10 +85,10 @@ trait SicSearchService {
 
   private[services] def searchQuery(journeyData: JourneyData, query: String, sector: Option[String] = None)(implicit hc: HeaderCarrier): Future[Int] = {
     (for {
-      oSearchResults  <- iCLConnector.search(query, journeyData.journeySetupDetails, sector)
-      sectorObject    = sector.flatMap(sicCode => oSearchResults.sectors.find(_.code == sicCode))
-      searchResults   = sectorObject.fold(oSearchResults)(s => oSearchResults.copy(currentSector = Some(s)))
-      _               <- sicStoreRepository.upsertSearchResults(journeyData.identifiers.journeyId, searchResults) flatMap { res =>
+      oSearchResults <- iCLConnector.search(query, journeyData.journeySetupDetails, sector)
+      sectorObject = sector.flatMap(sicCode => oSearchResults.sectors.find(_.code == sicCode))
+      searchResults = sectorObject.fold(oSearchResults)(s => oSearchResults.copy(currentSector = Some(s)))
+      _ <- sicStoreRepository.upsertSearchResults(journeyData.identifiers.journeyId, searchResults) flatMap { res =>
         if (searchResults.numFound == 1) lookupSicCodes(journeyData, searchResults.results) else Future.successful(res)
       }
     } yield searchResults.numFound) recover {

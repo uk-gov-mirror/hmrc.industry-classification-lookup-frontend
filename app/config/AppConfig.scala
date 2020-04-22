@@ -19,59 +19,37 @@ package config
 import java.nio.charset.Charset
 import java.util.Base64
 
-import javax.inject.Inject
-import play.api.Configuration
+import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.config.{AssetsConfig, OptimizelyConfig}
 
-class FrontendAppConfig @Inject()(configuration: Configuration) extends AppConfig {
+@Singleton
+class AppConfig @Inject()(configuration: ServicesConfig,
+                          assetsConfig: AssetsConfig,
+                          optimizelyConfig: OptimizelyConfig) {
 
-  private def loadConfig(key: String) = configuration.getString(key).getOrElse(throw new Exception(s"Missing configuration key: $key"))
+  def loadConfig(key: String): String = configuration.getString(key)
 
-  private val contactHost                  = configuration.getString(s"contact-frontend.host").getOrElse("")
+  lazy val industryClassificationLookupBackend: String = configuration.baseUrl("industry-classification-lookup")
+
+  private lazy val contactHost = configuration.getString(s"contact-frontend.host")
   private val contactFormServiceIdentifier = "MyService"
 
-  override lazy val analyticsToken            = loadConfig(s"google-analytics.token")
-  override lazy val analyticsHost             = loadConfig(s"google-analytics.host")
-  override lazy val reportAProblemPartialUrl  = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
-  override lazy val reportAProblemNonJSUrl    = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
+  lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
+  lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
+  lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
+  lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 
   private def whitelistConfig(key: String): Seq[String] =
     Some(new String(Base64.getDecoder.decode(loadConfig(key)), "UTF-8")).map(_.split(",")).getOrElse(Array.empty).toSeq
 
-  private def loadStringConfigBase64(key : String) : String = {
-    new String(Base64.getDecoder.decode(configuration.getString(key).getOrElse("")), Charset.forName("UTF-8"))
+  private def loadStringConfigBase64(key: String): String = {
+    new String(Base64.getDecoder.decode(configuration.getString(key)), Charset.forName("UTF-8"))
   }
 
-  lazy val whitelist         = whitelistConfig("whitelist")
-  lazy val whitelistExcluded = whitelistConfig("whitelist-excluded")
+  lazy val whitelist: Seq[String] = whitelistConfig("whitelist")
+  lazy val whitelistExcluded: Seq[String] = whitelistConfig("whitelist-excluded")
 
-  lazy val csrfBypassValue   = loadStringConfigBase64("Csrf-Bypass-value")
-  lazy val uriWhiteList      = configuration.getStringSeq("csrfexceptions.whitelist").getOrElse(Seq.empty).toSet
-
-  override lazy val assetsConfig: AssetsConfig = new AssetsConfig(configuration) {
-    val assetsUrl: String = loadConfig("assets.url")
-    val assetsVersion: String = loadConfig("assets.version")
-    override val assetsPrefix: String = assetsUrl + assetsVersion
-  }
-
-  override lazy val optimizelyConfig: OptimizelyConfig = new OptimizelyConfig(configuration) {
-    def optimizelyBaseUrl: String = configuration.getString("optimizely.url").getOrElse("")
-    def optimizelyProjectId: Option[String] = configuration.getString("optimizely.projectId")
-  }
-}
-
-trait AppConfig {
-  val analyticsToken: String
-  val analyticsHost: String
-  val reportAProblemPartialUrl: String
-  val reportAProblemNonJSUrl: String
-
-  val whitelist: Seq[String]
-  val whitelistExcluded: Seq[String]
-
-  val csrfBypassValue: String
-  val uriWhiteList: Set[String]
-
-  val assetsConfig: AssetsConfig
-  val optimizelyConfig: OptimizelyConfig
+  lazy val csrfBypassValue: String = loadStringConfigBase64("Csrf-Bypass-value")
+  lazy val uriWhiteList: Set[String] = configuration.getString("csrfexceptions.whitelist").split(",").toSet
 }

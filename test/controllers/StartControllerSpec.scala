@@ -18,34 +18,31 @@ package controllers
 
 import java.time.LocalDateTime
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.auth.AuthHelpers
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
-import play.api.i18n.MessagesApi
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class StartControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages with AuthHelpers {
   val authConnector: AuthConnector = mockAuthConnector
 
   class Setup {
-    def controller = new StartController {
-      override val sicSearchService: SicSearchService = mockSicSearchService
-      override implicit val appConfig: AppConfig = mockAppConfig
-      override val journeyService: JourneyService = mockJourneyService
-      override val loginURL: String = "test/login/url"
-
-      override def messagesApi: MessagesApi = MockMessages
-
-      override def authConnector: AuthConnector = mockAuthConnector
+    def controller: StartController = new StartController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
   }
 
@@ -59,11 +56,11 @@ class StartControllerSpec extends UnitTestSpec with MockAppConfig with MockMessa
     "redirect to the search page" when {
       "no sic-codes in journey setup" in new Setup {
         val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
-        val url = routes.ChooseActivityController.show(journeyId).url
+        val url: String = routes.ChooseActivityController.show(journeyId).url
 
         when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
-        AuthHelpers.requestWithAuthorisedUser(controller.startJourney(journeyId), requestWithSession){
+        AuthHelpers.requestWithAuthorisedUser(controller.startJourney(journeyId), requestWithSession) {
           result =>
             status(result) mustBe 303
             redirectLocation(result) mustBe Some(url)
@@ -75,11 +72,11 @@ class StartControllerSpec extends UnitTestSpec with MockAppConfig with MockMessa
       "there are sic-codes in journey setup" in new Setup {
         val journeySetup = JourneySetup(sicCodes = Seq("12345"))
         val journeyData = JourneyData(identifiers, "redirectUrl", journeySetup, LocalDateTime.now())
-        val url = routes.ConfirmationController.show(journeyId).url
+        val url: String = routes.ConfirmationController.show(journeyId).url
 
         when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
-        AuthHelpers.requestWithAuthorisedUser(controller.startJourney(journeyId), requestWithSession){
+        AuthHelpers.requestWithAuthorisedUser(controller.startJourney(journeyId), requestWithSession) {
           result =>
             status(result) mustBe 303
             redirectLocation(result) mustBe Some(url)

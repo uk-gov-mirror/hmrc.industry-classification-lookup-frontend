@@ -16,34 +16,32 @@
 
 package controllers
 
-import auth.SicSearchExternalURLs
 import config.AppConfig
 import forms.chooseactivity.ChooseMultipleActivitiesForm
 import forms.sicsearch.SicSearchForm
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData}
-import models.{SearchResults, SicSearch}
-import play.api.i18n.MessagesApi
-import play.api.mvc.{Action, AnyContent, Request, Result}
+import models.{SearchResults, SicCode, SicSearch}
+import play.api.data.Form
+import play.api.mvc._
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class ChooseActivityControllerImpl @Inject()(val messagesApi: MessagesApi,
-                                             val servicesConfig: ServicesConfig,
-                                             val appConfig: AppConfig,
-                                             val sicSearchService: SicSearchService,
-                                             val journeyService: JourneyService,
-                                             val authConnector: AuthConnector) extends ChooseActivityController with SicSearchExternalURLs
+@Singleton
+class ChooseActivityController @Inject()(mcc: MessagesControllerComponents,
+                                         val servicesConfig: ServicesConfig,
+                                         val sicSearchService: SicSearchService,
+                                         val journeyService: JourneyService,
+                                         val authConnector: AuthConnector
+                                        )(implicit ec: ExecutionContext,
+                                          appConfig: AppConfig)
+  extends ICLController(mcc) {
 
-trait ChooseActivityController extends ICLController {
-
-  val sicSearchService : SicSearchService
-  val chooseActivityForm = ChooseMultipleActivitiesForm.form
+  val chooseActivityForm: Form[List[SicCode]] = ChooseMultipleActivitiesForm.form
 
   def show(journeyId: String, doSearch: Option[Boolean] = None): Action[AnyContent] = Action.async {
     implicit request =>
@@ -111,8 +109,8 @@ trait ChooseActivityController extends ICLController {
       chooseActivityForm.bindFromRequest().fold(
         errors => Future.successful(BadRequest(views.html.pages.chooseactivity(journeyId, SicSearchForm.form.fill(SicSearch(searchResults.query)), errors, Some(searchResults)))),
         codes => sicSearchService.lookupSicCodes(journeyData, codes) map { _ =>
-            Redirect(routes.ConfirmationController.show(journeyId))
-          }
+          Redirect(routes.ConfirmationController.show(journeyId))
+        }
       )
     }
   }

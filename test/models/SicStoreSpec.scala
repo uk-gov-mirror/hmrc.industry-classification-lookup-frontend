@@ -27,47 +27,47 @@ class SicStoreSpec extends UnitTestSpec {
   val dateTime: DateTime = DateTime.parse("2017-06-15T10:06:28.434Z")
   val now: JsValue = Json.toJson(dateTime)(ReactiveMongoFormats.dateTimeWrite)
 
-  val sicStoreWithChoicesJson : JsValue = Json.parse(
+  val sicStoreWithChoicesJson: JsValue = Json.parse(
     s"""
-      |{
-      |  "journeyId" : "12345",
-      |  "search" : {
-      |    "query":"$query",
-      |    "numFound":1,
-      |    "results":[
-      |      {"code" : "19283", "desc" : "Search Sic Code Result Description"}
-      |    ],
-      |    "sectors":[
-      |      {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
-      |    ]
-      |  },
-      |  "choices" : [
-      |    {"code" : "57384", "desc" : "Sic Code Test Description 1", "indexes": ["someIndex 1"]},
-      |    {"code" : "11920", "desc" : "Sic Code Test Description 2", "indexes": ["someIndex 2"]},
-      |    {"code" : "12994", "desc" : "Sic Code Test Description 3", "indexes": ["someIndex 3"]},
-      |    {"code" : "39387", "desc" : "Sic Code Test Description 4", "indexes": []}
-      |  ],
-      |  "lastUpdated" : $now
-      |}
+       |{
+       |  "journeyId" : "12345",
+       |  "search" : {
+       |    "query":"$query",
+       |    "numFound":1,
+       |    "results":[
+       |      {"code" : "19283", "desc" : "Search Sic Code Result Description"}
+       |    ],
+       |    "sectors":[
+       |      {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
+       |    ]
+       |  },
+       |  "choices" : [
+       |    {"code" : "57384", "desc" : "Sic Code Test Description 1", "indexes": ["someIndex 1"]},
+       |    {"code" : "11920", "desc" : "Sic Code Test Description 2", "indexes": ["someIndex 2"]},
+       |    {"code" : "12994", "desc" : "Sic Code Test Description 3", "indexes": ["someIndex 3"]},
+       |    {"code" : "39387", "desc" : "Sic Code Test Description 4", "indexes": []}
+       |  ],
+       |  "lastUpdated" : $now
+       |}
     """.stripMargin
   )
 
-  val sicStoreNoChoicesJson : JsValue = Json.parse(
+  val sicStoreNoChoicesJson: JsValue = Json.parse(
     s"""
-      |{
-      |  "journeyId" : "12345",
-      |  "search" : {
-      |     "query":"$query",
-      |     "numFound":1,
-      |     "results":[
-      |       {"code" : "19283", "desc" : "Search Sic Code Result Description"}
-      |     ],
-      |     "sectors":[
-      |       {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
-      |     ]
-      |  },
-      |  "lastUpdated" : $now
-      |}
+       |{
+       |  "journeyId" : "12345",
+       |  "search" : {
+       |     "query":"$query",
+       |     "numFound":1,
+       |     "results":[
+       |       {"code" : "19283", "desc" : "Search Sic Code Result Description"}
+       |     ],
+       |     "sectors":[
+       |       {"code" : "A", "name" : "Clearly fake business sector", "count": 22}
+       |     ]
+       |  },
+       |  "lastUpdated" : $now
+       |}
     """.stripMargin
   )
 

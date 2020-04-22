@@ -16,7 +16,7 @@
 
 package services
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.SicCode
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.libs.json.{JsValue, Json}
@@ -26,14 +26,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class JourneyServiceImpl @Inject()(journeyDataRepo: JourneyDataRepo,
-                                   val sicSearchService: SicSearchService) extends JourneyService {
-  override val journeyDataRepository: JourneyDataMongoRepository = journeyDataRepo.store
-}
-
-trait JourneyService {
-  val journeyDataRepository: JourneyDataRepository
-  val sicSearchService: SicSearchService
+@Singleton
+class JourneyService @Inject()(journeyDataRepository: JourneyDataRepository,
+                               val sicSearchService: SicSearchService) {
 
   def initialiseJourney(journeyData: JourneyData)(implicit hc: HeaderCarrier): Future[JsValue] = {
     for {
@@ -48,7 +43,7 @@ trait JourneyService {
     } yield res
   }
 
-  def updateJourneyWithJourneySetup(identifiers: Identifiers, journeySetupDetails: JourneySetup):Future[JourneySetup] = {
+  def updateJourneyWithJourneySetup(identifiers: Identifiers, journeySetupDetails: JourneySetup): Future[JourneySetup] = {
     journeyDataRepository.updateJourneySetup(identifiers, journeySetupDetails)
   }
 

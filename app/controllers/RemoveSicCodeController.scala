@@ -16,31 +16,28 @@
 
 package controllers
 
-import javax.inject.Inject
-
-import auth.SicSearchExternalURLs
 import config.AppConfig
 import forms.RemoveSicCodeForm
+import javax.inject.{Inject, Singleton}
 import models.SicCodeChoice
 import play.api.data.Form
-import play.api.i18n.MessagesApi
 import play.api.mvc._
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class RemoveSicCodeControllerImpl @Inject()(val messagesApi: MessagesApi,
-                                            val servicesConfig: ServicesConfig,
-                                            val appConfig: AppConfig,
-                                            val sicSearchService: SicSearchService,
-                                            val journeyService: JourneyService,
-                                            val authConnector: AuthConnector) extends RemoveSicCodeController with SicSearchExternalURLs
+@Singleton
+class RemoveSicCodeController @Inject()(mcc: MessagesControllerComponents,
+                                        val servicesConfig: ServicesConfig,
+                                        val sicSearchService: SicSearchService,
+                                        val journeyService: JourneyService,
+                                        val authConnector: AuthConnector
+                                       )(implicit ec: ExecutionContext,
+                                         appConfig: AppConfig)
+  extends ICLController(mcc) {
 
-trait RemoveSicCodeController extends ICLController {
-  implicit val appConfig: AppConfig
-  val sicSearchService: SicSearchService
   def confirmationForm(description: String): Form[String] = RemoveSicCodeForm.form(description)
 
   private def withSicCodeChoice(journeyId: String, codes: List[SicCodeChoice], sicCode: String)(f: SicCodeChoice => Future[Result]): Future[Result] =
@@ -53,7 +50,7 @@ trait RemoveSicCodeController extends ICLController {
       userAuthorised() {
         withJourney(journeyId) { journey =>
           withCurrentUsersChoices(journey.identifiers) { codes =>
-            withSicCodeChoice(journeyId, codes, sicCode){ code =>
+            withSicCodeChoice(journeyId, codes, sicCode) { code =>
               Future.successful(Ok(views.html.pages.removeActivityConfirmation(journeyId, confirmationForm(code.desc), code)))
             }
           }

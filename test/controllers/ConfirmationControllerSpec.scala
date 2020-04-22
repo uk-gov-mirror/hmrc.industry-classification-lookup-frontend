@@ -18,18 +18,14 @@ package controllers
 
 import java.time.LocalDateTime
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
-import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc._
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
-import uk.gov.hmrc.auth.core.AuthConnector
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -37,14 +33,14 @@ import scala.concurrent.Future
 class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   class Setup {
-    val controller: ConfirmationController = new ConfirmationController with I18nSupport {
-      override val loginURL = "/test/login"
-
-      override implicit val appConfig: AppConfig      = mockAppConfig
-      override val sicSearchService: SicSearchService = mockSicSearchService
-      override val authConnector: AuthConnector       = mockAuthConnector
-      override val messagesApi: MessagesApi           = MockMessages
-      override val journeyService: JourneyService     = mockJourneyService
+    val controller: ConfirmationController = new ConfirmationController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
   }
 
@@ -70,7 +66,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId) {
         result =>
           status(result) mustBe 200
       }
@@ -83,7 +79,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId) {
         result =>
           status(result) mustBe 303
       }
@@ -100,7 +96,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
 
       when(mockJourneyService.getRedirectUrl(any())) thenReturn Future.successful("redirect-url")
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), requestWithSessionId.withFormUrlEncodedBody()){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), requestWithSessionId.withFormUrlEncodedBody()) { result =>
         status(result) mustBe 303
         redirectLocation(result) mustBe Some("redirect-url")
       }
@@ -114,7 +110,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
 
       val request: FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody()
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request) { result =>
         status(result) mustBe BAD_REQUEST
       }
     }
@@ -126,7 +122,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(None))
 
-      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Results.Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe SEE_OTHER
@@ -137,7 +133,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List())))
 
-      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Results.Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe SEE_OTHER
@@ -148,7 +144,7 @@ class ConfirmationControllerSpec extends UnitTestSpec with MockAppConfig with Mo
       when(mockSicSearchService.retrieveChoices(any())(any()))
         .thenReturn(Future.successful(Some(List(sicCodeChoice))))
 
-      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Ok)
+      val f: List[SicCodeChoice] => Future[Result] = _ => Future.successful(Results.Ok)
       val result: Future[Result] = controller.withCurrentUsersChoices(identifiers)(f)
 
       status(result) mustBe OK

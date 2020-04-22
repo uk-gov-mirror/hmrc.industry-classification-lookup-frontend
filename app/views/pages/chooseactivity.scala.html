@@ -19,7 +19,7 @@
 @import helpers.templates._
 @import forms.sicsearch.SicSearchForm
 
-@(journeyId: String, sicSearchForm: Form[SicSearch], chooseActForm: Form[List[SicCode]], oSearchResults: Option[SearchResults])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, sicSearchForm: Form[SicSearch], chooseActForm: Form[List[SicCode]], oSearchResults: Option[SearchResults])(implicit lang: play.api.i18n.Lang, request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.chooseactivity.title"), bodyClasses = Some("full-width")) {
 

@@ -17,11 +17,11 @@
 package forms
 
 import helpers.UnitTestSpec
-import play.api.data.FormError
+import play.api.data.{Form, FormError}
 
 class RemoveSicCodeFormSpec extends UnitTestSpec {
 
-  val testForm = RemoveSicCodeForm.form("description")
+  val testForm: Form[String] = RemoveSicCodeForm.form("description")
 
   "Binding BusinessActivityFormSpec to a model" should {
     "bind successfully with full data" in {

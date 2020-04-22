@@ -23,7 +23,7 @@ class SicSearchSpec extends UnitTestSpec {
 
   val testSicSearchModel = SicSearch("12345")
 
-  val testSicSearchJson : JsValue = Json.parse(
+  val testSicSearchJson: JsValue = Json.parse(
     """
       |{
       |  "sicSearch":"12345"

@@ -30,12 +30,14 @@ import scala.concurrent.Future
 class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
 
   val now = LocalDateTime.now
+
   class Setup {
-    val testService = new JourneyService {
-      override val journeyDataRepository = mockJourneyDataRepo
-      override val sicSearchService = mockSicSearchService
-    }
+    val testService = new JourneyService(
+      journeyDataRepository = mockJourneyDataRepository,
+      sicSearchService = mockSicSearchService
+    )
   }
+
   val identifier = Identifiers(
     journeyId = "testJourneyId",
     sessionId = "testSessionId"
@@ -44,10 +46,10 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
   val journeyData = JourneyData(identifier, "/test/uri", JourneySetup(), now)
 
   val testJourneyData = JourneyData(
-    identifiers          = identifier,
-    redirectUrl         = "/test/uri",
+    identifiers = identifier,
+    redirectUrl = "/test/uri",
     journeySetupDetails = JourneySetup(),
-    lastUpdated         = now
+    lastUpdated = now
   )
 
   "initialiseJourney" should {
@@ -66,7 +68,7 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
 
   "getRedirectUrl" should {
     "return a redirect url" in new Setup {
-      when(mockJourneyDataRepo.retrieveJourneyData(any()))
+      when(mockJourneyDataRepository.retrieveJourneyData(any()))
         .thenReturn(Future.successful(journeyData))
 
       assertAndAwait(testService.getRedirectUrl(identifier)) {
@@ -75,23 +77,23 @@ class JourneySetupServiceSpec extends UnitTestSpec with MockJourneyDataRepo {
     }
   }
   "updateJourneyWithJourneySetup" should {
-    val journeySetup = JourneySetup("foo",queryParser = None, None, 5)
+    val journeySetup = JourneySetup("foo", queryParser = None, None, 5)
     "return updated Journey Setup" in new Setup {
-      when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.successful(journeySetup))
-      await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)) mustBe journeySetup
+      when(mockJourneyDataRepository.updateJourneySetup(any(), any())).thenReturn(Future.successful(journeySetup))
+      await(testService.updateJourneyWithJourneySetup(journeyData.identifiers, journeySetup)) mustBe journeySetup
     }
     "return an Exception" in new Setup {
-      when(mockJourneyDataRepo.updateJourneySetup(any(),any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
-      intercept[Exception](await(testService.updateJourneyWithJourneySetup(journeyData.identifiers,journeySetup)))
+      when(mockJourneyDataRepository.updateJourneySetup(any(), any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
+      intercept[Exception](await(testService.updateJourneyWithJourneySetup(journeyData.identifiers, journeySetup)))
     }
   }
   "getJourney" should {
     "get journey data successfully" in new Setup {
-      when(mockJourneyDataRepo.retrieveJourneyData(any())).thenReturn(Future.successful(journeyData))
+      when(mockJourneyDataRepository.retrieveJourneyData(any())).thenReturn(Future.successful(journeyData))
       await(testService.getJourney(journeyData.identifiers)) mustBe journeyData
     }
     "return an Exception" in new Setup {
-      when(mockJourneyDataRepo.retrieveJourneyData(any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
+      when(mockJourneyDataRepository.retrieveJourneyData(any())).thenReturn(Future.failed(new Exception("foo bar wizz bang")))
       intercept[Exception](await(testService.getJourney(journeyData.identifiers)))
     }
   }
