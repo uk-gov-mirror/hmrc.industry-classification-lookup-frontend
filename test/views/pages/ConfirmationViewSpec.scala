@@ -29,7 +29,7 @@ import views.html.pages.{confirmation => ConfirmationPage}
 class ConfirmationViewSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages with I18nSupport {
   implicit val request: FakeRequest[_] = FakeRequest()
 
-  override def messagesApi: MessagesApi = MockMessages
+  override def messagesApi: MessagesApi = mockMessagesApi
 
   val sicCodeChoices = List(
     SicCodeChoice("12345", "my fake description", List("this is the index")),

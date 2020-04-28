@@ -16,31 +16,28 @@
 
 package connectors
 
-import javax.inject.Inject
+import config.AppConfig
+import javax.inject.{Inject, Singleton}
 import models.setup.JourneySetup
 import models.{SearchResults, SicCode}
 import play.api.Logger
 import play.api.http.Status.NO_CONTENT
 import play.api.libs.json.{Json, Reads}
-import uk.gov.hmrc.http.{CoreGet, HeaderCarrier, HttpException, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpException, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.config.ServicesConfig
 import uk.gov.hmrc.play.http.logging.MdcLoggingExecutionContext._
 
 import scala.concurrent.Future
 
-class ICLConnectorImpl @Inject()(config : ServicesConfig, val http: HttpClient) extends ICLConnector {
-  val ICLUrl: String = config.baseUrl("industry-classification-lookup")
-}
+@Singleton
+class ICLConnector @Inject()(appConfig: AppConfig,
+                             http: HttpClient) {
 
-trait ICLConnector {
-
-  val http: CoreGet
-  val ICLUrl: String
+  lazy val ICLUrl: String = appConfig.industryClassificationLookupBackend
 
   def lookup(sicCode: String)(implicit hc: HeaderCarrier): Future[List[SicCode]] = {
     http.GET[HttpResponse](s"$ICLUrl/industry-classification-lookup/lookup/$sicCode") map { resp =>
-      if(resp.status == NO_CONTENT) List.empty[SicCode] else Json.fromJson[List[SicCode]](resp.json).getOrElse(List.empty[SicCode])
+      if (resp.status == NO_CONTENT) List.empty[SicCode] else Json.fromJson[List[SicCode]](resp.json).getOrElse(List.empty[SicCode])
     } recover {
       case e: HttpException =>
         Logger.error(s"[Lookup] Looking up sic code : $sicCode returned a ${e.responseCode}")

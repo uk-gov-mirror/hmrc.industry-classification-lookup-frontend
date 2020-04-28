@@ -16,29 +16,32 @@
 
 package controllers.internal
 
-import javax.inject.Inject
-import controllers.{BasicController, JourneyManager}
+import controllers.ICLController
+import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData}
 import play.api.libs.json._
-import play.api.mvc.Results._
-import play.api.mvc.{Action, AnyContent, BodyParsers}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 
-class ApiControllerImpl @Inject()(val journeyService: JourneyService,
-                                  val sicSearchService: SicSearchService) extends ApiController {
-}
+@Singleton
+class ApiController @Inject()(mcc: MessagesControllerComponents,
+                              val journeyService: JourneyService,
+                              val sicSearchService: SicSearchService,
+                              val authConnector: AuthConnector,
+                              val servicesConfig: ServicesConfig
+                             )(implicit ec: ExecutionContext)
+  extends ICLController(mcc) {
 
-trait ApiController extends BasicController with JourneyManager {
-
-  val sicSearchService: SicSearchService
-
-  def journeyInitialisation(): Action[JsValue] = Action.async(BodyParsers.parse.json) { implicit request =>
+  def journeyInitialisation(): Action[JsValue] = Action.async(parse.json) { implicit request =>
     withSessionId { sessionId =>
       withJsBody[JourneyData](JourneyData.initialRequestReads(sessionId)) { journeyData =>
-        implicit val hc = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
         journeyService.initialiseJourney(journeyData).map(Ok(_))
       }
     }

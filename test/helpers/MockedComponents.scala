@@ -17,29 +17,29 @@
 package helpers
 
 import connectors.ICLConnector
-import org.scalatest.mockito.MockitoSugar
-import repositories.SicStoreMongoRepository
+import org.scalatestplus.mockito.MockitoSugar
+import repositories.SicStoreRepository
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
-import uk.gov.hmrc.play.config.ServicesConfig
 
 trait MockedComponents {
   self: MockitoSugar =>
 
-  val mockWSHttp           = mock[HttpClient]
+  val mockWSHttp: HttpClient = mock[HttpClient]
 
   //Connector mocks
-  val mockAuthConnector    = mock[AuthConnector]
-  val mockAuditConnector   = mock[AuditConnector]
-  val mockICLConnector     = mock[ICLConnector]
+  val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  val mockAuditConnector: AuditConnector = mock[AuditConnector]
+  val mockICLConnector: ICLConnector = mock[ICLConnector]
 
   //Service mocks
-  val mockJourneyService   = mock[JourneyService]
-  val mockSicSearchService = mock[SicSearchService]
-  val mockServicesConfig   = mock[ServicesConfig]
+  val mockJourneyService: JourneyService = mock[JourneyService]
+  val mockSicSearchService: SicSearchService = mock[SicSearchService]
+  val mockServicesConfig: ServicesConfig = mock[ServicesConfig]
 
   //Repo mocks
-  val mockSicStoreRepo     = mock[SicStoreMongoRepository]
+  val mockSicStoreRepository: SicStoreRepository = mock[SicStoreRepository]
 }

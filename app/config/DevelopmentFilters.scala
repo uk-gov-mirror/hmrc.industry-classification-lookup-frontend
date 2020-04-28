@@ -16,10 +16,10 @@
 
 package config
 
-import filters.CSRFExceptionsFilter
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import play.api.http.DefaultHttpFilters
 import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
-class DevelopmentFilters @Inject()(csrfExceptionsFilter: CSRFExceptionsFilter, defaultFilters: FrontendFilters)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter) ++ defaultFilters.filters:_*)
+@Singleton
+class DevelopmentFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter)
+  extends DefaultHttpFilters(Seq(csrfExceptionsFilter) ++ defaultFilters.filters: _*)

@@ -19,12 +19,15 @@ package helpers
 import java.net.{URLDecoder, URLEncoder}
 import java.util.UUID
 
-import play.api.libs.Crypto
+import play.api.libs.crypto.DefaultCookieSigner
 import play.api.libs.ws.WSCookie
 import uk.gov.hmrc.crypto.{CompositeSymmetricCrypto, Crypted, PlainText}
 import uk.gov.hmrc.http.SessionKeys
 
 trait CookieBaker {
+
+  val cookieSigner: DefaultCookieSigner
+
   val sessionId         = s"stubbed-${UUID.randomUUID}"
 
   val cookieKey = "gvBoGdgzqG1AarzF1LY0zQ=="
@@ -34,7 +37,7 @@ trait CookieBaker {
         case (k, v) => URLEncoder.encode(k, "UTF-8") + "=" + URLEncoder.encode(v, "UTF-8")
       }.mkString("&")
       val key = "yNhI04vHs9<_HWbC`]20u`37=NGLGYY5:0Tg5?y`W<NoJnXWqmjcgZBec@rOxb^G".getBytes
-      PlainText(Crypto.sign(encoded, key) + "-" + encoded)
+      PlainText(cookieSigner.sign(encoded, key) + "-" + encoded)
     }
 
     val encodedCookie = encode(sessionData)
@@ -44,7 +47,7 @@ trait CookieBaker {
   }
 
   def getCookieData(cookie: WSCookie): Map[String, String] = {
-    getCookieData(cookie.value.get)
+    getCookieData(cookie.value)
   }
 
   def getCookieData(cookieData: String): Map[String, String] = {
@@ -72,7 +75,7 @@ trait CookieBaker {
     ) ++ additionalData
   }
 
-  def getSessionCookie(additionalData: Map[String, String] = Map(), timeStampRollback: Long = 0, sessionID: String = sessionId) = {
+  def getSessionCookie(additionalData: Map[String, String] = Map(), timeStampRollback: Long = 0, sessionID: String = sessionId): String = {
     cookieValue(cookieData(additionalData, timeStampRollback, sessionID))
   }
 }

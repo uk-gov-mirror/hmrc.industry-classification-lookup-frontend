@@ -18,36 +18,32 @@ package controllers.test
 
 import java.time.LocalDateTime
 
-import auth.SicSearchExternalURLs
 import config.AppConfig
-import controllers.{ICLController, JourneyManager}
-import javax.inject.Inject
-
+import controllers.ICLController
+import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.MessagesApi
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.voa.play.form.ConditionalMappings.{isEqual, mandatoryIf}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class TestSetupControllerImpl @Inject()(val messagesApi: MessagesApi,
-                                        val appConfig: AppConfig,
-                                        val journeyService: JourneyService,
-                                        val servicesConfig: ServicesConfig,
-                                        val sicSearchService: SicSearchService,
-                                        val authConnector: AuthConnector) extends TestSetupController with SicSearchExternalURLs
+@Singleton
+class TestSetupController @Inject()(mcc: MessagesControllerComponents,
+                                    val journeyService: JourneyService,
+                                    val servicesConfig: ServicesConfig,
+                                    val sicSearchService: SicSearchService,
+                                    val authConnector: AuthConnector
+                                   )(implicit ec: ExecutionContext,
+                                     appConfig: AppConfig)
+  extends ICLController(mcc) {
 
-trait TestSetupController extends ICLController with JourneyManager {
-
-  val journeyService: JourneyService
-
-  val journeySetupForm = {
+  val journeySetupForm: Form[JourneySetup] = {
     def journeySetupApply(dataSet: String = JourneyData.ONS,
                           queryParser: Option[Boolean] = None,
                           queryBooster: Option[Boolean] = None,
@@ -70,7 +66,7 @@ trait TestSetupController extends ICLController with JourneyManager {
       userAuthorised() {
         withSessionId { sessionId =>
           hasJourney(Identifiers(journeyId, sessionId)) { journeyData =>
-          Future.successful(Ok(views.html.test.SetupJourneyView(journeyId, journeySetupForm.fill(journeyData.journeySetupDetails))))
+            Future.successful(Ok(views.html.test.SetupJourneyView(journeyId, journeySetupForm.fill(journeyData.journeySetupDetails))))
           }
         }
       }
@@ -85,7 +81,7 @@ trait TestSetupController extends ICLController with JourneyManager {
               errors =>
                 Future.successful(BadRequest(views.html.test.SetupJourneyView(journeyId, errors))),
               validJourney => {
-                journeyService.updateJourneyWithJourneySetup(journeyData.identifiers, validJourney).map( _ => Redirect(controllers.routes.ChooseActivityController.show(journeyId)))
+                journeyService.updateJourneyWithJourneySetup(journeyData.identifiers, validJourney).map(_ => Redirect(controllers.routes.ChooseActivityController.show(journeyId)))
               }
             )
           }
@@ -104,7 +100,7 @@ trait TestSetupController extends ICLController with JourneyManager {
             journeySetupDetails = JourneySetup(),
             lastUpdated = LocalDateTime.now()
           )
-          journeyService.initialiseJourney(journeyData).map( _ => Redirect(controllers.test.routes.TestSetupController.show(journeyId)))
+          journeyService.initialiseJourney(journeyData).map(_ => Redirect(controllers.test.routes.TestSetupController.show(journeyId)))
         }
       }
   }

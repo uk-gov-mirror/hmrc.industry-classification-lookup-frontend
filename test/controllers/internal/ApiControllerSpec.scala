@@ -19,6 +19,7 @@ package controllers.internal
 import java.time.LocalDateTime
 
 import helpers.UnitTestSpec
+import helpers.mocks.MockMessages
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import models.{SicCode, SicCodeChoice}
 import org.mockito.ArgumentMatchers.any
@@ -27,16 +28,21 @@ import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ApiControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite {
+class ApiControllerSpec extends UnitTestSpec with MockMessages {
 
   trait Setup {
-    val controller: ApiController = new ApiController {
-      override val journeyService: JourneyService = mockJourneyService
-      override val sicSearchService: SicSearchService = mockSicSearchService
+    val controller: ApiController = new ApiController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
   }
 
@@ -102,15 +108,15 @@ class ApiControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite {
           .withBody(
             Json.parse(
               """{
-              | "customMessages": {
-              |   "summary": {
-              |     "heading": "value1",
-              |     "lead": "value2"
-              |   }
-              | }
-              |}""".
+                | "customMessages": {
+                |   "summary": {
+                |     "heading": "value1",
+                |     "lead": "value2"
+                |   }
+                | }
+                |}""".
                 stripMargin)
-        )
+          )
 
         val result: Future[Result] = controller.journeyInitialisation()(invalidRequest)
         status(result) mustBe BAD_REQUEST
@@ -186,7 +192,7 @@ class ApiControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite {
         intercept[Exception](await(controller.fetchResults(journeyId)(fakeRequest)))
       }
     }
-      "return 404" when {
+    "return 404" when {
 
       "there is no sic code choices in the sic store" in new Setup {
         val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()

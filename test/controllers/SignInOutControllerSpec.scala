@@ -18,9 +18,10 @@ package controllers
 
 import helpers.UnitTestSpec
 import helpers.mocks.MockMessages
-import play.api.i18n.MessagesApi
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
-import uk.gov.hmrc.auth.core.AuthConnector
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
 
@@ -28,13 +29,17 @@ class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
   val cRUri = "test-uri"
 
   class Setup {
-    val controller: SignInOutController = new SignInOutController {
-      override val loginURL = "/test/login"
+    val controller: SignInOutController = new SignInOutController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
 
-      override val compRegFEURL: String = cRUrl
-      override val compRegFEURI: String = cRUri
-      override val messagesApi: MessagesApi = MockMessages
-      override val authConnector: AuthConnector = mockAuthConnector
+      override lazy val compRegFEURL: String = cRUrl
+      override lazy val compRegFEURI: String = cRUri
     }
   }
 
@@ -42,10 +47,10 @@ class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
 
     "return a 303 and redirect to post sign in" in new Setup {
 
-      val request = FakeRequest()
+      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
       val url = s"$cRUrl$cRUri/post-sign-in"
 
-      AuthHelpers.showWithAuthorisedUser(controller.postSignIn, request){
+      AuthHelpers.showWithAuthorisedUser(controller.postSignIn, request) {
         result =>
           status(result) mustBe 303
           redirectLocation(result) mustBe Some(url)
@@ -57,10 +62,10 @@ class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
 
     "return a 303 and redirect to questionnaire" in new Setup {
 
-      val request = FakeRequest()
+      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
       val url = s"$cRUrl$cRUri/questionnaire"
 
-      AuthHelpers.showWithAuthorisedUser(controller.signOut, request){
+      AuthHelpers.showWithAuthorisedUser(controller.signOut, request) {
         result =>
           status(result) mustBe 303
           redirectLocation(result) mustBe Some(url)

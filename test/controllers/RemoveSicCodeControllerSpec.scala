@@ -18,7 +18,6 @@ package controllers
 
 import java.time.LocalDateTime
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
@@ -26,25 +25,23 @@ import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
-import uk.gov.hmrc.auth.core.AuthConnector
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages {
 
   class Setup {
-    val controller: RemoveSicCodeController = new RemoveSicCodeController with I18nSupport {
-      override val loginURL = "/test/login"
-
-      override implicit val appConfig: AppConfig      = mockAppConfig
-      override val sicSearchService: SicSearchService = mockSicSearchService
-      override val authConnector: AuthConnector       = mockAuthConnector
-      override val messagesApi: MessagesApi           = MockMessages
-      override val journeyService: JourneyService     = mockJourneyService
+    val controller: RemoveSicCodeController = new RemoveSicCodeController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
   }
 
@@ -54,6 +51,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
   val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
+
   def formRequestWithSessionId(answer: String): FakeRequest[AnyContentAsFormUrlEncoded] = requestWithSessionId.withFormUrlEncodedBody("removeCode" -> answer)
 
   val sicCodeCode = "12345"
@@ -73,7 +71,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, sicCodeCode), requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, sicCodeCode), requestWithSessionId) {
         result =>
           status(result) mustBe OK
       }
@@ -86,7 +84,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, "Unknown"), requestWithSessionId){
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId, "Unknown"), requestWithSessionId) {
         result =>
           status(result) mustBe SEE_OTHER
           redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show(journeyId, Some(true)).url)
@@ -102,7 +100,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("")){
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("")) {
         result =>
           status(result) mustBe BAD_REQUEST
           verify(mockSicSearchService, times(0)).removeChoice(any(), any())(any())
@@ -118,7 +116,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("yes")){
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("yes")) {
         result =>
           status(result) mustBe SEE_OTHER
           redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show(journeyId).url)
@@ -132,7 +130,7 @@ class RemoveSicCodeControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite 
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("no")){
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId, sicCodeCode), formRequestWithSessionId("no")) {
         result =>
           status(result) mustBe SEE_OTHER
           redirectLocation(result) mustBe Some(controllers.routes.ConfirmationController.show(journeyId).url)

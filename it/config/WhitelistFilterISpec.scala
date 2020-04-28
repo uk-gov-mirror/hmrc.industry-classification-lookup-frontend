@@ -23,16 +23,20 @@ import helpers.ClientSpec
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.crypto.DefaultCookieSigner
+import play.api.libs.ws.{WSRequest, WSResponse}
 import reactivemongo.api.commands.WriteResult
-import repositories.{JourneyDataMongoRepository, JourneyDataRepo}
+import repositories.JourneyDataRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class WhitelistFilterISpec extends ClientSpec {
 
+  override lazy val cookieSigner: DefaultCookieSigner = fakeApplication.injector.instanceOf[DefaultCookieSigner]
+
   trait Setup {
-    val repo: JourneyDataMongoRepository = fakeApplication.injector.instanceOf[JourneyDataRepo].store
+    val repo: JourneyDataRepository = fakeApplication.injector.instanceOf[JourneyDataRepository]
 
     await(repo.drop)
     await(repo.ensureIndexes)
@@ -55,15 +59,15 @@ class WhitelistFilterISpec extends ClientSpec {
     .build()
 
   "FrontendAppConfig must return a valid config item" when {
-    lazy val frontendAppConfig = app.injector.instanceOf[FrontendAppConfig]
+    lazy val appConfig = app.injector.instanceOf[AppConfig]
 
 
     "the whitelist exclusion paths are requested" in {
-      frontendAppConfig.whitelistExcluded mustBe Seq("/ping/ping", "/healthcheck")
+      appConfig.whitelistExcluded mustBe Seq("/ping/ping", "/healthcheck")
     }
 
     "the whitelist IPs are requested" in {
-      frontendAppConfig.whitelist mustBe Seq("whitelistIP")
+      appConfig.whitelist mustBe Seq("whitelistIP")
     }
   }
 
@@ -73,7 +77,7 @@ class WhitelistFilterISpec extends ClientSpec {
     "allow requests through the whitelist" when {
 
       "the request is sent from a whitelisted ip address" in new Setup {
-        val client = buildClient(searchUri)
+        val client: WSRequest = buildClient(searchUri)
           .withTrueClientIPHeader("whitelistIP")
           .withSessionIdHeader()
 
@@ -81,7 +85,7 @@ class WhitelistFilterISpec extends ClientSpec {
 
         await(insertIntoDb(journeyData))
 
-        val response = await(client.get())
+        val response: WSResponse = await(client.get())
         response.status mustBe 200
       }
 

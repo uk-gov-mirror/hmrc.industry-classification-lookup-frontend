@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package filters
+package config
 
 import akka.stream.Materializer
-import config.AppConfig
 import javax.inject.Inject
 import play.api.http.HttpVerbs.POST
 import play.api.mvc.{Filter, RequestHeader, Result}
@@ -31,7 +30,7 @@ class CSRFExceptionsFilter @Inject()(appConfig: AppConfig, implicit val mat: Mat
   private def internalRoutesBypass(rh: RequestHeader): RequestHeader = {
     (rh.method, whitelist.exists(rh.path.matches(_))) match {
       case (POST, true) => applyHeaders(rh)
-      case _            => removeHeaders(rh)
+      case _ => removeHeaders(rh)
     }
   }
 

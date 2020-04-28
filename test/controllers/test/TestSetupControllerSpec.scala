@@ -18,7 +18,6 @@ package controllers.test
 
 import java.time.LocalDateTime
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
@@ -26,26 +25,24 @@ import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
-import uk.gov.hmrc.auth.core.AuthConnector
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages {
 
   class Setup {
-    val controller: TestSetupController = new TestSetupController with I18nSupport {
-      override val loginURL = "/test/login"
-
-      override implicit val appConfig: AppConfig      = mockAppConfig
-      override val messagesApi: MessagesApi           = MockMessages
-      override val authConnector: AuthConnector       = mockAuthConnector
-      override val journeyService: JourneyService     = mockJourneyService
-      override val sicSearchService: SicSearchService = mockSicSearchService
+    val controller: TestSetupController = new TestSetupController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
 
     val requestWithSessionId: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
@@ -57,7 +54,7 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
   val journeyData = JourneyData(identifiers, "redirectUrl", JourneySetup(), LocalDateTime.now())
 
   val journeyName: String = JourneyData.QUERY_BUILDER
-  val dataSet: String     = JourneyData.ONS
+  val dataSet: String = JourneyData.ONS
   val journeySetup = JourneySetup("foo", queryParser = None, queryBooster = None, 1)
 
   val sicStore = SicStore(
@@ -71,7 +68,7 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){ result =>
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId) { result =>
         status(result) mustBe 200
       }
     }
@@ -80,7 +77,7 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId){ result =>
+      AuthHelpers.showWithAuthorisedUser(controller.show(journeyId), requestWithSessionId) { result =>
         status(result) mustBe 200
       }
     }
@@ -95,7 +92,7 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request) { result =>
         status(result) mustBe 400
       }
     }
@@ -109,9 +106,9 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
       )
 
       when(mockJourneyService.getJourney(any())) thenReturn Future.successful(journeyData)
-      when(mockJourneyService.updateJourneyWithJourneySetup(any(),any())).thenReturn(Future.successful(journeySetup))
+      when(mockJourneyService.updateJourneyWithJourneySetup(any(), any())).thenReturn(Future.successful(journeySetup))
 
-      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request){ result =>
+      AuthHelpers.submitWithAuthorisedUser(controller.submit(journeyId), request) { result =>
         status(result) mustBe SEE_OTHER
         redirectLocation(result) mustBe Some(controllers.routes.ChooseActivityController.show(journeyId).toString)
       }

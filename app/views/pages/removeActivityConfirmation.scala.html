@@ -18,7 +18,7 @@
 @import uk.gov.hmrc.play.views.html.{helpers => govHelpers}
 @import config.AppConfig
 
-@(journeyId: String, removeSicCodeForm: Form[String], sicCodeChoice: SicCodeChoice)(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, removeSicCodeForm: Form[String], sicCodeChoice: SicCodeChoice)(implicit lang: play.api.i18n.Lang, request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @views.html.main_template(title = messages("page.icl.confirmremoval.title",  sicCodeChoice.desc), bodyClasses = None) {
     <a id="back" class="link-back" href="javascript:history.back()">@messages("app.common.back")</a>

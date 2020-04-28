@@ -59,7 +59,7 @@ class JourneyDataSpec extends PlaySpec {
             "customMessages" -> Json.obj(
               "summary" -> Json.obj(
                 "heading" -> "testMessage",
-                "lead"    -> "testMessage"
+                "lead" -> "testMessage"
               )
             )
           )

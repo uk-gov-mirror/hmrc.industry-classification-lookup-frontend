@@ -16,15 +16,15 @@
 
 package auth
 
-import uk.gov.hmrc.play.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 trait SicSearchExternalURLs {
   val servicesConfig: ServicesConfig
 
-  private[SicSearchExternalURLs] lazy val companyAuthHost = servicesConfig.getConfString("auth.company-auth.url","")
-  private[SicSearchExternalURLs] lazy val loginCallback   = servicesConfig.getConfString("auth.login-callback.url","")
-  private[SicSearchExternalURLs] lazy val loginPath       = servicesConfig.getConfString("auth.login_path","")
+  private[SicSearchExternalURLs] lazy val companyAuthHost = servicesConfig.getConfString("auth.company-auth.url", "")
+  private[SicSearchExternalURLs] lazy val loginCallback = servicesConfig.getConfString("auth.login-callback.url", "")
+  private[SicSearchExternalURLs] lazy val loginPath = servicesConfig.getConfString("auth.login_path", "")
 
-  val loginURL    = s"$companyAuthHost$loginPath"
-  val continueURL = s"$loginCallback???"
+  lazy val loginURL = s"$companyAuthHost$loginPath"
+  lazy val continueURL = s"$loginCallback???"
 }

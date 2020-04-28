@@ -16,29 +16,31 @@
 
 package controllers
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{AnyContentAsEmpty, Result}
+import play.api.mvc.{AnyContentAsEmpty, Result, Results}
 import play.api.test.FakeRequest
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
 
 class ICLControllerSpec extends UnitTestSpec with MockAppConfig with MockMessages {
 
   trait Setup {
-    val controller: ICLController = new ICLController with I18nSupport {
-      override val loginURL = "/test/login"
 
-      override implicit val appConfig: AppConfig        = mockAppConfig
-      override val journeyService: JourneyService       = mockJourneyService
-      override val authConnector: AuthConnector         = mockAuthConnector
-      override val messagesApi: MessagesApi             = MockMessages
-      override val sicSearchService: SicSearchService   = mockSicSearchService
+    object TestICLController extends ICLController(mockMessasgesControllerComponents) {
+      val authConnector: AuthConnector = mockAuthConnector
+      val journeyService: JourneyService = mockJourneyService
+      val sicSearchService: SicSearchService = mockSicSearchService
+      val servicesConfig: ServicesConfig = mockServicesConfig
+
+      override lazy val loginURL = "/test/login"
     }
+
   }
 
   val sessionId = "session-12345"
@@ -46,18 +48,18 @@ class ICLControllerSpec extends UnitTestSpec with MockAppConfig with MockMessage
 
   "withSessionId" should {
     "supply the sessionId to the function parameter and return the supplied result" in new Setup {
-      val suppliedFunction: String => Future[Result] = sessionId => Future.successful(Ok(sessionId))
+      val suppliedFunction: String => Future[Result] = sessionId => Future.successful(Results.Ok(sessionId))
 
-      assertFutureResult(controller.withSessionId(suppliedFunction)(requestWithSessionId)) { res =>
-        status(res)          mustBe OK
+      assertFutureResult(TestICLController.withSessionId(suppliedFunction)(requestWithSessionId)) { res =>
+        status(res) mustBe OK
         contentAsString(res) mustBe sessionId
       }
     }
 
     "return a Bad Request when the request does not contain a session id" in new Setup {
-      val suppliedFunction: String => Future[Result] = _ => Future.successful(Ok)
+      val suppliedFunction: String => Future[Result] = _ => Future.successful(Results.Ok)
 
-      assertFutureResult(controller.withSessionId(suppliedFunction)(FakeRequest())) { res =>
+      assertFutureResult(TestICLController.withSessionId(suppliedFunction)(FakeRequest())) { res =>
         status(res) mustBe BAD_REQUEST
         contentAsString(res) mustBe "SessionId is missing from request"
       }

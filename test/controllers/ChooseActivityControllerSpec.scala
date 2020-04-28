@@ -18,7 +18,6 @@ package controllers
 
 import java.time.LocalDateTime
 
-import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.auth.AuthHelpers
 import helpers.mocks.{MockAppConfig, MockMessages}
@@ -29,28 +28,27 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded, Result}
 import play.api.test.FakeRequest
-import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with MockAppConfig with MockMessages {
 
 
   class Setup extends CodeMocks with AuthHelpers {
-    override val authConnector = mockAuthConnector
+    override val authConnector: AuthConnector = mockAuthConnector
 
-    val controller: ChooseActivityController = new ChooseActivityController with I18nSupport {
-      override val loginURL = "/test/login"
-
-      override implicit val appConfig: AppConfig        = mockAppConfig
-      override val sicSearchService: SicSearchService   = mockSicSearchService
-      override val authConnector: AuthConnector         = mockAuthConnector
-      implicit val messagesApi: MessagesApi             = MockMessages
-      override val journeyService: JourneyService       = mockJourneyService
+    val controller: ChooseActivityController = new ChooseActivityController(
+      mcc = mockMessasgesControllerComponents,
+      authConnector = mockAuthConnector,
+      journeyService = mockJourneyService,
+      sicSearchService = mockSicSearchService,
+      servicesConfig = mockServicesConfig
+    ) {
+      override lazy val loginURL = "/test/login"
     }
 
     val requestWithSession: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withSessionId(sessionId)
@@ -69,7 +67,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
 
   val searchResults = SearchResults(query, 1, List(sicCode), List(Sector(SECTOR_A, "Fake Sector", 1)))
   val noSearchResults = SearchResults(query, 0, List(), List())
-  val multipleSearchResults = SearchResults(query, 2, List(sicCode,sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
+  val multipleSearchResults = SearchResults(query, 2, List(sicCode, sicCode2), List(Sector("A", "Fake Sector", 1), Sector("B", "Faker sector", 1)))
 
   "show without results" should {
     "return a 303 for an unauthorised user" in new Setup {
@@ -84,7 +82,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
       requestWithAuthorisedUser(controller.show(journeyId), requestWithSession) {
-        (response: Future[Result]) =>
+        response: Future[Result] =>
           status(response) mustBe OK
           val document = Jsoup.parse(contentAsString(response))
           document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
@@ -104,7 +102,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
       requestWithAuthorisedUser(controller.show(journeyId, Some(true)), requestWithSession) {
-        (response: Future[Result]) =>
+        response: Future[Result] =>
           status(response) mustBe OK
           val document = Jsoup.parse(contentAsString(response))
           document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
@@ -122,7 +120,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
       requestWithAuthorisedUser(controller.show(journeyId, Some(true)), requestWithSession) {
-        (response: Future[Result]) =>
+        response: Future[Result] =>
           status(response) mustBe OK
       }
     }
@@ -135,7 +133,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       when(mockJourneyService.getJourney(ArgumentMatchers.any())) thenReturn Future.successful(journeyData)
 
       requestWithAuthorisedUser(controller.show(journeyId, Some(true)), requestWithSession) {
-        (response: Future[Result]) =>
+        response: Future[Result] =>
           status(response) mustBe OK
           val document = Jsoup.parse(contentAsString(response))
           document.getElementById("sicSearch").attr("name") mustBe "sicSearch"
@@ -212,7 +210,7 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       )
 
       requestWithAuthorisedUser(controller.submit(journeyId, Some("test")), requestWithSession) {
-        (response: Future[Result]) =>
+        response: Future[Result] =>
           status(response) mustBe BAD_REQUEST
       }
     }

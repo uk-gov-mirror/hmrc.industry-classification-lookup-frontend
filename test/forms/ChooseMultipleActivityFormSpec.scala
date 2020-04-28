@@ -20,11 +20,12 @@ import forms.chooseactivity.ChooseMultipleActivitiesForm
 import models.SicCode
 import org.scalatestplus.play.PlaySpec
 import play.api.data.FormError
+import play.api.mvc.AnyContentAsFormUrlEncoded
 import play.api.test.FakeRequest
 
 class ChooseMultipleActivityFormSpec extends PlaySpec {
 
-  val inputMap = Map(
+  val inputMap: Map[String, String] = Map(
     "code[0]" -> "testCode0-testDescription0",
     "code[1]" -> "testCode1-testDescription1",
     "code[2]" -> "testCode2-testDescription2",
@@ -32,9 +33,9 @@ class ChooseMultipleActivityFormSpec extends PlaySpec {
     "code[4]" -> "testCode4-testDescription4"
   )
 
-  implicit val request = FakeRequest().withFormUrlEncodedBody(inputMap.toSeq:_*)
+  implicit val request: FakeRequest[AnyContentAsFormUrlEncoded] = FakeRequest().withFormUrlEncodedBody(inputMap.toSeq: _*)
 
-  val inputMap2 = Map(
+  val inputMap2: Map[String, String] = Map(
     "code[0]" -> "testCode0",
     "code[1]" -> "testCode1",
     "code[2]" -> "",
@@ -43,11 +44,11 @@ class ChooseMultipleActivityFormSpec extends PlaySpec {
   )
 
   val expectedList = List("testCode0", "testCode1", "testCode2", "testCode3", "testCode4")
-  val expectedSicCodeList = List(SicCode("testCode0","testDescription0"),
-    SicCode("testCode1","testDescription1"),
-    SicCode("testCode2","testDescription2"),
-    SicCode("testCode3","testDescription3"),
-    SicCode("testCode4","testDescription4"))
+  val expectedSicCodeList = List(SicCode("testCode0", "testDescription0"),
+    SicCode("testCode1", "testDescription1"),
+    SicCode("testCode2", "testDescription2"),
+    SicCode("testCode3", "testDescription3"),
+    SicCode("testCode4", "testDescription4"))
 
   "SicSearchMultipleForm" should {
     "bind successfully" when {
@@ -65,10 +66,10 @@ class ChooseMultipleActivityFormSpec extends PlaySpec {
 
       "binding from a map with gaps" in {
         ChooseMultipleActivitiesForm.form.bind(inputMap2).get mustBe List(
-          SicCode("testCode0","testCode0"),
-          SicCode("testCode1","testCode1"),
-          SicCode("testCode3","testCode3"),
-          SicCode("testCode4","testCode4"))
+          SicCode("testCode0", "testCode0"),
+          SicCode("testCode1", "testCode1"),
+          SicCode("testCode3", "testCode3"),
+          SicCode("testCode4", "testCode4"))
       }
     }
 

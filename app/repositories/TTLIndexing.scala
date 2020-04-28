@@ -19,7 +19,6 @@ package repositories
 import play.api.Logger
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong}
-
 import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -34,24 +33,24 @@ trait TTLIndexing[A, ID] {
   private val LAST_UPDATED_INDEX = "lastUpdatedIndex"
   private val EXPIRE_AFTER_SECONDS = "expireAfterSeconds"
 
-//  def ensureTTLIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[Seq[Boolean]] = {
-//    collection.indexesManager.list.flatMap { indexes => {
-//        val ttlIndex: Option[Index] = indexes.find(_.eventualName == LAST_UPDATED_INDEX)
-//
-//        ttlIndex match {
-//          case Some(index) if hasSameTTL(index) =>
-//            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has not been changed")
-//            doNothing
-//          case Some(index) =>
-//            Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has been changed. Updating ttl index to : $ttl")
-//            deleteIndex(index) flatMap (_ => ensureLastUpdated)
-//          case _ =>
-//            Logger.info(s"[TTLIndex] TTL Index for collection : $collectionName does not exist. Creating TTL index")
-//            ensureLastUpdated
-//        }
-//      }
-//    } recoverWith errorHandler
-//  }
+  def ensureTTLIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[Seq[Boolean]] = {
+    collection.indexesManager.list.flatMap { indexes => {
+      val ttlIndex: Option[Index] = indexes.find(_.eventualName == LAST_UPDATED_INDEX)
+
+      ttlIndex match {
+        case Some(index) if hasSameTTL(index) =>
+          Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has not been changed")
+          doNothing
+        case Some(index) =>
+          Logger.info(s"[TTLIndex] document expiration value for collection : $collectionName has been changed. Updating ttl index to : $ttl")
+          deleteIndex(index) flatMap (_ => ensureLastUpdated)
+        case _ =>
+          Logger.info(s"[TTLIndex] TTL Index for collection : $collectionName does not exist. Creating TTL index")
+          ensureLastUpdated
+      }
+    }
+    } recoverWith errorHandler
+  }
 
   private val doNothing = Future(Seq(true))
 

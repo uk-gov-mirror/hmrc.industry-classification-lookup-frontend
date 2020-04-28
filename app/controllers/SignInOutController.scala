@@ -16,27 +16,25 @@
 
 package controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
+import services.{JourneyService, SicSearchService}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import auth.{AuthFunction, SicSearchExternalURLs}
-import play.api.i18n.{I18nSupport, MessagesApi}
-import play.api.mvc.{Action, AnyContent}
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.play.config.ServicesConfig
+import scala.concurrent.{ExecutionContext, Future}
 
-import scala.concurrent.Future
+@Singleton
+class SignInOutController @Inject()(mcc: MessagesControllerComponents,
+                                    val servicesConfig: ServicesConfig,
+                                    val authConnector: AuthConnector,
+                                    val journeyService: JourneyService,
+                                    val sicSearchService: SicSearchService
+                                   )(implicit ec: ExecutionContext)
+  extends ICLController(mcc) {
 
-class SignInOutControllerImpl @Inject()(val messagesApi: MessagesApi,
-                                        val servicesConfig: ServicesConfig,
-                                        val authConnector: AuthConnector) extends SignInOutController with SicSearchExternalURLs {
-  lazy val compRegFEURL = servicesConfig.getConfString("company-registration-frontend.www.url", "")
-  lazy val compRegFEURI = servicesConfig.getConfString("company-registration-frontend.www.uri", "")
-}
-
-trait SignInOutController extends I18nSupport with AuthorisedFunctions with AuthFunction {
-
-  val compRegFEURL: String
-  val compRegFEURI: String
+  lazy val compRegFEURL: String = servicesConfig.getConfString("company-registration-frontend.www.url", "")
+  lazy val compRegFEURI: String = servicesConfig.getConfString("company-registration-frontend.www.uri", "")
 
   val postSignIn: Action[AnyContent] = Action.async {
     implicit request =>

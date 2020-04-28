@@ -17,22 +17,24 @@
 package connectors
 
 import helpers.UnitTestSpec
+import helpers.mocks.MockAppConfig
 import models.setup.JourneySetup
 import models.{SearchResults, Sector, SicCode}
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{CoreGet, HttpException, HttpResponse, NotFoundException}
+import uk.gov.hmrc.http.{HttpException, HttpResponse, NotFoundException}
 
 import scala.concurrent.Future
 
-class ICLConnectorSpec extends UnitTestSpec {
+class ICLConnectorSpec extends UnitTestSpec with MockAppConfig {
 
   val iCLUrl = "http://localhost:12345"
 
-
   class Setup extends CodeMocks {
-    val connector: ICLConnector = new ICLConnector {
-      val http: CoreGet  = mockWSHttp
-      val ICLUrl: String = iCLUrl
+    val connector: ICLConnector = new ICLConnector(
+      appConfig = mockConfig,
+      http = mockWSHttp
+    ) {
+      override lazy val ICLUrl: String = iCLUrl
     }
   }
 
@@ -44,7 +46,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     val lookupUrl = s"$iCLUrl/industry-classification-lookup/lookup/$sicCode"
 
     "return a sic code case class matching the code provided" in new Setup {
-      mockHttpGet[HttpResponse](lookupUrl).thenReturn(Future.successful(HttpResponse(200,Some(Json.toJson[List[SicCode]](List(sicCodeResult))))))
+      mockHttpGet[HttpResponse](lookupUrl).thenReturn(Future.successful(HttpResponse(200, Some(Json.toJson[List[SicCode]](List(sicCodeResult))))))
 
       awaitAndAssert(connector.lookup(sicCode)) {
         _ mustBe List(sicCodeResult)
@@ -113,7 +115,7 @@ class ICLConnectorSpec extends UnitTestSpec {
     "return 0 results when ICL returns a 404" in new Setup {
       mockHttpGet[SearchResults](searchUrl).thenReturn(Future.failed(new NotFoundException("404")))
 
-      awaitAndAssert(connector.search(query,journeySetup)) {
+      awaitAndAssert(connector.search(query, journeySetup)) {
         _ mustBe zeroResults
       }
     }

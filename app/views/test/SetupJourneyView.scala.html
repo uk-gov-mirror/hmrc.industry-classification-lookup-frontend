@@ -19,7 +19,7 @@
 @import helpers.templates.{inputRadioGroup, inputRadioHidden, inputCheckboxGroup, input}
 @import models.setup.{JourneySetup, JourneyData}
 
-@(journeyId: String, journeyForm: Form[JourneySetup])(implicit request: Request[_], messages: Messages, appConfiguration: AppConfig)
+@(journeyId: String, journeyForm: Form[JourneySetup])(implicit lang: play.api.i18n.Lang, request: Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @hiddenYesContent = {
 <div class="additional-option-block panel panel-border-narrow">
