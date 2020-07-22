@@ -7,7 +7,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "play-ui" % "8.8.0-play-26",
     "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-26",
     "uk.gov.hmrc" %% "play-whitelist-filter" % "3.1.0-play-26",
-    "uk.gov.hmrc" %% "simple-reactivemongo" % "7.26.0-play-26",
+    "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26",
     "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.2.0-play-26"
   )
 
@@ -17,7 +17,7 @@ private object AppDependencies {
     "org.jsoup" % "jsoup" % "1.13.1" % scope,
     "org.mockito" % "mockito-core" % "3.3.3" % scope,
     "org.scalamock" %% "scalamock-scalatest-support" % "3.6.0" % scope,
-    "uk.gov.hmrc" %% "reactivemongo-test" % "4.19.0-play-26" % scope
+    "uk.gov.hmrc" %% "reactivemongo-test" % "4.21.0-play-26" % scope
   )
 
   def apply() = compile ++ test()
