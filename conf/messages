@@ -1,4 +1,5 @@
 app.title                                       = Register your company
+getHelp.linkText                                = Get help with this page (opens in new tab)
 
 app.common.continue                             = Continue
 app.common.confirmAndContinue                   = Confirm and continue
