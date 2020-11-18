@@ -6,7 +6,7 @@ private object AppDependencies {
     "uk.gov.hmrc" %% "govuk-template" % "5.54.0-play-26",
     "uk.gov.hmrc" %% "play-ui" % "8.8.0-play-26",
     "uk.gov.hmrc" %% "auth-client" % "3.0.0-play-26",
-    "uk.gov.hmrc" %% "play-whitelist-filter" % "3.1.0-play-26",
+    "uk.gov.hmrc" %% "play-allowlist-filter" % "0.1.0-play-26",
     "uk.gov.hmrc" %% "simple-reactivemongo" % "7.30.0-play-26",
     "uk.gov.hmrc" %% "play-conditional-form-mapping" % "1.2.0-play-26"
   )

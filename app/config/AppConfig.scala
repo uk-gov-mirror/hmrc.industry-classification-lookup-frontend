@@ -40,16 +40,16 @@ class AppConfig @Inject()(configuration: ServicesConfig,
   lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 
-  private def whitelistConfig(key: String): Seq[String] =
+  private def allowlistConfig(key: String): Seq[String] =
     Some(new String(Base64.getDecoder.decode(loadConfig(key)), "UTF-8")).map(_.split(",")).getOrElse(Array.empty).toSeq
 
   private def loadStringConfigBase64(key: String): String = {
     new String(Base64.getDecoder.decode(configuration.getString(key)), Charset.forName("UTF-8"))
   }
 
-  lazy val whitelist: Seq[String] = whitelistConfig("whitelist")
-  lazy val whitelistExcluded: Seq[String] = whitelistConfig("whitelist-excluded")
+  lazy val allowlist: Seq[String] = allowlistConfig("allowlist")
+  lazy val allowlistExcluded: Seq[String] = allowlistConfig("allowlist-excluded")
 
   lazy val csrfBypassValue: String = loadStringConfigBase64("Csrf-Bypass-value")
-  lazy val uriWhiteList: Set[String] = configuration.getString("csrfexceptions.whitelist").split(",").toSet
+  lazy val uriAllowList: Set[String] = configuration.getString("csrfexceptions.allowlist").split(",").toSet
 }
