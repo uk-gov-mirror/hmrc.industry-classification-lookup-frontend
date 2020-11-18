@@ -31,7 +31,7 @@ import repositories.JourneyDataRepository
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class WhitelistFilterISpec extends ClientSpec {
+class AllowlistFilterISpec extends ClientSpec {
 
   override lazy val cookieSigner: DefaultCookieSigner = fakeApplication.injector.instanceOf[DefaultCookieSigner]
 
@@ -46,8 +46,8 @@ class WhitelistFilterISpec extends ClientSpec {
 
   val extraConfig: Map[String, Any] = Map(
     "play.http.filters" -> "config.ProductionFilters",
-    "whitelist-excluded" -> "/ping/ping,/healthcheck".toBase64,
-    "whitelist" -> "whitelistIP".toBase64
+    "allowlist-excluded" -> "/ping/ping,/healthcheck".toBase64,
+    "allowlist" -> "allowlistIP".toBase64
   )
 
   val searchUri = "/sic-search/testJourneyId/search-standard-industry-classification-codes"
@@ -62,23 +62,23 @@ class WhitelistFilterISpec extends ClientSpec {
     lazy val appConfig = app.injector.instanceOf[AppConfig]
 
 
-    "the whitelist exclusion paths are requested" in {
-      appConfig.whitelistExcluded mustBe Seq("/ping/ping", "/healthcheck")
+    "the allowlist exclusion paths are requested" in {
+      appConfig.allowlistExcluded mustBe Seq("/ping/ping", "/healthcheck")
     }
 
-    "the whitelist IPs are requested" in {
-      appConfig.whitelist mustBe Seq("whitelistIP")
+    "the allowlist IPs are requested" in {
+      appConfig.allowlist mustBe Seq("allowlistIP")
     }
   }
 
 
   "ProductionFrontendGlobal" must {
 
-    "allow requests through the whitelist" when {
+    "allow requests through the allowlist" when {
 
-      "the request is sent from a whitelisted ip address" in new Setup {
+      "the request is sent from a allowlisted ip address" in new Setup {
         val client: WSRequest = buildClient(searchUri)
-          .withTrueClientIPHeader("whitelistIP")
+          .withTrueClientIPHeader("allowlistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
@@ -89,9 +89,9 @@ class WhitelistFilterISpec extends ClientSpec {
         response.status mustBe 200
       }
 
-      "the request is not sent from a white-listed IP but the requested Url is a white-listed Url" in {
+      "the request is not sent from a allow-listed IP but the requested Url is a allow-listed Url" in {
         val client = buildClient("/ping/ping")
-          .withTrueClientIPHeader("whitelistIP")
+          .withTrueClientIPHeader("allowlistIP")
           .withSessionIdHeader()
 
         mockAuthorise()
@@ -103,9 +103,9 @@ class WhitelistFilterISpec extends ClientSpec {
 
     "redirect the request to the outage page" when {
 
-      "the request is not sent from a white-listed IP and the requested Url is not a white-listed Url" in {
+      "the request is not sent from a allow-listed IP and the requested Url is not a allow-listed Url" in {
         val client = buildClient(searchUri)
-          .withTrueClientIPHeader("nonWhitelistIP")
+          .withTrueClientIPHeader("nonAllowlistIP")
           .withSessionIdHeader()
 
         mockAuthorise()

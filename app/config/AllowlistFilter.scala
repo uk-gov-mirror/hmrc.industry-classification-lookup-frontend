@@ -19,17 +19,17 @@ package config
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
 import play.api.mvc.Call
-import uk.gov.hmrc.whitelist.AkamaiWhitelistFilter
+import uk.gov.hmrc.allowlist.AkamaiAllowlistFilter
 
 @Singleton
-class WhitelistFilter @Inject()(val mat: Materializer,
+class AllowlistFilter @Inject()(val mat: Materializer,
                                 appConfig: AppConfig)
-  extends AkamaiWhitelistFilter {
+  extends AkamaiAllowlistFilter {
 
-  override def whitelist: Seq[String] = appConfig.whitelist
+  override def allowlist: Seq[String] = appConfig.allowlist
 
   override def excludedPaths: Seq[Call] = {
-    appConfig.whitelistExcluded.map { path =>
+    appConfig.allowlistExcluded.map { path =>
       Call("GET", path)
     }
   }

@@ -25,10 +25,10 @@ import scala.concurrent.Future
 
 class CSRFExceptionsFilter @Inject()(appConfig: AppConfig, implicit val mat: Materializer) extends Filter {
 
-  private lazy val whitelist: Set[String] = appConfig.uriWhiteList
+  private lazy val allowlist: Set[String] = appConfig.uriAllowList
 
   private def internalRoutesBypass(rh: RequestHeader): RequestHeader = {
-    (rh.method, whitelist.exists(rh.path.matches(_))) match {
+    (rh.method, allowlist.exists(rh.path.matches(_))) match {
       case (POST, true) => applyHeaders(rh)
       case _ => removeHeaders(rh)
     }

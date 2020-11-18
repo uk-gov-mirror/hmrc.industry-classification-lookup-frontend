@@ -21,5 +21,5 @@ import play.api.http.DefaultHttpFilters
 import uk.gov.hmrc.play.bootstrap.filters.FrontendFilters
 
 @Singleton
-class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, whitelistFilter: WhitelistFilter)
-  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, whitelistFilter) ++ defaultFilters.filters: _*)
+class ProductionFilters @Inject()(defaultFilters: FrontendFilters, csrfExceptionsFilter: CSRFExceptionsFilter, allowlistFilter: AllowlistFilter)
+  extends DefaultHttpFilters(Seq(csrfExceptionsFilter, allowlistFilter) ++ defaultFilters.filters: _*)
