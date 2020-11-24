@@ -52,4 +52,7 @@ class AppConfig @Inject()(configuration: ServicesConfig,
 
   lazy val csrfBypassValue: String = loadStringConfigBase64("Csrf-Bypass-value")
   lazy val uriAllowList: Set[String] = configuration.getString("csrfexceptions.allowlist").split(",").toSet
+
+  lazy val countdownLength: String = configuration.getString("timeout.countdown")
+  lazy val timeoutLength: String = configuration.getString("timeout.length")
 }
