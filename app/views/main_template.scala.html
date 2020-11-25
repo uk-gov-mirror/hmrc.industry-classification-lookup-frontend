@@ -15,13 +15,16 @@
  *@
 
 @import config.AppConfig
+@import controllers.routes.SignInOutController
+@import play.twirl.api.HtmlFormat
 
 @(title: String,
   sidebarLinks: Option[Html] = None,
   contentHeader: Option[Html] = None,
   bodyClasses: Option[String] = None,
   mainClass: Option[String] = None,
-  scriptElem: Option[Html] = None)(mainContent: Html)(implicit request : Request[_], messages: Messages, appConfiguration: AppConfig)
+  scriptElem: Option[Html] = None,
+  enableTimeout: Boolean = true)(mainContent: Html)(implicit request : Request[_], messages: Messages, appConfiguration: AppConfig)
 
 @import uk.gov.hmrc.play.views.html.layouts
 
@@ -34,6 +37,19 @@
     }
 }
 
+@defaultScriptElem = {
+    @if(enableTimeout) {
+        <script id="timeoutScript" role="dialog" tabindex="-1">
+            window.GOVUK.timeoutDialog({
+            timeout: @appConfiguration.timeoutLength,
+            countdown: @appConfiguration.countdownLength,
+            keepAliveUrl: '#',
+            signOutUrl: '@SignInOutController.signOut.url'
+            });
+        </script>
+    }
+    @scriptElem.getOrElse(HtmlFormat.empty)
+}
 
 @govuk_wrapper(appConfig          = appConfiguration,
                title              = title,
@@ -43,4 +59,4 @@
                contentHeader      = contentHeader,
                mainContent        = layouts.article(mainContent),
                serviceInfoContent = serviceInfoContent,
-               scriptElem         = scriptElem)
+               scriptElem         = Some(defaultScriptElem))
