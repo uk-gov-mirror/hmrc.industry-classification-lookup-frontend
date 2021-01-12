@@ -18,19 +18,17 @@ package helpers
 
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsObject, JsValue, Json}
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import play.api.test.DefaultAwaitTimeout
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index
 import repositories.TTLIndexing
-import uk.gov.hmrc.mongo.{MongoSpecSupport, ReactiveRepository}
+import uk.gov.hmrc.mongo.{Awaiting, MongoSpecSupport, ReactiveRepository}
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.Random
 
-trait MongoSpec extends PlaySpec with MongoSpecSupport with FutureAwaits with DefaultAwaitTimeout {
-
-  implicit val executionContext: ExecutionContextExecutor = scala.concurrent.ExecutionContext.Implicits.global
+trait MongoSpec extends PlaySpec with MongoSpecSupport with Awaiting with DefaultAwaitTimeout {
 
   def generateOID: String = {
     val alpha = "abcdef123456789"

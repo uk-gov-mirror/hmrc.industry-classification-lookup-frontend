@@ -21,18 +21,16 @@ import models.setup.{JourneyData, JourneySetup}
 import org.joda.time.DateTime
 import org.scalatest.concurrent.Eventually
 import org.scalatestplus.play.PlaySpec
-import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
 import reactivemongo.api.commands.WriteResult
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import uk.gov.hmrc.mongo.{Awaiting, MongoSpecSupport}
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-class SicStoreRepoISpec extends PlaySpec with MongoSpecSupport with GuiceFakeApplicationFactory with Eventually with Awaiting {
+class SicStoreRepoISpec extends PlaySpec with MongoSpecSupport with GuiceOneServerPerSuite with Eventually with Awaiting {
 
   class Setup {
-    val repository: SicStoreRepository = fakeApplication.injector.instanceOf[SicStoreRepository]
+    val repository: SicStoreRepository = app.injector.instanceOf[SicStoreRepository]
 
     await(repository.drop)
 

@@ -18,7 +18,7 @@ package repositories
 
 import helpers.MongoSpec
 import org.scalatest.concurrent.{Eventually, IntegrationPatience}
-import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{Format, Json}
 import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong, BSONObjectID}
@@ -26,7 +26,7 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TTLIndexingISpec extends MongoSpec with Eventually with GuiceFakeApplicationFactory with IntegrationPatience {
+class TTLIndexingISpec extends MongoSpec with Eventually with GuiceOneServerPerSuite with IntegrationPatience {
 
   val ttl = 12345789
 
@@ -38,6 +38,8 @@ class TTLIndexingISpec extends MongoSpec with Eventually with GuiceFakeApplicati
 
   class TestTTLRepository extends ReactiveRepository[TestCaseClass, BSONObjectID](collectionName = "test-collection", mongo, TestCaseClass.format)
     with TTLIndexing[TestCaseClass, BSONObjectID] {
+
+    implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
 
     override def ensureIndexes(implicit ec: ExecutionContext): Future[Seq[Boolean]] = {
       for {

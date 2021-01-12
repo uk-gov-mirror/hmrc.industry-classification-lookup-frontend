@@ -22,19 +22,19 @@ import models.setup.messages.{CustomMessages, Summary}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import org.scalatest.{Assertion, BeforeAndAfterEach}
 import org.scalatestplus.play.PlaySpec
-import org.scalatestplus.play.guice.GuiceFakeApplicationFactory
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsResultException, Json, OWrites}
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.play.json.collection.JSONCollection
 import uk.gov.hmrc.mongo.Awaiting
 
-class JourneyDataRepositoryISpec extends PlaySpec with Awaiting with BeforeAndAfterEach with GuiceFakeApplicationFactory {
+class JourneyDataRepositoryISpec extends PlaySpec with Awaiting with BeforeAndAfterEach with GuiceOneServerPerSuite {
 
   class Setup {
 
-    val repository: JourneyDataRepository = fakeApplication.injector.instanceOf[JourneyDataRepository]
-    val mongo: ReactiveMongoComponent = fakeApplication.injector.instanceOf[ReactiveMongoComponent]
+    val repository: JourneyDataRepository = app.injector.instanceOf[JourneyDataRepository]
+    val mongo: ReactiveMongoComponent = app.injector.instanceOf[ReactiveMongoComponent]
 
     await(repository.drop)
 

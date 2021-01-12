@@ -28,6 +28,10 @@ trait CookieBaker {
 
   val cookieSigner: DefaultCookieSigner
 
+  val userIdKey: String = "userId"
+  val tokenKey: String = "token"
+  val authProviderKey: String = "ap"
+
   val sessionId         = s"stubbed-${UUID.randomUUID}"
 
   val cookieKey = "gvBoGdgzqG1AarzF1LY0zQ=="
@@ -68,9 +72,9 @@ trait CookieBaker {
 
     Map(
       SessionKeys.sessionId -> sessionID,
-      SessionKeys.userId -> "/auth/oid/1234567890",
-      SessionKeys.token -> "token",
-      SessionKeys.authProvider -> "GGW",
+      userIdKey -> "/auth/oid/1234567890",
+      tokenKey -> "token",
+      authProviderKey -> "GGW",
       SessionKeys.lastRequestTimestamp -> rollbackTimestamp
     ) ++ additionalData
   }

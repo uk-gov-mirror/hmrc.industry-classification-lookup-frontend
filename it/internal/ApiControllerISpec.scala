@@ -35,7 +35,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class ApiControllerISpec extends ClientSpec {
 
-  override lazy val cookieSigner: DefaultCookieSigner = fakeApplication.injector.instanceOf[DefaultCookieSigner]
+  override lazy val cookieSigner: DefaultCookieSigner = app.injector.instanceOf[DefaultCookieSigner]
 
   override implicit lazy val app: Application = new GuiceApplicationBuilder()
     .configure(
@@ -56,8 +56,8 @@ class ApiControllerISpec extends ClientSpec {
     ).build()
 
   trait Setup {
-    val sicStoreRepo: SicStoreRepository = fakeApplication.injector.instanceOf[SicStoreRepository]
-    val journeyRepo: JourneyDataRepository = fakeApplication.injector.instanceOf[JourneyDataRepository]
+    val sicStoreRepo: SicStoreRepository = app.injector.instanceOf[SicStoreRepository]
+    val journeyRepo: JourneyDataRepository = app.injector.instanceOf[JourneyDataRepository]
 
     def insertSicStore(sicStore: SicStore): WriteResult = await(sicStoreRepo.insert(sicStore))
 
