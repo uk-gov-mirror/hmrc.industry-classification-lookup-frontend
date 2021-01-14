@@ -1,6 +1,5 @@
 
 import scoverage.ScoverageKeys
-import TestPhases.oneForkedJvmPerTest
 import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
@@ -24,25 +23,25 @@ lazy val microservice = Project(appName, file("."))
   .configs(IntegrationTest)
   .settings(inConfig(IntegrationTest)(Defaults.itSettings): _*)
   .settings(
-    scalaVersion                                  := "2.11.11",
+    fork                       in IntegrationTest := false,
+    testForkedParallel         in IntegrationTest := false,
+    parallelExecution          in IntegrationTest := false,
+    logBuffered                in IntegrationTest := false,
+    unmanagedSourceDirectories in IntegrationTest := (baseDirectory in IntegrationTest) (base => Seq(base / "it")).value,
+    fork                       in Test            := true,
+    testForkedParallel         in Test            := false,
+    parallelExecution          in Test            := true,
+    logBuffered                in Test            := false,
+    addTestReportOption(IntegrationTest, "int-test-reports")
+  )
+  .settings(
+    scalaVersion                                  := "2.12.12",
     libraryDependencies                           ++= AppDependencies(),
     retrieveManaged                               := true,
     evictionWarningOptions     in update          := EvictionWarningOptions.default.withWarnScalaVersionEviction(false),
     cancelable                 in Global          := true,
-    Keys.fork                  in IntegrationTest := false,
-    Keys.fork                  in Test            := true,
-    parallelExecution          in Test            := false,
-    testGrouping               in IntegrationTest := oneForkedJvmPerTest((definedTests in IntegrationTest).value),
-    parallelExecution          in IntegrationTest := false,
     resolvers                                     += Resolver.bintrayRepo("hmrc", "releases"),
     resolvers                                     += Resolver.jcenterRepo,
-    unmanagedSourceDirectories in IntegrationTest := (baseDirectory in IntegrationTest)(base => Seq(base / "it")).value,
     addTestReportOption(IntegrationTest, "int-test-reports")
   )
-
-dependencyOverrides ++= Set(
-  "com.typesafe.akka" %% "akka-actor" % "2.5.23",
-  "com.typesafe.akka" %% "akka-protobuf" % "2.5.23",
-  "com.typesafe.akka" %% "akka-slf4j" % "2.5.23",
-  "com.typesafe.akka" %% "akka-stream" % "2.5.23"
-)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427

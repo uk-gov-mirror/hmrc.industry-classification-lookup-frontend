@@ -33,10 +33,10 @@ import scala.concurrent.Future
 
 class AllowlistFilterISpec extends ClientSpec {
 
-  override lazy val cookieSigner: DefaultCookieSigner = fakeApplication.injector.instanceOf[DefaultCookieSigner]
+  override lazy val cookieSigner: DefaultCookieSigner = app.injector.instanceOf[DefaultCookieSigner]
 
   trait Setup {
-    val repo: JourneyDataRepository = fakeApplication.injector.instanceOf[JourneyDataRepository]
+    val repo: JourneyDataRepository = app.injector.instanceOf[JourneyDataRepository]
 
     await(repo.drop)
     await(repo.ensureIndexes)

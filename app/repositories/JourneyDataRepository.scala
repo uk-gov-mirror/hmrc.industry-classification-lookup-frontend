@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ import reactivemongo.bson.{BSONDocument, BSONObjectID}
 import reactivemongo.play.json._
 import uk.gov.hmrc.mongo.ReactiveRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class JourneyDataRepository @Inject()(config: Configuration,
-                                      mongo: ReactiveMongoComponent)
+                                      mongo: ReactiveMongoComponent
+                                     )(implicit val ec: ExecutionContext)
   extends ReactiveRepository[JourneyData, BSONObjectID](
     "journey-data",
     mongo.mongoConnector.db,

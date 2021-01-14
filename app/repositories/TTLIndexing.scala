@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,18 @@ import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONLong}
 import uk.gov.hmrc.mongo.ReactiveRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
+import scala.concurrent.{Future, ExecutionContext}
 
 trait TTLIndexing[A, ID] {
   self: ReactiveRepository[A, ID] =>
 
   val ttl: Long
+  implicit val ec: ExecutionContext
 
   private val LAST_UPDATED_INDEX = "lastUpdatedIndex"
   private val EXPIRE_AFTER_SECONDS = "expireAfterSeconds"
 
-  def ensureTTLIndexes(implicit ec: scala.concurrent.ExecutionContext): Future[Seq[Boolean]] = {
+  def ensureTTLIndexes: Future[Seq[Boolean]] = {
     collection.indexesManager.list.flatMap { indexes => {
       val ttlIndex: Option[Index] = indexes.find(_.eventualName == LAST_UPDATED_INDEX)
 

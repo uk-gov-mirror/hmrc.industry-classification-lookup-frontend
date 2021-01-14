@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,12 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
 import scala.collection.Seq
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SicStoreRepository @Inject()(config: Configuration,
-                                   mongo: ReactiveMongoComponent)
+                                   mongo: ReactiveMongoComponent
+                                  )(implicit val ec: ExecutionContext)
   extends ReactiveRepository[SicStore, BSONObjectID](
     "sic-store",
     mongo.mongoConnector.db,
