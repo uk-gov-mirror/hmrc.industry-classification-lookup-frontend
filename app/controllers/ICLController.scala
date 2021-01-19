@@ -17,7 +17,7 @@
 package controllers
 
 import auth.SicSearchExternalURLs
-import javax.inject.Inject
+import config.AppConfig
 import models.SicCodeChoice
 import models.setup.{Identifiers, JourneyData}
 import play.api.Logger
@@ -29,11 +29,12 @@ import uk.gov.hmrc.auth.core.{AuthorisationException, AuthorisedFunctions, NoAct
 import uk.gov.hmrc.http.{HeaderCarrier, NotFoundException}
 import uk.gov.hmrc.play.bootstrap.controller.FrontendController
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 abstract class ICLController @Inject()(mcc: MessagesControllerComponents
-                                      )(implicit ec: ExecutionContext)
+                                      )(implicit ec: ExecutionContext, appConfig: AppConfig)
   extends FrontendController(mcc) with AuthorisedFunctions with I18nSupport with SicSearchExternalURLs {
 
   implicit lazy val lang: Lang = Lang("en")

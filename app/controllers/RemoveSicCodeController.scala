@@ -18,24 +18,22 @@ package controllers
 
 import config.AppConfig
 import forms.RemoveSicCodeForm
-import javax.inject.{Inject, Singleton}
 import models.SicCodeChoice
 import play.api.data.Form
 import play.api.mvc._
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RemoveSicCodeController @Inject()(mcc: MessagesControllerComponents,
-                                        val servicesConfig: ServicesConfig,
                                         val sicSearchService: SicSearchService,
                                         val journeyService: JourneyService,
                                         val authConnector: AuthConnector
                                        )(implicit ec: ExecutionContext,
-                                         appConfig: AppConfig)
+                                         val appConfig: AppConfig)
   extends ICLController(mcc) {
 
   def confirmationForm(description: String): Form[String] = RemoveSicCodeForm.form(description)

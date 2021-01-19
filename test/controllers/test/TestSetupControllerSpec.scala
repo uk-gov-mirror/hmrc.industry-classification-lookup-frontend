@@ -16,8 +16,6 @@
 
 package controllers.test
 
-import java.time.LocalDateTime
-
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import models._
@@ -29,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsFormUrlEncoded}
 import play.api.test.FakeRequest
 
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -39,8 +38,10 @@ class TestSetupControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite with
       mcc = mockMessasgesControllerComponents,
       authConnector = mockAuthConnector,
       journeyService = mockJourneyService,
-      sicSearchService = mockSicSearchService,
-      servicesConfig = mockServicesConfig
+      sicSearchService = mockSicSearchService
+    )(
+      ec = global,
+      appConfig = mockConfig
     ) {
       override lazy val loginURL = "/test/login"
     }

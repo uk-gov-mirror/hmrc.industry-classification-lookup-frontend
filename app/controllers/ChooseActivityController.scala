@@ -19,7 +19,6 @@ package controllers
 import config.AppConfig
 import forms.chooseactivity.ChooseMultipleActivitiesForm
 import forms.sicsearch.SicSearchForm
-import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData}
 import models.{SearchResults, SicCode, SicSearch}
 import play.api.data.Form
@@ -27,19 +26,17 @@ import play.api.mvc._
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ChooseActivityController @Inject()(mcc: MessagesControllerComponents,
-                                         val servicesConfig: ServicesConfig,
                                          val sicSearchService: SicSearchService,
                                          val journeyService: JourneyService,
                                          val authConnector: AuthConnector
                                         )(implicit ec: ExecutionContext,
-                                          appConfig: AppConfig)
-  extends ICLController(mcc) {
+                                          val appConfig: AppConfig) extends ICLController(mcc) {
 
   val chooseActivityForm: Form[List[SicCode]] = ChooseMultipleActivitiesForm.form
 

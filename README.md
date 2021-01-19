@@ -2,11 +2,22 @@
 
 [![Build Status](https://travis-ci.org/hmrc/industry-classification-lookup-frontend.svg)](https://travis-ci.org/hmrc/industry-classification-lookup-frontend) [ ![Download](https://api.bintray.com/packages/hmrc/releases/industry-classification-lookup-frontend/images/download.svg) ](https://bintray.com/hmrc/releases/industry-classification-lookup-frontend/_latestVersion)
 
-### License
+## License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html")
 
-### Initialsing a Journey
+## 1. Starting the service
+
+### With Service Manager
+
+to run all required services, run `sm --start ICL_ALL -r`
+or to run it individually, `sm --start ICL_FE -r`.
+
+### Locally
+
+run `./run.sh`
+
+## 2. Initialsing a Journey
 
 To start, the calling service must make a **POST** to `/internal/initialise-journey`
 
@@ -62,7 +73,7 @@ The **Ok** response will look like:
 }
 ```
 
-### Receiving selected sic codes
+## 3. Receiving selected sic codes
 
 Once the user has left the service and redirected back to the calling service via the provided redirect url, the calling service can make a **GET** request to the **fetchResultsUri** and a json body will be returned with the results of the journey.
 

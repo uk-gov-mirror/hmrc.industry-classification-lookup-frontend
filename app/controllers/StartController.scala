@@ -16,22 +16,21 @@
 
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import config.AppConfig
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartController @Inject()(mcc: MessagesControllerComponents,
-                                val servicesConfig: ServicesConfig,
                                 val authConnector: AuthConnector,
                                 val sicSearchService: SicSearchService,
                                 val journeyService: JourneyService
-                               )(implicit ec: ExecutionContext)
-  extends ICLController(mcc) {
+                               )(implicit ec: ExecutionContext,
+                                 val appConfig: AppConfig) extends ICLController(mcc) {
 
   def startJourney(jId: String): Action[AnyContent] = Action.async {
     implicit request =>

@@ -16,8 +16,9 @@
 
 package controllers
 
-import java.time.LocalDateTime
+import config.AppConfig
 
+import java.time.LocalDateTime
 import helpers.UnitTestSpec
 import helpers.auth.AuthHelpers
 import helpers.mocks.{MockAppConfig, MockMessages}
@@ -45,8 +46,10 @@ class ChooseActivityControllerSpec extends UnitTestSpec with GuiceOneAppPerSuite
       mcc = mockMessasgesControllerComponents,
       authConnector = mockAuthConnector,
       journeyService = mockJourneyService,
-      sicSearchService = mockSicSearchService,
-      servicesConfig = mockServicesConfig
+      sicSearchService = mockSicSearchService
+    )(
+      ec = global,
+      appConfig = mockConfig
     ) {
       override lazy val loginURL = "/test/login"
     }

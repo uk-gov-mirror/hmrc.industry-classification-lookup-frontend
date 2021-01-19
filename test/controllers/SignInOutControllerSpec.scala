@@ -17,13 +17,13 @@
 package controllers
 
 import helpers.UnitTestSpec
-import helpers.mocks.MockMessages
+import helpers.mocks.{MockAppConfig, MockMessages}
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
+class SignInOutControllerSpec extends UnitTestSpec with MockMessages with MockAppConfig {
 
   val cRUrl = "http://localhost:12345/"
   val cRUri = "test-uri"
@@ -33,42 +33,24 @@ class SignInOutControllerSpec extends UnitTestSpec with MockMessages {
       mcc = mockMessasgesControllerComponents,
       authConnector = mockAuthConnector,
       journeyService = mockJourneyService,
-      sicSearchService = mockSicSearchService,
-      servicesConfig = mockServicesConfig
+      sicSearchService = mockSicSearchService
+    )(
+      ec = global,
+      appConfig = mockConfig
     ) {
       override lazy val loginURL = "/test/login"
-
-      override lazy val compRegFEURL: String = cRUrl
-      override lazy val compRegFEURI: String = cRUri
-    }
-  }
-
-  "postSignIn" should {
-
-    "return a 303 and redirect to post sign in" in new Setup {
-
-      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-      val url = s"$cRUrl$cRUri/post-sign-in"
-
-      AuthHelpers.showWithAuthorisedUser(controller.postSignIn, request) {
-        result =>
-          status(result) mustBe 303
-          redirectLocation(result) mustBe Some(url)
-      }
     }
   }
 
   "signOut" should {
-
     "return a 303 and redirect to questionnaire" in new Setup {
-
       val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-      val url = s"$cRUrl$cRUri/questionnaire"
+      val signOutUrl = "http://localhost:9514/feedback/vat-registration"
 
       AuthHelpers.showWithAuthorisedUser(controller.signOut, request) {
         result =>
           status(result) mustBe 303
-          redirectLocation(result) mustBe Some(url)
+          redirectLocation(result) mustBe Some(signOutUrl)
       }
     }
   }
