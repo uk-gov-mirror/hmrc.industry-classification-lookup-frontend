@@ -16,31 +16,31 @@
 
 package controllers.internal
 
-import java.time.LocalDateTime
-
 import helpers.UnitTestSpec
-import helpers.mocks.MockMessages
+import helpers.mocks.{MockAppConfig, MockMessages}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import models.{SicCode, SicCodeChoice}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ApiControllerSpec extends UnitTestSpec with MockMessages {
+class ApiControllerSpec extends UnitTestSpec with MockMessages with MockAppConfig {
 
   trait Setup {
     val controller: ApiController = new ApiController(
       mcc = mockMessasgesControllerComponents,
       authConnector = mockAuthConnector,
       journeyService = mockJourneyService,
-      sicSearchService = mockSicSearchService,
-      servicesConfig = mockServicesConfig
+      sicSearchService = mockSicSearchService
+    )(
+      ec = global,
+      appConfig = mockConfig
     ) {
       override lazy val loginURL = "/test/login"
     }

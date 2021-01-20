@@ -17,24 +17,21 @@
 package controllers
 
 import config.AppConfig
-import javax.inject.{Inject, Singleton}
 import models.setup.messages.Summary
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ConfirmationController @Inject()(mcc: MessagesControllerComponents,
-                                       val servicesConfig: ServicesConfig,
                                        val sicSearchService: SicSearchService,
                                        val journeyService: JourneyService,
                                        val authConnector: AuthConnector
                                       )(implicit ec: ExecutionContext,
-                                        appConfig: AppConfig)
-  extends ICLController(mcc) {
+                                        val appConfig: AppConfig) extends ICLController(mcc) {
 
   def show(journeyId: String): Action[AnyContent] = Action.async {
     implicit request =>

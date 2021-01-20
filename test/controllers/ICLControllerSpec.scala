@@ -16,6 +16,7 @@
 
 package controllers
 
+import config.AppConfig
 import helpers.UnitTestSpec
 import helpers.mocks.{MockAppConfig, MockMessages}
 import play.api.mvc.{AnyContentAsEmpty, Result, Results}
@@ -33,6 +34,7 @@ class ICLControllerSpec extends UnitTestSpec with MockAppConfig with MockMessage
   trait Setup {
 
     object TestICLController extends ICLController(mockMessasgesControllerComponents) {
+      implicit val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
       val authConnector: AuthConnector = mockAuthConnector
       val journeyService: JourneyService = mockJourneyService
       val sicSearchService: SicSearchService = mockSicSearchService

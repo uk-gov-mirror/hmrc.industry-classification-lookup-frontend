@@ -40,6 +40,9 @@ class AppConfig @Inject()(configuration: ServicesConfig,
   lazy val reportAProblemPartialUrl = s"$contactHost/contact/problem_reports_ajax?service=$contactFormServiceIdentifier"
   lazy val reportAProblemNonJSUrl = s"$contactHost/contact/problem_reports_nonjs?service=$contactFormServiceIdentifier"
 
+  lazy val feedbackFrontendUrl = loadConfig("microservice.services.feedback-frontend.url")
+  lazy val signOutUrl = s"$feedbackFrontendUrl/feedback/vat-registration"
+
   private def allowlistConfig(key: String): Seq[String] =
     Some(new String(Base64.getDecoder.decode(loadConfig(key)), "UTF-8")).map(_.split(",")).getOrElse(Array.empty).toSeq
 

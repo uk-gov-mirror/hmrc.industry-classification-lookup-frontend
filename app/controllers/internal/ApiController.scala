@@ -16,8 +16,8 @@
 
 package controllers.internal
 
+import config.AppConfig
 import controllers.ICLController
-import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData}
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
@@ -25,18 +25,16 @@ import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @Singleton
 class ApiController @Inject()(mcc: MessagesControllerComponents,
                               val journeyService: JourneyService,
                               val sicSearchService: SicSearchService,
-                              val authConnector: AuthConnector,
-                              val servicesConfig: ServicesConfig
-                             )(implicit ec: ExecutionContext)
-  extends ICLController(mcc) {
+                              val authConnector: AuthConnector
+                             )(implicit ec: ExecutionContext, val appConfig: AppConfig) extends ICLController(mcc) {
 
   def journeyInitialisation(): Action[JsValue] = Action.async(parse.json) { implicit request =>
     withSessionId { sessionId =>

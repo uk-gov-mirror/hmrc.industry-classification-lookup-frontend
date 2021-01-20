@@ -16,37 +16,26 @@
 
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import config.AppConfig
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SignInOutController @Inject()(mcc: MessagesControllerComponents,
-                                    val servicesConfig: ServicesConfig,
                                     val authConnector: AuthConnector,
                                     val journeyService: JourneyService,
                                     val sicSearchService: SicSearchService
-                                   )(implicit ec: ExecutionContext)
-  extends ICLController(mcc) {
-
-  lazy val compRegFEURL: String = servicesConfig.getConfString("company-registration-frontend.www.url", "")
-  lazy val compRegFEURI: String = servicesConfig.getConfString("company-registration-frontend.www.uri", "")
-
-  val postSignIn: Action[AnyContent] = Action.async {
-    implicit request =>
-      userAuthorised() {
-        Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/post-sign-in"))
-      }
-  }
+                                   )(implicit ec: ExecutionContext,
+                                     val appConfig: AppConfig) extends ICLController(mcc) {
 
   def signOut: Action[AnyContent] = Action.async {
     implicit request =>
       userAuthorised() {
-        Future.successful(Redirect(s"$compRegFEURL$compRegFEURI/questionnaire").withNewSession)
+        Future.successful(Redirect(appConfig.signOutUrl).withNewSession)
       }
   }
 }

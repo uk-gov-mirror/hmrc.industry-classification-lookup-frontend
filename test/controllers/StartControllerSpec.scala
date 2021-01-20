@@ -16,8 +16,6 @@
 
 package controllers
 
-import java.time.LocalDateTime
-
 import helpers.UnitTestSpec
 import helpers.auth.AuthHelpers
 import helpers.mocks.{MockAppConfig, MockMessages}
@@ -28,6 +26,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import uk.gov.hmrc.auth.core.AuthConnector
 
+import java.time.LocalDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -39,8 +38,10 @@ class StartControllerSpec extends UnitTestSpec with MockAppConfig with MockMessa
       mcc = mockMessasgesControllerComponents,
       authConnector = mockAuthConnector,
       journeyService = mockJourneyService,
-      sicSearchService = mockSicSearchService,
-      servicesConfig = mockServicesConfig
+      sicSearchService = mockSicSearchService
+    )(
+      ec = global,
+      appConfig = mockConfig
     ) {
       override lazy val loginURL = "/test/login"
     }

@@ -16,11 +16,8 @@
 
 package controllers.test
 
-import java.time.LocalDateTime
-
 import config.AppConfig
 import controllers.ICLController
-import javax.inject.{Inject, Singleton}
 import models.setup.{Identifiers, JourneyData, JourneySetup}
 import play.api.data.Form
 import play.api.data.Forms._
@@ -28,19 +25,19 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, MessagesControllerComponents}
 import services.{JourneyService, SicSearchService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.voa.play.form.ConditionalMappings.{isEqual, mandatoryIf}
 
+import java.time.LocalDateTime
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TestSetupController @Inject()(mcc: MessagesControllerComponents,
                                     val journeyService: JourneyService,
-                                    val servicesConfig: ServicesConfig,
                                     val sicSearchService: SicSearchService,
                                     val authConnector: AuthConnector
                                    )(implicit ec: ExecutionContext,
-                                     appConfig: AppConfig)
+                                     val appConfig: AppConfig)
   extends ICLController(mcc) {
 
   val journeySetupForm: Form[JourneySetup] = {
