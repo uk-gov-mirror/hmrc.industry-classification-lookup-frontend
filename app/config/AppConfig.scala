@@ -33,7 +33,7 @@ class AppConfig @Inject()(configuration: ServicesConfig,
   lazy val industryClassificationLookupBackend: String = configuration.baseUrl("industry-classification-lookup")
 
   private lazy val contactHost = configuration.getString(s"contact-frontend.host")
-  private val contactFormServiceIdentifier = "MyService"
+  private val contactFormServiceIdentifier = "vrs"
 
   lazy val analyticsToken: String = loadConfig(s"google-analytics.token")
   lazy val analyticsHost: String = loadConfig(s"google-analytics.host")
