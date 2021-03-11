@@ -1,5 +1,5 @@
 app.title                                       = Register your company
-getHelp.linkText                                = Is this page not working properly? (opens in a new tab)
+getHelp.linkText                                = Is this page not working properly? (opens in new tab)
 
 app.common.continue                             = Continue
 app.common.confirmAndContinue                   = Confirm and continue
